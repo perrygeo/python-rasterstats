@@ -1,6 +1,4 @@
-# python-raster-stats
-
-Summary statistics of raster dataset values based on vector geometries.
+`rasterstats` is a fast, flexible, robust open source python raster stats module with minimal dependencies.
 
 * Raster data support: 
   * Any continuous raster band supported by GDAL
@@ -66,13 +64,13 @@ Find a bug? Report it via github issues: provide smallest possible raster, vecto
 * heavily profiled using a wide range of input data. The resulting heuristics used to automatically configure for optimal performance. Optimzation heuristic for determining global_src_extent - number of features - extent of features - available system memory vs raster_extent
 * CLI: pivots for categorical
 * support parallel processing on multiple CPUs via the `multiprocessing` approach
-* zonal majority (http://stackoverflow.com/questions/6252280/find-the-most-frequent-number-in-a-numpy-vector)
+* zonal majority... [example](http://stackoverflow.com/questions/6252280/find-the-most-frequent-number-in-a-numpy-vector)
 
 ## Alternatives
+There are several other packages for different computing environments that provide similar functionality:
 
-Grass r.stats
+Grass r.stats 
 R spatialdataframe
 starspan
 zonal statistics arcpy
 QGIS
-
