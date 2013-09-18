@@ -11,6 +11,6 @@ python:
   - "2.7"
 install:
   - "pip install shapely coveralls --use-mirrors"
-script: "python setup.py test"
+script: "coverage run setup.py test"
 after_success:
   - coveralls
