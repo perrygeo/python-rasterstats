@@ -1,4 +1,10 @@
-`rasterstats` is a fast, flexible, robust open source python raster stats module with minimal dependencies.
+#### `rasterstats`
+
+[![Build Status](https://api.travis-ci.org/perrygeo/python-raster-stats.png)](https://api.travis-ci.org/perrygeo/python-raster-stats)
+
+
+
+A fast, flexible, robust open source python raster stats module with minimal dependencies.
 
 * Raster data support: 
   * Any continuous raster band supported by GDAL
@@ -10,7 +16,7 @@
 
 **Install** with
 ```
-sudo apt-get ?
+sudo apt-get python-numpy python-gdal
 pip install rasterstats
 ```
 For more details on installation and dependencies, see documentation.
@@ -69,8 +75,8 @@ Find a bug? Report it via github issues: provide smallest possible raster, vecto
 ## Alternatives
 There are several other packages for different computing environments that provide similar functionality:
 
-Grass r.stats 
-R spatialdataframe
-starspan
-zonal statistics arcpy
-QGIS
+* Grass r.stats 
+* R spatialdataframe
+* starspan
+* zonal statistics arcpy
+* QGIS
