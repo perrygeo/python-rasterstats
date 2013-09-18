@@ -1,14 +1,20 @@
-#### `rasterstats`
+# Python `rasterstats` module
 
 [![Build Status](https://api.travis-ci.org/perrygeo/python-raster-stats.png)](https://api.travis-ci.org/perrygeo/python-raster-stats) [![Coverage Status](https://coveralls.io/repos/perrygeo/python-raster-stats/badge.png)](https://coveralls.io/r/perrygeo/python-raster-stats)
 
-
-A fast, flexible, robust open source python raster stats module with minimal dependencies.
+The `rasterstats` python module provides a fast, flexible and robust tool to summarize geospatial raster
+datasets based on vector geometries.  
 
 * Raster data support: 
-  * Any continuous raster band supported by GDAL
+  * Any raster supported by GDAL
+  * Support for continuous and categorical
 * Vector data support:
-  * OGR layer
+  * Points, Lines, Polygon and Multi-* geometries
+  * Flexible input formats
+    * OGR layers
+    * Python objects that supports the `geo_interface`
+    * Well-Known Text/Binary (WKT/WKB) geometries
+* Command Line interface with CSV output
 * Depends on GDAL, Shapely and numpy
 
 ## Quickstart
@@ -27,24 +33,53 @@ Raster dataset of elevation
 Vector dataset of census tract boundaries (polygons)
 (Pic of Vector)
 
-Python interface
+#### Python interface
+
+Basic usage; paths to vector and raster datasets:
 ```
 >>> from rasterstats import raster_stats
->>> stats = raster_stats('/path/to/census_tracts.shp', '/path/to/elevation.tif')
+>>> raster_stats('/path/to/census_tracts.shp', '/path/to/elevation.tif')
 {...}
 ```
 
-Command line interface
+Integrating with other python objects that support the geo_interface (e.g. Fiona, Shapely, ArcPy, PyShp, GeoDjango)
+```
+>>> import fiona
+>>>
+>>> # an iterable of objects with geo_interface
+>>> lyr = fiona.open('/path/to/vector.shp')
+>>> features = (x for x in lyr if x['properties']['state'] == 'CT')
+>>> raster_stats(features, '/path/to/elevation.tif')
+...
+>>> 
+>>> # a single object with a geo_interface
+>>> lyr = fiona.open('/path/to/vector.shp')
+>>> raster_stats(lyr.next(), '/path/to/elevation.tif')
+...
+```
+
+Using with geometries in "Well-Known" formats
+```
+>>> raster_stats('POINT(-124 42)', '/path/to/elevation.tif')
+...
+```
+
+Working with categorical rasters (e.g. vegetation map)
+```
+>>> raster_stats(lyr.next(), '/path/to/vegetation.tif', categories=True)
+...
+```
+
+#### Command line interface
 ```
 $ rasterstats --vector /path/to/census_tracts.shp --raster /path/to/elevation.tif
 ```
 
 
-## More Resources
-* Documentation
-* Examples
-* Build status
-* Test coverage
+## More resources
+ * Documentation
+ * Examples
+
 
 ## Issues
 Find a bug? Report it via github issues: provide smallest possible raster, vector and code to reproduce it
