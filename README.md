@@ -17,32 +17,34 @@ datasets based on vector geometries.
 * Command Line interface with CSV output
 * Depends on GDAL, Shapely and numpy
 
-## Quickstart
-
-**Install** with
+## Install
 ```
 sudo apt-get python-numpy python-gdal
 pip install rasterstats
 ```
 For more details on installation and dependencies, see documentation.
 
-**Usage**
-Raster dataset of elevation
-(Pic of Raster)
+## Example Usage
+Given a polygon vector layer and a digitial elevation model (DEM) raster, calculate the mean elevation of each polygon:
 
-Vector dataset of census tract boundaries (polygons)
-(Pic of Vector)
+![zones elevation](https://github.com/perrygeo/python-raster-stats/raw/master/docs/img/zones_elevation.png)
 
-#### Python interface
-
-Basic usage; paths to vector and raster datasets:
 ```
 >>> from rasterstats import raster_stats
->>> raster_stats('/path/to/census_tracts.shp', '/path/to/elevation.tif')
-{...}
+>>> stats = raster_stats("tests/data/polygons.shp", "tests/data/elevation.tif")
+
+>>> stats[1].keys()
+    ['std', 'count', 'min', 'max', 'sum', 'fid', 'mean']
+    
+>>> [(f['fid'], f['mean']) for f in stats]
+    [(1, 756.6057470703125), (2, 114.660084635416666)]
 ```
 
-Integrating with other python objects that support the geo_interface (e.g. Fiona, Shapely, ArcPy, PyShp, GeoDjango)
+#### Python interface 
+
+In addition to the basic usage above, rasterstats supports other mechanisms of specifying vector geometeries.
+
+It integrates with other python objects that support the geo_interface (e.g. Fiona, Shapely, ArcPy, PyShp, GeoDjango)
 ```
 >>> import fiona
 >>>
@@ -58,7 +60,7 @@ Integrating with other python objects that support the geo_interface (e.g. Fiona
 ...
 ```
 
-Using with geometries in "Well-Known" formats
+Or by using with geometries in "Well-Known" formats.
 ```
 >>> raster_stats('POINT(-124 42)', '/path/to/elevation.tif')
 ...
@@ -89,7 +91,6 @@ Find a bug? Report it via github issues: provide smallest possible raster, vecto
 * unit tests covering edge cases for input datasets
 * command line interface which returns csv data and optionally copies over original vector attrs
 * support for categorical
-* projection support
 * pip installable
 * python 2 & 3 support
 * buildthedocs OR use some sort of literate programming
