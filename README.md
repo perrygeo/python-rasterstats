@@ -1,7 +1,6 @@
 #### `rasterstats`
 
-[![Build Status](https://api.travis-ci.org/perrygeo/python-raster-stats.png)](https://api.travis-ci.org/perrygeo/python-raster-stats)
-
+[![Build Status](https://api.travis-ci.org/perrygeo/python-raster-stats.png)](https://api.travis-ci.org/perrygeo/python-raster-stats) [![Coverage Status](https://coveralls.io/repos/perrygeo/python-raster-stats/badge.png)](https://coveralls.io/r/perrygeo/python-raster-stats)
 
 
 A fast, flexible, robust open source python raster stats module with minimal dependencies.
