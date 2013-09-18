@@ -1,4 +1,4 @@
-# Python `rasterstats` module
+# rasterstats
 
 [![Build Status](https://api.travis-ci.org/perrygeo/python-raster-stats.png)](https://api.travis-ci.org/perrygeo/python-raster-stats) [![Coverage Status](https://coveralls.io/repos/perrygeo/python-raster-stats/badge.png)](https://coveralls.io/r/perrygeo/python-raster-stats)
 
@@ -11,9 +11,9 @@ datasets based on vector geometries.
 * Vector data support:
   * Points, Lines, Polygon and Multi-* geometries
   * Flexible input formats
-    * OGR layers
-    * Python objects that supports the `geo_interface`
-    * Well-Known Text/Binary (WKT/WKB) geometries
+      * Any vector layer supported by OGR
+      * Python objects that support the [geo_interface](https://gist.github.com/sgillies/2217756)
+      * Well-Known Text/Binary (WKT/WKB) geometries
 * Command Line interface with CSV output
 * Depends on GDAL, Shapely and numpy
 
@@ -86,19 +86,13 @@ Find a bug? Report it via github issues: provide smallest possible raster, vecto
 
 ## TODO 
 * respects null/no-data values
-* covering edge cases for input datasets
+* unit tests covering edge cases for input datasets
 * command line interface which returns csv data and optionally copies over original vector attrs
-* supports categorical
-* Vector data:
-  * Points, Lines, Polygon and Multi-* geometries
-  * Can specify:
-    * OGR layer
-    * single geoms or list of geometries represented by wkts, wkbs or any object that supports the __geo_interface__
+* support for categorical
 * projection support
 * pip installable
 * python 2 & 3 support
 * buildthedocs OR use some sort of literate programming
-* travis-ci and https://coveralls.io/info/features
 * Examples for PyShp, GeoDjango, Fiona, Path to OGR resource, ArcPy (as Ipython notebooks?)
 * reproject on the fly using projection metadata
 * heavily profiled using a wide range of input data. The resulting heuristics used to automatically configure for optimal performance. Optimzation heuristic for determining global_src_extent - number of features - extent of features - available system memory vs raster_extent
