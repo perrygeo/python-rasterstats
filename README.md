@@ -2,34 +2,49 @@
 
 Summary statistics of raster dataset values based on vector geometries.
 
-Docs (API, Topics)
-Examples
-Build status
-Test coverage
-
-## Quickstart
-
-You've got a raster dataset representing elevation and a vector dataset representing county boundaries. 
-Show the average, min and max elevation for each county
-Show percentage of land cover by county
-Output to csv (via CLI)
-Pass geometries via wkt or wkb (single & list)
-Integrate with other python packages via __geo_interface__
-
-## Features
-
 * Raster data support: 
   * Any continuous raster band supported by GDAL
 * Vector data support:
   * OGR layer
-* Python module (returns built in python data structures - list of dicts)
-* Depends on GDAL, GEOS, shapely and numpy
-* Full coverage unit testing
+* Depends on GDAL, Shapely and numpy
+
+## Quickstart
+
+**Install** with
+```
+sudo apt-get ?
+pip install rasterstats
+```
+For more details on installation and dependencies, see documentation.
+
+**Usage**
+Raster dataset of elevation
+(Pic of Raster)
+
+Vector dataset of census tract boundaries (polygons)
+(Pic of Vector)
+
+Python interface
+```
+>>> from rasterstats import raster_stats
+>>> stats = raster_stats('/path/to/census_tracts.shp', '/path/to/elevation.tif')
+{...}
+```
+
+Command line interface
+```
+$ rasterstats --vector /path/to/census_tracts.shp --raster /path/to/elevation.tif
+```
+
+
+## More Resources
+* Documentation
+* Examples
+* Build status
+* Test coverage
 
 ## Issues
-To report a bug via github issues: provide smallest possible raster, vector and code to reproduce it
-
-## Docs
+Find a bug? Report it via github issues: provide smallest possible raster, vector and code to reproduce it
 
 ## TODO 
 * respects null/no-data values
