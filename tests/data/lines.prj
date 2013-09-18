@@ -1,0 +1,16 @@
+PROJCS["unnamed",
+    GEOGCS["GRS 1980(IUGG, 1980)",
+        DATUM["unknown",
+            SPHEROID["GRS80",6378137,298.257222101]],
+        PRIMEM["Greenwich",0],
+        UNIT["degree",0.0174532925199433]],
+    PROJECTION["Albers_Conic_Equal_Area"],
+    PARAMETER["standard_parallel_1",43],
+    PARAMETER["standard_parallel_2",48],
+    PARAMETER["latitude_of_center",34],
+    PARAMETER["longitude_of_center",-120],
+    PARAMETER["false_easting",600000],
+    PARAMETER["false_northing",0],
+    UNIT["metre",1,
+        AUTHORITY["EPSG","9001"]]]
+

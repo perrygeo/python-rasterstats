@@ -1,0 +1,47 @@
+#!/bin/env python
+"""
+rasterstats
+
+Usage:
+  rasterstats COMMAND DATASET [ARGS ...]
+  rasterstats (-h | --help)
+  rasterstats --version
+
+Options:
+  -h --help     Show this screen.
+  --version     Show version.
+"""
+import sys
+from docopt import docopt
+from rasterstats import raster_stats
+
+
+def guess_type(thing):
+    try:
+        return float(thing)
+    except:
+        pass
+    return str(thing)
+
+
+if __name__ == '__main__':
+    opt = docopt(__doc__, version='geofu 0.0.1')
+    if opt['DATASET'] == "-":
+        # use stdin
+        opt['DATASET'] = sys.stdin.readlines()[-1].strip()
+    lyr = load(opt['DATASET'])
+    args = []
+    kwargs = {}
+    for arg in opt['ARGS']:
+        if "=" in arg:
+            k, v = arg.split("=")
+            v = guess_type(v)
+            kwargs[k] = v
+        else:
+            arg = guess_type(arg)
+            args.append(arg)
+    res = getattr(lyr, opt['COMMAND'])(*args, **kwargs)
+    if isinstance(res, lyr.__class__):
+        print res.path
+    else:
+        print res

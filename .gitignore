@@ -1,0 +1,12 @@
+*.pyc
+.coverage
+TEST*.xml
+build/*
+dist/*
+*.swp
+.DS_Store
+*.orig
+*.egg-info
+MANIFEST
+Vagrantfile
+.vagrant/*
