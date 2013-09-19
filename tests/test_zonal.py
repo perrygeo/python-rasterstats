@@ -35,13 +35,16 @@ def test_zonal_nodata():
     assert stats[0]['count'] == 75
     assert stats[1]['count'] == 50
 
-# TODO test non-existent path
-# def test_doesnt exist():
-#     multipolygons = os.path.join(DATA, 'DOESNOTEXIST.shp')
-#     stats = raster_stats(multipolygons, raster)
-#     assert len(stats) == 2
-#     assert stats[0]['count'] == 75
-#     assert stats[1]['count'] == 50
+def test_doesnt_exist():
+    nonexistent = os.path.join(DATA, 'DOESNOTEXIST.shp')
+    with pytest.raises(RasterStatsError):
+        raster_stats(nonexistent, raster)
+
+def test_nonsense():
+    with pytest.raises(RasterStatsError):
+        raster_stats("blaghrlargh", raster)
+    with pytest.raises(RasterStatsError):
+        raster_stats(["blaghrlargh",], raster)
 
 ### Different geometry types
 
