@@ -31,7 +31,7 @@ setup(
     url="https://github.com/perrygeo/python-raster-stats",
     package_dir={'': 'src'},
     packages=['rasterstats'],
-    long_description=read('README.md'),
+    long_description=read('README.rst'),
     install_requires=[
         'shapely',
         'numpy',
