@@ -7,19 +7,21 @@ rasterstats
 The ``rasterstats`` python module provides a fast, flexible and robust
 tool to summarize geospatial raster datasets based on vector geometries.
 
--  Raster data support:
--  Any raster data source supported by GDAL
--  Support for continuous and categorical
--  Respects null/no-data metadata or takes argument
--  Vector data support:
--  Points, Lines, Polygon and Multi-\* geometries
--  Flexible input formats
+-  Raster data support
 
-   -  Any vector data source supported by OGR
-   -  Python objects that are geojson-like mappings or support the
-      `geo\_interface <https://gist.github.com/sgillies/2217756>`_
-   -  Well-Known Text/Binary (WKT/WKB) geometries
+    -  Any raster data source supported by GDAL
+    -  Support for continuous and categorical
+    -  Respects null/no-data metadata or takes argument
+    
+-  Vector data support
 
+    -  Points, Lines, Polygon and Multi-\* geometries
+    -  Flexible input formats
+    
+        -  Any vector data source supported by OGR
+        -  Python objects that are geojson-like mappings or support the `geo\_interface <https://gist.github.com/sgillies/2217756>`_
+        -  Well-Known Text/Binary (WKT/WKB) geometries
+        
 -  Depends on GDAL, Shapely and numpy
 
 Install
