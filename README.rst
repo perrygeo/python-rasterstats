@@ -29,7 +29,7 @@ Install
 
 Using ubuntu 12.04::
 
-   sudo apt-get python-numpy python-gdal 
+   sudo apt-get install python-numpy python-gdal 
    pip install rasterstats
 
 
