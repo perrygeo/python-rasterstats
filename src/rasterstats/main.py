@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from shapely.geometry import shape
+from shapely.geometry import shape, box, MultiPolygon
 import numpy as np
 from osgeo import gdal, ogr
 from osgeo.gdalconst import GA_ReadOnly
@@ -65,6 +65,16 @@ def raster_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
             geom = shape(feat['geometry'])
         else:  # it's just a geometry
             geom = shape(feat)
+
+        # Point and MultiPoint don't play well with GDALRasterize
+        # convert them into box polygons the size of a raster cell
+        buff = rgt[1] / 2.0
+        if geom.type == "MultiPoint":
+            geom = MultiPolygon([box(*(pt.buffer(buff).bounds)) 
+                                for pt in geom.geoms])
+        elif geom.type == 'Point':
+            geom = box(*(geom.buffer(buff).bounds))
+
         ogr_geom_type = shapely_to_ogr_type(geom.type)
 
         if not global_src_extent:
@@ -98,7 +108,11 @@ def raster_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
         rvds = driver.Create('', src_offset[2], src_offset[3], 1, gdal.GDT_Byte)
         rvds.SetGeoTransform(new_gt)
 
-        gdal.RasterizeLayer(rvds, [1], mem_layer, burn_values=[1])
+        rasterize_opts = {}
+        # if geom.type == "MultiPoint":
+        #     rasterize_opts = {'options': ['ALL_TOUCHED=TRUE']}
+
+        gdal.RasterizeLayer(rvds, [1], mem_layer, burn_values=[1], **rasterize_opts)
         rv_array = rvds.ReadAsArray()
 
         # Mask the source data array with our current feature

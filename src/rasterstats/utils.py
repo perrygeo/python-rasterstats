@@ -67,12 +67,13 @@ def shapely_to_ogr_type(shapely_type):
         return ogr.wkbMultiPolygon
     elif shapely_type == "MultiLineString":
         return ogr.wkbLineString
-    raise Exception("Unknown shapely_type %s" % shapely_type)
+    raise TypeError("shapely type %s not supported" % shapely_type)
 
 
 def parse_geo(thing):
     """ Given a python object, try to get a geo-json like mapping from it
     """
+
     # object implementing geo_interface
     try:
         geo = thing.__geo_interface__
@@ -118,11 +119,7 @@ def get_ogr_ds(vds):
     if not isinstance(vds, basestring):
         raise OGRError("OGR cannot open %r: not a string" % vds)
 
-    try:
-        ds = ogr.Open(vds)
-    except:
-        raise OGRError("OGR cannot open %r" % vds)
-
+    ds = ogr.Open(vds)
     if not ds:
         raise OGRError("OGR cannot open %r" % vds)
 
@@ -142,7 +139,7 @@ def geo_records(vectors):
         yield parse_geo(vector)
 
 
-def get_features(vectors, layer_num):
+def get_features(vectors, layer_num=0):
     if isinstance(vectors, basestring):
         try:
         # either an OGR layer ...
@@ -169,9 +166,6 @@ def get_features(vectors, layer_num):
         # ... or an iterable of objects
         features_iter = geo_records(vectors)
         strategy = "iter_geo"
-
-    if not features_iter or not strategy:
-        raise RasterStatsError("can't get feautures from vectors %r" % vectors)
 
     return features_iter, strategy
 
