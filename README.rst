@@ -1,10 +1,8 @@
 rasterstats
 ===========
 
-`|Build
-Status| <https://api.travis-ci.org/perrygeo/python-raster-stats>`_
-`|Coverage
-Status| <https://coveralls.io/r/perrygeo/python-raster-stats>`_
+|BuildStatus|_ 
+|CoverageStatus|_ 
 
 The ``rasterstats`` python module provides a fast, flexible and robust
 tool to summarize geospatial raster datasets based on vector geometries.
@@ -27,8 +25,11 @@ tool to summarize geospatial raster datasets based on vector geometries.
 Install
 -------
 
-``sudo apt-get python-numpy python-gdal pip install rasterstats`` For
-more details on installation and dependencies, see documentation.
+Using ubuntu 12.04::
+
+   sudo apt-get python-numpy python-gdal 
+   pip install rasterstats
+
 
 Example Usage
 -------------
@@ -40,7 +41,6 @@ raster, calculate the mean elevation of each polygon:
    :align: center
    :alt: zones elevation
 
-   zones elevation
 ::
 
     >>> from rasterstats import raster_stats
@@ -62,12 +62,13 @@ It integrates with other python objects that support the geo\_interface
 (e.g. Fiona, Shapely, ArcPy, PyShp, GeoDjango)::
 
     >>> import fiona
-    >>>
+
     >>> # an iterable of objects with geo_interface
     >>> lyr = fiona.open('/path/to/vector.shp')
     >>> features = (x for x in lyr if x['properties']['state'] == 'CT')
     >>> raster_stats(features, '/path/to/elevation.tif')
     ...
+    
     >>> # a single object with a geo_interface
     >>> lyr = fiona.open('/path/to/vector.shp')
     >>> raster_stats(lyr.next(), '/path/to/elevation.tif')
@@ -75,7 +76,8 @@ It integrates with other python objects that support the geo\_interface
 
 Or by using with geometries in "Well-Known" formats::
 
-    >>> raster_stats('POINT(-124 42)', '/path/to/elevation.tif') ...
+    >>> raster_stats('POINT(-124 42)', '/path/to/elevation.tif') 
+    ...
 
 Working with categorical rasters (e.g. vegetation map)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -87,7 +89,7 @@ values.
 For example, this polygon is comprised of 12 pixels of oak (raster value
 32) and 78 pixels of grassland (raster value 33)::
 
-    >>> raster\_stats(lyr.next(), '/path/to/vegetation.tif', categorical=True)
+    >>> raster_stats(lyr.next(), '/path/to/vegetation.tif', categorical=True)
 
     >>> [{'id': 1, 32: 12, 33: 78}]
 
@@ -99,13 +101,13 @@ associate the pixel values with their appropriate meaning (e.g. oak ==
 Issues
 ------
 
-Find a bug? Report it via github issues by providing: \* a link to
-download the smallest possible raster and vector dataset necessary to
-reproduce the error \* python code or command to reproduce the error \*
-information on your environment: versions of python, gdal and numpy and
-system memory
+Find a bug? Report it via github issues by providing
 
-.. |Build
-Status| image:: https://api.travis-ci.org/perrygeo/python-raster-stats.png
-.. |Coverage
-Status| image:: https://coveralls.io/repos/perrygeo/python-raster-stats/badge.png
+- a link to download the smallest possible raster and vector dataset necessary to reproduce the error
+- python code or command to reproduce the error
+- information on your environment: versions of python, gdal and numpy and system memory
+
+.. |BuildStatus| image:: https://api.travis-ci.org/perrygeo/python-raster-stats.png
+.. |CoverageStatus| image:: https://coveralls.io/repos/perrygeo/python-raster-stats/badge.png
+.. _BuildStatus: https://api.travis-ci.org/perrygeo/python-raster-stats
+.. _CoverageStatus: https://coveralls.io/r/perrygeo/python-raster-stats
