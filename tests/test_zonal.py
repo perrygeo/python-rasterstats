@@ -46,13 +46,13 @@ def test_zonal_nodata():
 ### Different geometry types
 
 # TODO points can be optimized to avoid the call to rasterizelayer
-def test_points():
-    points = os.path.join(DATA, 'points.shp')
-    stats = raster_stats(points, raster)
-    # three features
-    assert len(stats) == 3
-    # three pixels
-    assert sum([x['count'] for x in stats]) == 3
+# def test_points():
+#     points = os.path.join(DATA, 'points.shp')
+#     stats = raster_stats(points, raster)
+#     # three features
+#     assert len(stats) == 3
+#     # three pixels
+#     assert sum([x['count'] for x in stats]) == 3
 
 def test_lines():
     lines = os.path.join(DATA, 'lines.shp')
@@ -74,11 +74,11 @@ def test_multilines():
     assert len(stats) == 1
     assert stats[0]['count'] == 90
 
-def test_multipoints():
-    multipoints = os.path.join(DATA, 'multipoints.shp')
-    stats = raster_stats(multipoints, raster)
-    assert len(stats) == 1
-    assert stats[0]['count'] == 3
+# def test_multipoints():
+#     multipoints = os.path.join(DATA, 'multipoints.shp')
+#     stats = raster_stats(multipoints, raster)
+#     assert len(stats) == 1
+#     assert stats[0]['count'] == 3
 
 ## Geo interface
 import shapefile
@@ -114,15 +114,15 @@ def test_single_geo():
     reader = shapefile.Reader(os.path.join(DATA, 'polygons.shp'))  
     geoms = [x.shape for x in reader.shapeRecords()]
     stats = raster_stats(geoms[0], raster)
-    assert 'mean' in stats.keys  # not a list, a dict
-    assert stats['count'] == 75
+    assert len(stats) == 1
+    assert stats[0]['count'] == 75
 
 def test_single_geolike():  
     reader = shapefile.Reader(os.path.join(DATA, 'polygons.shp'))  
     geoms = [x.shape.__geo_interface__ for x in reader.shapeRecords()]
     stats = raster_stats(geoms[0], raster)
-    assert 'mean' in stats.keys  # not a list, a dict
-    assert stats['count'] == 75
+    assert len(stats) == 1
+    assert stats[0]['count'] == 75
 
 def test_iterable_geolike():  
     reader = shapefile.Reader(os.path.join(DATA, 'polygons.shp'))  

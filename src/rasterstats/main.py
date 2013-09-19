@@ -1,47 +1,12 @@
 # -*- coding: utf-8 -*-
-from shapely.geometry import mapping, shape
+from shapely.geometry import shape
 import numpy as np
-import json
 from osgeo import gdal, ogr
 from osgeo.gdalconst import GA_ReadOnly
-from .utils import bbox_to_pixel_offsets, feature_to_geojson, shapely_to_ogr_type
+from .utils import bbox_to_pixel_offsets, shapely_to_ogr_type, get_features, \
+                   RasterStatsError
+
 ogr.UseExceptions()
-
-
-class RasterStatsError(Exception):
-    pass
-
-
-class OGRError(Exception):
-    pass
-
-
-def get_ogr_ds(vds):
-    if not isinstance(vds, basestring):
-        raise OGRError("OGR cannot open %r: not a string" % vds)
-
-    try:
-        ds = ogr.Open(vds)
-    except:
-        raise OGRError("OGR cannot open %r" % vds)
-
-    if not ds:
-        raise OGRError("OGR cannot open %r" % vds)
-
-    return ds
-
-
-def ogr_records(vector, layer_num=0):  
-    ds = get_ogr_ds(vector)
-    layer = ds.GetLayer(layer_num)
-    for i in range(layer.GetFeatureCount()):
-        feature = layer.GetFeature(i)
-        yield feature_to_geojson(feature)
-
-
-def geo_records(vectors):
-    for vector in vectors:
-        yield vector.__geo_interface__
 
 
 def raster_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None, 
@@ -56,18 +21,7 @@ def raster_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
         nodata_value = float(nodata_value)
         rb.SetNoDataValue(nodata_value)
 
-    try:
-        # are we dealing with an ogr path?
-        get_ogr_ds(vectors)
-        features_iter = ogr_records(vectors, layer_num)
-        strategy = "ogr"
-    except OGRError:
-        # treat vectors as an iterable of objects with a __geo_interface__ 
-        features_iter = geo_records(vectors)
-        strategy = "iter_geo"
-        gdal.ErrorReset()
-        # TODO single geo)interface
-        # TODO multi and single wkt/wkb
+    features_iter, strategy = get_features(vectors, layer_num)
 
     # create an in-memory numpy array of the source raster data
     # covering the whole extent of the vector layer
@@ -75,7 +29,7 @@ def raster_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
 
         # find extent of ALL features
         if strategy != "ogr":
-            raise RasterStatsError("global_src_extent is only supported for OGR vector layers")
+            raise RasterStatsError("global_src_extent requires OGR vector")
 
         ds = ogr.Open(vectors)
         layer = ds.GetLayer(layer_num)
@@ -84,7 +38,8 @@ def raster_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
         layer_extent = (ex[0], ex[2], ex[1], ex[3])
 
         # use global source extent
-        # useful only when disk IO or raster scanning inefficiencies are your limiting factor
+        # useful only when disk IO or raster scanning 
+        #   inefficiencies are your limiting factor
         # advantage: reads raster data in one pass
         # disadvantage: large vector extents may have big memory requirements
         src_offset = bbox_to_pixel_offsets(rgt, layer_extent)
@@ -105,10 +60,7 @@ def raster_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
 
     stats = []
 
-    # Loop through geometries
-
     for feat in features_iter:
-        # Load shapely geom from __geo_interface__
         if feat['type'] == "Feature":
             geom = shape(feat['geometry'])
         else:  # it's just a geometry
@@ -175,7 +127,7 @@ def raster_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
                 'count': int(masked.count()),
             }
 
-        if feat.has_key('properties'):  # if it's an actual feature, not geometry
+        if feat.has_key('properties'):  # if it's a feature, not geometry
             for key, val in feat['properties'].items():
                 feature_stats[key] = val
 

@@ -8,8 +8,9 @@ datasets based on vector geometries.
 * Raster data support: 
   * Any raster supported by GDAL
   * Support for continuous and categorical
+  * Respects null/no-data metadata or takes argument
 * Vector data support:
-  * Points, Lines, Polygon and Multi-* geometries
+  * ~Points~, Lines, Polygon and Multi-* geometries
   * Flexible input formats
       * Any vector layer supported by OGR
       * Python objects that support the [geo_interface](https://gist.github.com/sgillies/2217756)
@@ -34,9 +35,9 @@ Given a polygon vector layer and a digitial elevation model (DEM) raster, calcul
 >>> stats = raster_stats("tests/data/polygons.shp", "tests/data/elevation.tif")
 
 >>> stats[1].keys()
-    ['std', 'count', 'min', 'max', 'sum', 'fid', 'mean']
+    ['std', 'count', 'min', 'max', 'sum', 'id', 'mean']
     
->>> [(f['fid'], f['mean']) for f in stats]
+>>> [(f['id'], f['mean']) for f in stats]
     [(1, 756.6057470703125), (2, 114.660084635416666)]
 ```
 
@@ -66,15 +67,10 @@ Or by using with geometries in "Well-Known" formats.
 ...
 ```
 
-Working with categorical rasters (e.g. vegetation map)
+#### Working with categorical rasters (e.g. vegetation map)
 ```
 >>> raster_stats(lyr.next(), '/path/to/vegetation.tif', categorical=True)
 ...
-```
-
-#### Command line interface
-```
-$ rasterstats --vector /path/to/census_tracts.shp --raster /path/to/elevation.tif
 ```
 
 
@@ -87,19 +83,19 @@ $ rasterstats --vector /path/to/census_tracts.shp --raster /path/to/elevation.ti
 Find a bug? Report it via github issues: provide smallest possible raster, vector and code to reproduce it
 
 ## TODO 
-* respects null/no-data values
 * unit tests covering edge cases for input datasets
 * command line interface which returns csv data and optionally copies over original vector attrs
-* support for categorical
 * pip installable
 * python 2 & 3 support
 * buildthedocs OR use some sort of literate programming
 * Examples for PyShp, GeoDjango, Fiona, Path to OGR resource, ArcPy (as Ipython notebooks?)
 * reproject on the fly using projection metadata
-* heavily profiled using a wide range of input data. The resulting heuristics used to automatically configure for optimal performance. Optimzation heuristic for determining global_src_extent - number of features - extent of features - available system memory vs raster_extent
+* profiled using a wide range of input data. The resulting heuristics used to automatically configure for optimal performance. Optimzation heuristic for determining global_src_extent - number of features - extent of features - available system memory vs raster_extent
 * CLI: pivots for categorical
 * support parallel processing on multiple CPUs via the `multiprocessing` approach
-* zonal majority... [example](http://stackoverflow.com/questions/6252280/find-the-most-frequent-number-in-a-numpy-vector)
+* zonal majority... [example](http://stackoverflow.com/questions/6252280/find-the-most-frequent-number-in-a-numpy-vector) and other zonal stat metrics
+* option list of zonal stats to calculate (may speed things up to exclude)
+* benchmark against alternative packages
 
 ## Alternatives
 There are several other packages for different computing environments that provide similar functionality:
