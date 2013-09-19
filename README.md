@@ -66,7 +66,7 @@ Using with geometries in "Well-Known" formats
 
 Working with categorical rasters (e.g. vegetation map)
 ```
->>> raster_stats(lyr.next(), '/path/to/vegetation.tif', categories=True)
+>>> raster_stats(lyr.next(), '/path/to/vegetation.tif', categorical=True)
 ...
 ```
 

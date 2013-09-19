@@ -39,7 +39,7 @@ setup(
         # pandas, pyproj?
     ],
     scripts=['scripts/rasterstats'],
-    tests_require=['pytest'],
+    tests_require=['pytest', 'pyshp', 'coverage'],
     cmdclass = {'test': PyTest},
     classifiers=[
         "Development Status :: 1 - Planning",
