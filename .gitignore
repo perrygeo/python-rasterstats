@@ -11,4 +11,5 @@ MANIFEST
 Vagrantfile
 .vagrant/*
 .coverage
+*.aux.xml
 
