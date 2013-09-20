@@ -2,7 +2,9 @@ rasterstats
 ===========
 
 |BuildStatus|_ 
-|CoverageStatus|_ 
+|CoverageStatus|_
+|PyPiVersion|_
+|PyPiDownloads|_
 
 The ``rasterstats`` python module provides a fast, flexible and robust
 tool to summarize geospatial raster datasets based on vector geometries.
@@ -110,6 +112,13 @@ Find a bug? Report it via github issues by providing
 - information on your environment: versions of python, gdal and numpy and system memory
 
 .. |BuildStatus| image:: https://api.travis-ci.org/perrygeo/python-raster-stats.png
-.. |CoverageStatus| image:: https://coveralls.io/repos/perrygeo/python-raster-stats/badge.png
 .. _BuildStatus: https://api.travis-ci.org/perrygeo/python-raster-stats
+
+.. |CoverageStatus| image:: https://coveralls.io/repos/perrygeo/python-raster-stats/badge.png
 .. _CoverageStatus: https://coveralls.io/r/perrygeo/python-raster-stats
+
+.. |PyPiVersion| image:: https://pypip.in/v/rasterstats/badge.png
+.. _PyPiVersion: http://pypi.python.org/pypi/rasterstats
+
+.. |PyPiDownloads| image:: https://pypip.in/d/rasterstats/badge.png
+.. _PyPiDownloads: http://pypi.python.org/pypi/rasterstats
