@@ -4,7 +4,6 @@ rasterstats
 |BuildStatus|_ 
 |CoverageStatus|_
 |PyPiVersion|_
-|PyPiDownloads|_
 
 The ``rasterstats`` python module provides a fast, flexible and robust
 tool to summarize geospatial raster datasets based on vector geometries.
@@ -112,7 +111,6 @@ Or by using with geometries in "Well-Known" formats::
     >>> raster_stats('POINT(-124 42)', '/path/to/elevation.tif') 
     ...
 
-
 Feature Properties
 ^^^^^^^^^^^^^^^^^^
 
@@ -128,14 +126,16 @@ is set to True::
     True
 
 
-Working with categorical rasters (e.g. vegetation map)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Working with categorical rasters 
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 You can treat rasters as categorical (i.e. raster values represent
-discrete classes) if only interested in the counts of unique pixel
+discrete classes) if you're only interested in the counts of unique pixel
 values.
 
-For example, this polygon is comprised of 12 pixels of oak (raster value
+For example, you may have a raster vegetation dataset and want to summarize 
+vegetation by polygon. Mean/Median/Max/etc vegetation class doesn't make much sense. 
+The polygon below is comprised of 12 pixels of oak (raster value
 32) and 78 pixels of grassland (raster value 33)::
 
     >>> raster_stats(lyr.next(), '/path/to/vegetation.tif', categorical=True)
