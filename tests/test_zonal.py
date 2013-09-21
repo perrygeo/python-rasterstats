@@ -45,8 +45,11 @@ def test_doesnt_exist():
         raster_stats(nonexistent, raster)
 
 def test_nonsense():
+    polygons = os.path.join(DATA, 'polygons.shp')
     with pytest.raises(RasterStatsError):
         raster_stats("blaghrlargh", raster)
+    with pytest.raises(RasterStatsError):
+        raster_stats(polygons, "blercherlerch")
     with pytest.raises(RasterStatsError):
         raster_stats(["blaghrlargh",], raster)
 

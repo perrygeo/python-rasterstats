@@ -30,7 +30,8 @@ def raster_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
                 " must be one of \n %r" % (x, VALID_STATS))
 
     rds = gdal.Open(raster, GA_ReadOnly)
-    assert(rds)
+    if not rds:
+        raise RasterStatsError("Cannot open %r as GDAL raster" % raster)
     rb = rds.GetRasterBand(band_num)
     rgt = rds.GetGeoTransform()
 
