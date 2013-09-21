@@ -14,7 +14,7 @@ raster = os.path.join(DATA, 'slope.tif')
 def test_main():
     polygons = os.path.join(DATA, 'polygons.shp')
     stats = raster_stats(polygons, raster)
-    for key in ['std', 'count', 'min', 'max', 'sum', 'mean']:
+    for key in ['__fid__', 'count', 'min', 'max', 'mean']:
         assert stats[0].has_key(key)
     assert len(stats) == 2
     assert stats[0]['count'] == 75
@@ -217,3 +217,35 @@ def test_ogr_geojson_nogeom():
     res = feature_to_geojson(feat)
     assert res['type'] == 'Feature'
     assert res['geometry'] == None
+
+def test_specify_stats_list():
+    polygons = os.path.join(DATA, 'polygons.shp')
+    stats = raster_stats(polygons, raster, stats=['min', 'max'])
+    assert sorted(stats[0].keys()) == sorted(['__fid__', 'min', 'max'])
+    assert 'count' not in stats[0].keys()
+
+def test_specify_stats_string():
+    polygons = os.path.join(DATA, 'polygons.shp')
+    stats = raster_stats(polygons, raster, stats='min max')
+    assert sorted(stats[0].keys()) == sorted(['__fid__', 'min', 'max'])
+    assert 'count' not in stats[0].keys()
+
+def test_specify_stats_invalid():
+    polygons = os.path.join(DATA, 'polygons.shp')
+    with pytest.raises(RasterStatsError):
+        raster_stats(polygons, raster, stats='foo max')
+
+def test_optional_stats():
+    polygons = os.path.join(DATA, 'polygons.shp')
+    stats = raster_stats(polygons, raster, stats='min max sum majority median std')
+    assert stats[0]['min'] <= stats[0]['median'] <= stats[0]['max']
+
+def test_no_copy_properties():
+    polygons = os.path.join(DATA, 'polygons.shp')
+    stats = raster_stats(polygons, raster, copy_properties=False)  # default
+    assert not stats[0].has_key('id')  # attr from original shp
+
+def test_copy_properties():
+    polygons = os.path.join(DATA, 'polygons.shp')
+    stats = raster_stats(polygons, raster, copy_properties=True)
+    assert stats[0].has_key('id')  # attr from original shp

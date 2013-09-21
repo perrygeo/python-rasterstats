@@ -50,13 +50,43 @@ raster, calculate the mean elevation of each polygon:
     >>> stats = raster_stats("tests/data/polygons.shp", "tests/data/elevation.tif")
 
     >>> stats[1].keys()
-        ['std', 'count', 'min', 'max', 'sum', 'id', 'mean']
+        ['__fid__', 'count', 'min', 'max', 'mean']
 
     >>> [(f['id'], f['mean']) for f in stats]
         [(1, 756.6057470703125), (2, 114.660084635416666)]
 
-Python interface
-^^^^^^^^^^^^^^^^
+Statistics
+^^^^^^^^^^
+
+By default, the ``raster_stats`` function will return the following statistics
+- min
+- max
+- mean
+- count
+
+Optionally, these statistics are also available
+- sum
+- std
+- median
+- majority
+
+You can specify the statistics to calculate using the ``stats`` argument::
+
+    >>> stats = raster_stats("tests/data/polygons.shp", 
+                             "tests/data/elevation.tif"
+                             stats=['min', 'max', 'median', 'majority', 'sum'])
+
+    >>> # also takes space-delimited string
+    >>> stats = raster_stats("tests/data/polygons.shp", 
+                             "tests/data/elevation.tif"
+                             stats="min max median majority sum")
+
+
+Note that the more complex statistics may require significantly more processing so 
+performance can be impacted based on which statistics you choose to calculate.
+
+Specifying Geometries
+^^^^^^^^^^^^^^^^^^^^^
 
 In addition to the basic usage above, rasterstats supports other
 mechanisms of specifying vector geometeries.
@@ -81,6 +111,22 @@ Or by using with geometries in "Well-Known" formats::
 
     >>> raster_stats('POINT(-124 42)', '/path/to/elevation.tif') 
     ...
+
+
+Feature Properties
+^^^^^^^^^^^^^^^^^^
+
+By default, an \_\_fid\_\_ property is added to each feature's results. None of
+the other feature attributes/proprties are copied over unless ``copy_properties``
+is set to True::
+
+    >>> stats = raster_stats("tests/data/polygons.shp", 
+                             "tests/data/elevation.tif"
+                             copy_properties=True)
+                             
+    >>> stats[0].has_key('name')  # name field from original shapefile is retained
+    True
+
 
 Working with categorical rasters (e.g. vegetation map)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

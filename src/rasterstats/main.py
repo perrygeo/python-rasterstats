@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from shapely.geometry import shape, box, MultiPolygon
 import numpy as np
+from collections import Counter
 from osgeo import gdal, ogr
 from osgeo.gdalconst import GA_ReadOnly
 from .utils import bbox_to_pixel_offsets, shapely_to_ogr_type, get_features, \
@@ -8,9 +9,25 @@ from .utils import bbox_to_pixel_offsets, shapely_to_ogr_type, get_features, \
 
 ogr.UseExceptions()
 
+DEFAULT_STATS = ['count', 'min', 'max', 'mean']
+VALID_STATS = DEFAULT_STATS + ['sum', 'std', 'median', 'majority']
 
 def raster_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None, 
-                 global_src_extent=False, categorical=False):
+                 global_src_extent=False, categorical=False, stats=None, 
+                 copy_properties=False):
+
+    if not stats:
+        if not categorical:
+            stats = DEFAULT_STATS
+        else:
+            stats = []
+    else:
+        if isinstance(stats, basestring):
+            stats = stats.split()
+    for x in stats:
+        if x not in VALID_STATS:
+            raise RasterStatsError("Stat `%s` not valid;" \
+                " must be one of \n %r" % (x, VALID_STATS))
 
     rds = gdal.Open(raster, GA_ReadOnly)
     assert(rds)
@@ -42,9 +59,9 @@ def raster_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
     mem_drv = ogr.GetDriverByName('Memory')
     driver = gdal.GetDriverByName('MEM')
 
-    stats = []
+    results = []
 
-    for feat in features_iter:
+    for i, feat in enumerate(features_iter):
         if feat['type'] == "Feature":
             geom = shape(feat['geometry'])
         else:  # it's just a geometry
@@ -102,11 +119,7 @@ def raster_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
         rvds = driver.Create('', src_offset[2], src_offset[3], 1, gdal.GDT_Byte)
         rvds.SetGeoTransform(new_gt)
 
-        rasterize_opts = {}
-        # if geom.type == "MultiPoint":
-        #     rasterize_opts = {'options': ['ALL_TOUCHED=TRUE']}
-
-        gdal.RasterizeLayer(rvds, [1], mem_layer, burn_values=[1], **rasterize_opts)
+        gdal.RasterizeLayer(rvds, [1], mem_layer, burn_values=[1])
         rv_array = rvds.ReadAsArray()
 
         # Mask the source data array with our current feature
@@ -120,25 +133,45 @@ def raster_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
             )
         )
 
-        feature_stats = {}
-        if categorical:
-            from collections import Counter
-            feature_stats = dict(Counter(masked.flatten()))
-        else:
-            # Continuous variable, 1 dict per feature
-            feature_stats = {
-                'min': float(masked.min()),
-                'mean': float(masked.mean()),
-                'max': float(masked.max()),
-                'std': float(masked.std()),
-                'sum': float(masked.sum()),
-                'count': int(masked.count()),
-            }
 
-        if feat.has_key('properties'):  # if it's a feature, not geometry
+        if categorical or 'majority' in stats:
+            # run the counter once, only if needed
+            pixel_count = Counter(masked.compressed())
+
+        if categorical:  
+            feature_stats = dict(pixel_count)
+        else:
+            feature_stats = {}
+
+        if 'min' in stats:
+            feature_stats['min'] = float(masked.min())
+        if 'max' in stats:
+            feature_stats['max'] = float(masked.max())
+        if 'mean' in stats:
+            feature_stats['mean'] = float(masked.mean())
+        if 'count' in stats:
+            feature_stats['count'] = int(masked.count())
+        # optional
+        if 'sum' in stats:
+            feature_stats['sum'] = float(masked.sum())
+        if 'std' in stats:
+            feature_stats['std'] = float(masked.std())
+        if 'median' in stats:
+            feature_stats['median'] = float(np.median(masked.compressed()))
+        if 'majority' in stats:
+            feature_stats['majority'] = pixel_count.most_common(1)[0][0]
+        
+        try:
+            # Use the provided feature id as __fid__
+            feature_stats['__fid__'] = feat['id']
+        except KeyError:
+            # use the enumerator
+            feature_stats['__fid__'] = i 
+
+        if feat.has_key('properties') and copy_properties:
             for key, val in feat['properties'].items():
                 feature_stats[key] = val
 
-        stats.append(feature_stats)
+        results.append(feature_stats)
 
-    return stats
+    return results
