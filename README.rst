@@ -58,12 +58,14 @@ Statistics
 ^^^^^^^^^^
 
 By default, the ``raster_stats`` function will return the following statistics
+
 - min
 - max
 - mean
 - count
 
 Optionally, these statistics are also available
+
 - sum
 - std
 - median
@@ -134,7 +136,9 @@ discrete classes) if you're only interested in the counts of unique pixel
 values.
 
 For example, you may have a raster vegetation dataset and want to summarize 
-vegetation by polygon. Mean/Median/Max/etc vegetation class doesn't make much sense. 
+vegetation by polygon. Statistics such as mean, median, sum, etc. don't make much sense in this context
+(What's the sum of oak + grassland?). 
+
 The polygon below is comprised of 12 pixels of oak (raster value
 32) and 78 pixels of grassland (raster value 33)::
 
