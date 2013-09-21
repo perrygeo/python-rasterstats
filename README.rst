@@ -4,7 +4,6 @@ rasterstats
 |BuildStatus|_ 
 |CoverageStatus|_
 |PyPiVersion|_
-|PyPiDownloads|_
 
 The ``rasterstats`` python module provides a fast, flexible and robust
 tool to summarize geospatial raster datasets based on vector geometries.
