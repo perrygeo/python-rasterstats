@@ -22,10 +22,9 @@ def test_main():
 
 def test_zonal_global_extent():
     polygons = os.path.join(DATA, 'polygons.shp')
-    stats = raster_stats(polygons, raster, global_src_extent=True)
-    assert len(stats) == 2
-    assert stats[0]['count'] == 75
-    assert stats[1]['count'] == 50
+    stats = raster_stats(polygons, raster)
+    global_stats = raster_stats(polygons, raster, global_src_extent=True)
+    assert stats == global_stats
 
 def test_global_non_ogr():
     reader = shapefile.Reader(os.path.join(DATA, 'polygons.shp'))  
@@ -35,7 +34,7 @@ def test_global_non_ogr():
 
 def test_zonal_nodata():
     polygons = os.path.join(DATA, 'polygons.shp')
-    stats = raster_stats(polygons, raster, global_src_extent=True, nodata_value=0)
+    stats = raster_stats(polygons, raster, nodata_value=0)
     assert len(stats) == 2
     assert stats[0]['count'] == 75
     assert stats[1]['count'] == 50

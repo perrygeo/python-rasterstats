@@ -23,37 +23,21 @@ def raster_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
 
     features_iter, strategy = get_features(vectors, layer_num)
 
-    # create an in-memory numpy array of the source raster data
-    # covering the whole extent of the vector layer
     if global_src_extent:
-
-        # find extent of ALL features
+        # create an in-memory numpy array of the source raster data
+        # covering the whole extent of the vector layer
         if strategy != "ogr":
             raise RasterStatsError("global_src_extent requires OGR vector")
 
+        # find extent of ALL features
         ds = ogr.Open(vectors)
         layer = ds.GetLayer(layer_num)
         ex = layer.GetExtent()
         # transform from OGR extent to xmin, xmax, ymin, ymax
         layer_extent = (ex[0], ex[2], ex[1], ex[3])
 
-        # use global source extent
-        # useful only when disk IO or raster scanning 
-        #   inefficiencies are your limiting factor
-        # advantage: reads raster data in one pass
-        # disadvantage: large vector extents may have big memory requirements
-        src_offset = bbox_to_pixel_offsets(rgt, layer_extent)
-        src_array = rb.ReadAsArray(*src_offset)
-
-        # calculate new geotransform of the layer subset
-        new_gt = (
-            (rgt[0] + (src_offset[0] * rgt[1])),
-            rgt[1],
-            0.0,
-            (rgt[3] + (src_offset[1] * rgt[5])),
-            0.0,
-            rgt[5]
-        )
+        global_src_offset = bbox_to_pixel_offsets(rgt, layer_extent)
+        global_src_array = rb.ReadAsArray(*global_src_offset)
 
     mem_drv = ogr.GetDriverByName('Memory')
     driver = gdal.GetDriverByName('MEM')
@@ -77,23 +61,33 @@ def raster_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
 
         ogr_geom_type = shapely_to_ogr_type(geom.type)
 
-        if not global_src_extent:
-            # use local source extent
-            # fastest option when you have fast disks and well indexed raster (ie tiled Geotiff)
-            # advantage: each feature uses the smallest raster chunk
-            # disadvantage: lots of reads on the source raster
-            src_offset = bbox_to_pixel_offsets(rgt, geom.bounds)
-            src_array = rb.ReadAsArray(*src_offset)
+        # calculate new geotransform of the feature subset
+        src_offset = bbox_to_pixel_offsets(rgt, geom.bounds)
+        new_gt = (
+            (rgt[0] + (src_offset[0] * rgt[1])),
+            rgt[1],
+            0.0,
+            (rgt[3] + (src_offset[1] * rgt[5])),
+            0.0,
+            rgt[5]
+        )
 
-            # calculate new geotransform of the feature subset
-            new_gt = (
-                (rgt[0] + (src_offset[0] * rgt[1])),
-                rgt[1],
-                0.0,
-                (rgt[3] + (src_offset[1] * rgt[5])),
-                0.0,
-                rgt[5]
-            )
+        if not global_src_extent:
+            # use feature's source extent and read directly from source
+            # fastest option when you have fast disks and well-indexed raster
+            # advantage: each feature uses the smallest raster chunk
+            # disadvantage: lots of disk reads on the source raster
+            src_array = rb.ReadAsArray(*src_offset)
+        else:
+            # derive array from global source extent array
+            # useful *only* when disk IO or raster format inefficiencies are your limiting factor
+            # advantage: reads raster data in one pass before loop
+            # disadvantage: large vector extents combined with big rasters need lotsa memory
+            xa = src_offset[0] - global_src_offset[0]
+            ya = src_offset[1] - global_src_offset[1]
+            xb = xa + src_offset[2]
+            yb = ya + src_offset[3]
+            src_array = global_src_array[ya:yb, xa:xb]
 
         # Create a temporary vector layer in memory
         mem_ds = mem_drv.CreateDataSource('out')
