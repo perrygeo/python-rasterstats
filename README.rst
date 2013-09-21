@@ -112,7 +112,7 @@ Find a bug? Report it via github issues by providing
 - information on your environment: versions of python, gdal and numpy and system memory
 
 .. |BuildStatus| image:: https://api.travis-ci.org/perrygeo/python-raster-stats.png
-.. _BuildStatus: https://api.travis-ci.org/perrygeo/python-raster-stats
+.. _BuildStatus: https://travis-ci.org/perrygeo/python-raster-stats
 
 .. |CoverageStatus| image:: https://coveralls.io/repos/perrygeo/python-raster-stats/badge.png
 .. _CoverageStatus: https://coveralls.io/r/perrygeo/python-raster-stats
