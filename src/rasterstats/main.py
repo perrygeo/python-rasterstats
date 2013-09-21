@@ -23,7 +23,10 @@ def raster_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
             stats = []
     else:
         if isinstance(stats, basestring):
-            stats = stats.split()
+            if stats in ['*', 'ALL']:
+                stats = VALID_STATS
+            else:
+                stats = stats.split()
     for x in stats:
         if x not in VALID_STATS:
             raise RasterStatsError("Stat `%s` not valid;" \

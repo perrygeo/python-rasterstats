@@ -3,6 +3,7 @@ import os
 import pytest
 from osgeo import ogr
 from rasterstats import raster_stats, RasterStatsError
+from rasterstats.main import VALID_STATS
 from rasterstats.utils import shapely_to_ogr_type, parse_geo, get_ogr_ds, \
                               OGRError, feature_to_geojson
 from shapely.geometry import shape, box
@@ -226,6 +227,13 @@ def test_specify_stats_list():
     stats = raster_stats(polygons, raster, stats=['min', 'max'])
     assert sorted(stats[0].keys()) == sorted(['__fid__', 'min', 'max'])
     assert 'count' not in stats[0].keys()
+
+def test_specify_all_stats():
+    polygons = os.path.join(DATA, 'polygons.shp')
+    stats = raster_stats(polygons, raster, stats='ALL')
+    assert sorted(stats[0].keys()) == sorted(VALID_STATS + ["__fid__"])
+    stats = raster_stats(polygons, raster, stats='*')
+    assert sorted(stats[0].keys()) == sorted(VALID_STATS + ["__fid__"])
 
 def test_specify_stats_string():
     polygons = os.path.join(DATA, 'polygons.shp')
