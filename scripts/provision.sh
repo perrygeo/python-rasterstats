@@ -6,11 +6,14 @@
 
 apt-get update
 
-apt-get install -y libgdal-dev gdal-bin \
+sudo apt-get install -y libgdal-dev gdal-bin \
                    python-gdal python-pip python-numpy \
                    libspatialindex-dev libspatialindex1 \
-                   build-essential git atop python-dev python-dateutil
+                   build-essential git atop python-dev \
+                   libfreetype6 libfreetype6-dev libpng12-dev screen
+
 
 cd /usr/local/src/python-raster-stats
-sudo pip install shapely pytest coverage
+sudo pip install --upgrade setuptools
+sudo pip install --upgrade shapely pytest coverage tornado jinja2 pyzmq ipython matplotlib
 python setup.py develop
