@@ -10,7 +10,8 @@ from .utils import bbox_to_pixel_offsets, shapely_to_ogr_type, get_features, \
 ogr.UseExceptions()
 
 DEFAULT_STATS = ['count', 'min', 'max', 'mean']
-VALID_STATS = DEFAULT_STATS + ['sum', 'std', 'median', 'majority', 'minority']
+VALID_STATS = DEFAULT_STATS + \
+    ['sum', 'std', 'median', 'majority', 'minority', 'unique']
 
 def raster_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None, 
                  global_src_extent=False, categorical=False, stats=None, 
@@ -140,7 +141,8 @@ def raster_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
 
         if categorical or \
            'majority' in stats or \
-           'minority' in stats:
+           'minority' in stats or \
+           'unique' in stats:
             # run the counter once, only if needed
             pixel_count = Counter(masked.compressed())
 
@@ -168,6 +170,8 @@ def raster_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
             feature_stats['majority'] = pixel_count.most_common(1)[0][0]
         if 'minority' in stats:
             feature_stats['minority'] = pixel_count.most_common()[-1][0]
+        if 'unique' in stats:
+            feature_stats['unique'] = len(pixel_count.keys())
         
         try:
             # Use the provided feature id as __fid__
