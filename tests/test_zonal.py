@@ -2,7 +2,7 @@
 import os
 import pytest
 from osgeo import ogr
-from rasterstats import raster_stats, RasterStatsError
+from rasterstats import raster_stats, stats_to_csv, RasterStatsError
 from rasterstats.main import VALID_STATS
 from rasterstats.utils import shapely_to_ogr_type, parse_geo, get_ogr_ds, \
                               OGRError, feature_to_geojson
@@ -271,4 +271,19 @@ def test_range():
     stats = raster_stats(polygons, raster, stats="range")
     assert not stats[0].has_key('min')
     assert ranges == [x['range'] for x in stats]
+
+def test_csv():
+    polygons = os.path.join(DATA, 'polygons.shp')
+    stats = raster_stats(polygons, raster, stats="*")
+    csv = stats_to_csv(stats)
+    assert csv.split()[0] == ','.join(sorted(VALID_STATS + ['__fid__']))
+
+def test_categorical_csv():
+    polygons = os.path.join(DATA, 'polygons.shp')
+    categorical_raster = os.path.join(DATA, 'slope_classes.tif') 
+    stats = raster_stats(polygons, categorical_raster, categorical=True)
+    csv = stats_to_csv(stats)
+    assert csv.split()[0] == "1.0,2.0,5.0,__fid__"
+
+
 

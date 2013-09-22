@@ -15,5 +15,5 @@ sudo apt-get install -y libgdal-dev gdal-bin \
 
 cd /usr/local/src/python-raster-stats
 sudo pip install --upgrade setuptools
-sudo pip install --upgrade shapely pytest coverage tornado jinja2 pyzmq ipython matplotlib pygments
+sudo pip install --upgrade shapely pytest coverage tornado jinja2 pyzmq ipython matplotlib pygments docopt
 python setup.py develop

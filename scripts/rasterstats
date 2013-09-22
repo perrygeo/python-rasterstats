@@ -2,8 +2,11 @@
 """
 rasterstats
 
+Given a vector and a raster dataset, run zonal stats and output a csv to stdout
+
 Usage:
-  rasterstats COMMAND DATASET [ARGS ...]
+  rasterstats VECTOR RASTER
+  rasterstats VECTOR RASTER --categorical
   rasterstats (-h | --help)
   rasterstats --version
 
@@ -13,35 +16,23 @@ Options:
 """
 import sys
 from docopt import docopt
-from rasterstats import raster_stats
-
-
-def guess_type(thing):
-    try:
-        return float(thing)
-    except:
-        pass
-    return str(thing)
+from rasterstats import raster_stats, stats_to_csv
 
 
 if __name__ == '__main__':
-    opt = docopt(__doc__, version='geofu 0.0.1')
-    if opt['DATASET'] == "-":
+    opt = docopt(__doc__, version="0.3") # TODO get from setup or other common 
+    if opt['VECTOR'] == "-":
         # use stdin
-        opt['DATASET'] = sys.stdin.readlines()[-1].strip()
-    lyr = load(opt['DATASET'])
+        opt['VECTOR'] = sys.stdin.readlines()[-1].strip()
     args = []
     kwargs = {}
-    for arg in opt['ARGS']:
-        if "=" in arg:
-            k, v = arg.split("=")
-            v = guess_type(v)
-            kwargs[k] = v
-        else:
-            arg = guess_type(arg)
-            args.append(arg)
-    res = getattr(lyr, opt['COMMAND'])(*args, **kwargs)
-    if isinstance(res, lyr.__class__):
-        print res.path
+    print opt
+    import ipdb; ipdb.set_trace()
+    if opt['--categorical']:
+        stats = raster_stats(opt['VECTOR'], opt['RASTER'],
+                             stats="minority majority count unique",
+                             categorical=True)
     else:
-        print res
+        stats = raster_stats(opt['VECTOR'], opt['RASTER'], stats="*")
+    print stats_to_csv(stats)
+

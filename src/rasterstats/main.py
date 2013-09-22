@@ -197,3 +197,25 @@ def raster_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
         results.append(feature_stats)
 
     return results
+
+def stats_to_csv(stats):
+    from cStringIO import StringIO
+    import csv
+
+    csv_fh = StringIO()
+
+    keys = set()
+    for stat in stats:
+        for key in stat.keys():
+            keys.add(key)
+
+    fieldnames = sorted(list(keys))
+
+    csvwriter = csv.DictWriter(csv_fh, delimiter=',', fieldnames=fieldnames)
+    csvwriter.writerow(dict((fn,fn) for fn in fieldnames))
+    for row in stats:
+         csvwriter.writerow(row)
+    contents = csv_fh.getvalue()
+    csv_fh.close()
+    return contents
+
