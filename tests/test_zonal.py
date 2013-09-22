@@ -260,3 +260,15 @@ def test_copy_properties():
     polygons = os.path.join(DATA, 'polygons.shp')
     stats = raster_stats(polygons, raster, copy_properties=True)
     assert stats[0].has_key('id')  # attr from original shp
+
+def test_range():
+    polygons = os.path.join(DATA, 'polygons.shp')
+    stats = raster_stats(polygons, raster, stats="range min max")
+    for stat in stats:
+        assert stat['range'] == stat['max'] - stat['min']
+    ranges = [x['range'] for x in stats]
+    # without min/max specified
+    stats = raster_stats(polygons, raster, stats="range")
+    assert not stats[0].has_key('min')
+    assert ranges == [x['range'] for x in stats]
+
