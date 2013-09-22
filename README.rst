@@ -71,6 +71,9 @@ Optionally, these statistics are also available
 - std
 - median
 - majority
+- minority
+- unique
+- range
 
 You can specify the statistics to calculate using the ``stats`` argument::
 
