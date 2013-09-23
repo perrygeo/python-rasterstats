@@ -5,7 +5,7 @@ from osgeo import ogr
 from rasterstats import raster_stats, stats_to_csv, RasterStatsError
 from rasterstats.main import VALID_STATS
 from rasterstats.utils import shapely_to_ogr_type, parse_geo, get_ogr_ds, \
-                              OGRError, feature_to_geojson
+                              OGRError, feature_to_geojson, bbox_to_pixel_offsets
 from shapely.geometry import shape, box
 import json
 
@@ -309,3 +309,11 @@ def test_no_overlap():
     for res in stats:
         # no polygon should have any overlap
         assert res['count'] is None
+
+def test_bbox_offbyone():
+    # Make sure we don't get the off-by-one error in calculating src offset
+    rgt = (-4418000.0, 250.0, 0.0, 4876500.0, 0.0, -250.0)
+    geom_bounds = [4077943.9961, -3873500.0, 4462000.0055, -3505823.7582]
+    so = bbox_to_pixel_offsets(rgt, geom_bounds)
+    rsize = (37000, 35000)
+    assert so[1] + so[3] == rsize[1]

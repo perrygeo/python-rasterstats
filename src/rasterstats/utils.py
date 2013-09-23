@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 import json
+import math
 from osgeo import ogr, gdal
 from shapely import wkt, wkb
 from shapely.geos import ReadingError
-from shapely.geometry import box
 
 ogr.UseExceptions()
 
@@ -21,11 +21,11 @@ def bbox_to_pixel_offsets(gt, bbox):
     pixel_width = gt[1]
     pixel_height = gt[5]
 
-    x1 = int((bbox[0] - originX) / pixel_width)
-    x2 = int((bbox[2] - originX) / pixel_width) + 1
+    x1 = int(math.floor((bbox[0] - originX) / pixel_width))
+    x2 = int(math.ceil((bbox[2] - originX) / pixel_width))
 
-    y1 = int((bbox[3] - originY) / pixel_height)
-    y2 = int((bbox[1] - originY) / pixel_height) + 1
+    y1 = int(math.floor((bbox[3] - originY) / pixel_height))
+    y2 = int(math.ceil((bbox[1] - originY) / pixel_height))
 
     xsize = x2 - x1
     ysize = y2 - y1
