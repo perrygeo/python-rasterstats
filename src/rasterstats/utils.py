@@ -3,6 +3,7 @@ import json
 from osgeo import ogr, gdal
 from shapely import wkt, wkb
 from shapely.geos import ReadingError
+from shapely.geometry import box
 
 ogr.UseExceptions()
 
@@ -29,6 +30,14 @@ def bbox_to_pixel_offsets(gt, bbox):
     xsize = x2 - x1
     ysize = y2 - y1
     return (x1, y1, xsize, ysize)
+
+
+def raster_extent_as_bounds(gt, size):
+    east1 = gt[0]
+    east2 = gt[0] + (gt[1] * size[0])
+    west1 = gt[3] + (gt[5] * size[1])
+    west2 = gt[3]
+    return (east1, west1, east2, west2)
 
 
 def feature_to_geojson(feature):

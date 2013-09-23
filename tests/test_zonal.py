@@ -285,5 +285,27 @@ def test_categorical_csv():
     csv = stats_to_csv(stats)
     assert csv.split()[0] == "1.0,2.0,5.0,__fid__"
 
+def test_nodata_value():
+    polygons = os.path.join(DATA, 'polygons.shp')
+    categorical_raster = os.path.join(DATA, 'slope_classes.tif') 
+    stats = raster_stats(polygons, categorical_raster, stats="*",
+        categorical=True, nodata_value=1.0)
+    assert stats[0]['majority'] == None
+    assert stats[0]['count'] == 0  # no pixels; they're all null
+    assert stats[1]['minority'] == 2.0
+    assert stats[1]['count'] == 49 # used to be 50 if we allowed 1.0
+    assert not stats[0].has_key('1.0')
 
+def test_partial_overlap():
+    polygons = os.path.join(DATA, 'polygons_partial_overlap.shp')
+    stats = raster_stats(polygons, raster, stats="count")
+    for res in stats:
+        # each polygon should have at least a few pixels overlap
+        assert res['count'] > 0
 
+def test_no_overlap():
+    polygons = os.path.join(DATA, 'polygons_no_overlap.shp')
+    stats = raster_stats(polygons, raster, stats="count")
+    for res in stats:
+        # no polygon should have any overlap
+        assert res['count'] is None
