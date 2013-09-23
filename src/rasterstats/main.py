@@ -33,6 +33,12 @@ def raster_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
             raise RasterStatsError("Stat `%s` not valid;" \
                 " must be one of \n %r" % (x, VALID_STATS))
 
+    run_count = False
+    if categorical or 'majority' in stats or 'minority' in stats or \
+       'unique' in stats:
+        # run the counter once, only if needed
+        run_count = True
+
     rds = gdal.Open(raster, GA_ReadOnly)
     if not rds:
         raise RasterStatsError("Cannot open %r as GDAL raster" % raster)
@@ -138,12 +144,7 @@ def raster_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
             )
         )
 
-
-        if categorical or \
-           'majority' in stats or \
-           'minority' in stats or \
-           'unique' in stats:
-            # run the counter once, only if needed
+        if run_count:
             pixel_count = Counter(masked.compressed())
 
         if categorical:  
@@ -167,9 +168,15 @@ def raster_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
         if 'median' in stats:
             feature_stats['median'] = float(np.median(masked.compressed()))
         if 'majority' in stats:
-            feature_stats['majority'] = pixel_count.most_common(1)[0][0]
+            try:
+                feature_stats['majority'] = pixel_count.most_common(1)[0][0]
+            except IndexError:
+                feature_stats['majority'] = None
         if 'minority' in stats:
-            feature_stats['minority'] = pixel_count.most_common()[-1][0]
+            try:
+                feature_stats['minority'] = pixel_count.most_common()[-1][0]
+            except IndexError:
+                feature_stats['minority'] = None
         if 'unique' in stats:
             feature_stats['unique'] = len(pixel_count.keys())
         if 'range' in stats:
