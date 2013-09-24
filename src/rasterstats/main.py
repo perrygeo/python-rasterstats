@@ -51,6 +51,8 @@ def raster_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
     if nodata_value is not None:
         nodata_value = float(nodata_value)
         rb.SetNoDataValue(nodata_value)
+    else:
+        nodata_value = rb.GetNoDataValue()
 
     features_iter, strategy = get_features(vectors, layer_num)
 
