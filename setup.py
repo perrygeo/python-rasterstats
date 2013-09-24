@@ -22,7 +22,7 @@ class PyTest(TestCommand):
 
 setup(
     name="rasterstats",
-    version="0.3",
+    version="0.3.1",
     author="Matthew Perry",
     author_email="perrygeo@gmail.com",
     description=("Summarize geospatial raster datasets based on vector geometries"),
