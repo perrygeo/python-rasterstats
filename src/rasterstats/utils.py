@@ -1,11 +1,6 @@
 # -*- coding: utf-8 -*-
 import json
 import math
-from osgeo import ogr, gdal
-from shapely import wkt, wkb
-from shapely.geos import ReadingError
-
-ogr.UseExceptions()
 
 class RasterStatsError(Exception):
     pass
@@ -68,6 +63,7 @@ def feature_to_geojson(feature):
 
 
 def shapely_to_ogr_type(shapely_type):
+    from osgeo import ogr
     if shapely_type == "Polygon":
         return ogr.wkbPolygon
     elif shapely_type == "LineString":
@@ -82,6 +78,8 @@ def shapely_to_ogr_type(shapely_type):
 def parse_geo(thing):
     """ Given a python object, try to get a geo-json like mapping from it
     """
+    from shapely.geos import ReadingError
+    from shapely import wkt, wkb
 
     # object implementing geo_interface
     try:
@@ -125,6 +123,7 @@ def parse_geo(thing):
 
 
 def get_ogr_ds(vds):
+    from osgeo import ogr
     if not isinstance(vds, basestring):
         raise OGRError("OGR cannot open %r: not a string" % vds)
 
@@ -160,7 +159,6 @@ def get_features(vectors, layer_num=0):
             feat = parse_geo(vectors)
             features_iter = [feat]
             strategy = "single_geo"
-            gdal.ErrorReset()
     elif hasattr(vectors, '__geo_interface__'):
         # ... or an single object
         feat = parse_geo(vectors)

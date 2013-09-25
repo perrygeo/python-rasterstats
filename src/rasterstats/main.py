@@ -142,18 +142,17 @@ def raster_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
 
             # Create a temporary vector layer in memory
             mem_ds = mem_drv.CreateDataSource('out')
-            #mem_layer = mem_ds.CreateLayer('poly', None, ogr.wkbPolygon)
-            mem_layer = mem_ds.CreateLayer('mem_ds', None, ogr_geom_type)
+            mem_layer = mem_ds.CreateLayer('out', None, ogr_geom_type)
             ogr_feature = ogr.Feature(feature_def=mem_layer.GetLayerDefn())
-            ogr_geom = ogr.CreateGeometryFromWkb(geom.wkb)
+            ogr_geom = ogr.CreateGeometryFromWkt(geom.wkt)
             ogr_feature.SetGeometryDirectly(ogr_geom)
             mem_layer.CreateFeature(ogr_feature)
 
             # Rasterize it
-            rvds = driver.Create('', src_offset[2], src_offset[3], 1, gdal.GDT_Byte)
+            rvds = driver.Create('rvds', src_offset[2], src_offset[3], 1, gdal.GDT_Byte)
             rvds.SetGeoTransform(new_gt)
 
-            gdal.RasterizeLayer(rvds, [1], mem_layer, burn_values=[1])
+            gdal.RasterizeLayer(rvds, [1], mem_layer, None, None, burn_values=[1])
             rv_array = rvds.ReadAsArray()
 
             # Mask the source data array with our current feature

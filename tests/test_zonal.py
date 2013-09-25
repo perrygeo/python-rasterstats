@@ -94,7 +94,8 @@ def test_multilines():
     multilines = os.path.join(DATA, 'multilines.shp')
     stats = raster_stats(multilines, raster)
     assert len(stats) == 1
-    assert stats[0]['count'] == 90
+    # can differ slightly based on platform/gdal version
+    assert stats[0]['count'] in [89, 90]
 
 def test_multipoints():
     multipoints = os.path.join(DATA, 'multipoints.shp')
