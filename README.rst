@@ -53,7 +53,7 @@ raster, calculate the mean elevation of each polygon:
     >>> stats[1].keys()
         ['__fid__', 'count', 'min', 'max', 'mean']
 
-    >>> [(f['id'], f['mean']) for f in stats]
+    >>> [(f['__fid__'], f['mean']) for f in stats]
         [(1, 756.6057470703125), (2, 114.660084635416666)]
 
 Statistics
@@ -149,7 +149,7 @@ The polygon below is comprised of 12 pixels of oak (raster value
 
     >>> raster_stats(lyr.next(), '/path/to/vegetation.tif', categorical=True)
 
-    >>> [{'id': 1, 32: 12, 33: 78}]
+    >>> [{'__fid__': 1, 32: 12, 33: 78}]
 
 Keep in mind that rasterstats just
 reports on the pixel values as keys; It is up to the programmer to
