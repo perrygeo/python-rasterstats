@@ -1,1 +1,1 @@
-python setup.py sdist bdist_wininst upload
+python setup.py sdist --formats=gztar,zip bdist_wininst upload
