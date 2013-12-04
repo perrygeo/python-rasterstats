@@ -243,7 +243,7 @@ def stats_to_csv(stats):
     csvwriter = csv.DictWriter(csv_fh, delimiter=',', fieldnames=fieldnames)
     csvwriter.writerow(dict((fn,fn) for fn in fieldnames))
     for row in stats:
-         csvwriter.writerow(row)
+        csvwriter.writerow(row)
     contents = csv_fh.getvalue()
     csv_fh.close()
     return contents
