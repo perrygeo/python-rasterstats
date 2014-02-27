@@ -7,7 +7,9 @@ from osgeo.gdalconst import GA_ReadOnly
 from .utils import bbox_to_pixel_offsets, shapely_to_ogr_type, get_features, \
                    RasterStatsError, raster_extent_as_bounds
 
-ogr.UseExceptions()
+
+if ogr.GetUseExceptions() != 1:
+    ogr.UseExceptions()
 
 
 DEFAULT_STATS = ['count', 'min', 'max', 'mean']
