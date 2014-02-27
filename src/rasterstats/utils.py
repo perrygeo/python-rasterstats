@@ -134,6 +134,12 @@ def get_ogr_ds(vds):
     return ds
 
 
+def ogr_srs(vector, layer_num):
+    ds = get_ogr_ds(vector)
+    layer = ds.GetLayer(layer_num)
+    return layer.GetSpatialRef()
+
+
 def ogr_records(vector, layer_num=0):  
     ds = get_ogr_ds(vector)
     layer = ds.GetLayer(layer_num)
@@ -148,11 +154,14 @@ def geo_records(vectors):
 
 
 def get_features(vectors, layer_num=0):
+    from osgeo import osr
+    spatial_ref = osr.SpatialReference()
     if isinstance(vectors, basestring):
         try:
         # either an OGR layer ...
             get_ogr_ds(vectors)
             features_iter = ogr_records(vectors, layer_num)
+            spatial_ref = ogr_srs(vectors, layer_num)
             strategy = "ogr"
         except OGRError:
         # ... or a single string to be parsed as wkt/wkb/json
@@ -174,5 +183,5 @@ def get_features(vectors, layer_num=0):
         features_iter = geo_records(vectors)
         strategy = "iter_geo"
 
-    return features_iter, strategy
+    return features_iter, strategy, spatial_ref
 

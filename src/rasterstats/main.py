@@ -56,7 +56,7 @@ def raster_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
     else:
         nodata_value = rb.GetNoDataValue()
 
-    features_iter, strategy = get_features(vectors, layer_num)
+    features_iter, strategy, spatial_ref = get_features(vectors, layer_num)
 
     if global_src_extent:
         # create an in-memory numpy array of the source raster data
@@ -144,7 +144,7 @@ def raster_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
 
             # Create a temporary vector layer in memory
             mem_ds = mem_drv.CreateDataSource('out')
-            mem_layer = mem_ds.CreateLayer('out', None, ogr_geom_type)
+            mem_layer = mem_ds.CreateLayer('out', spatial_ref, ogr_geom_type)
             ogr_feature = ogr.Feature(feature_def=mem_layer.GetLayerDefn())
             ogr_geom = ogr.CreateGeometryFromWkt(geom.wkt)
             ogr_feature.SetGeometryDirectly(ogr_geom)
