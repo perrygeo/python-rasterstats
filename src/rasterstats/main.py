@@ -118,7 +118,7 @@ def raster_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
             rgt[5]
         )
 
-        if src_offset[2] < 0 or src_offset[3] < 0:
+        if src_offset[2] <= 0 or src_offset[3] <= 0:
             # we're off the raster completely, no overlap at all
             # so there's no need to even bother trying to calculate
             feature_stats = dict([(s, None) for s in stats])
