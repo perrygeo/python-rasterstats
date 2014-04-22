@@ -2,3 +2,6 @@
 0.3.3
 - Create in-memory layer with proper spatial reference object
 - don't call ogr.UseExceptions unless needed
+
+0.3.4
+- Gaurd against touching (but not overlapping) polygons. Fixes #27... thanks @engelmannjens
