@@ -154,7 +154,7 @@ def raster_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
             rvds = driver.Create('rvds', src_offset[2], src_offset[3], 1, gdal.GDT_Byte)
             rvds.SetGeoTransform(new_gt)
 
-            gdal.RasterizeLayer(rvds, [1], mem_layer, None, None, burn_values=[1])
+            gdal.RasterizeLayer(rvds, [1], mem_layer, None, None, [1],['ALL_TOUCHED=TRUE'])
             rv_array = rvds.ReadAsArray()
 
             # Mask the source data array with our current feature
