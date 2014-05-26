@@ -318,3 +318,10 @@ def test_bbox_offbyone():
     so = bbox_to_pixel_offsets(rgt, geom_bounds)
     rsize = (37000, 35000)
     assert so[1] + so[3] == rsize[1]
+
+def test_all_touched():
+    polygons = os.path.join(DATA, 'polygons.shp')
+    stats = raster_stats(polygons, raster, all_touched=True)
+    assert stats[0]['count'] == 95  # 75 if ALL_TOUCHED=False
+    assert stats[1]['count'] == 73  # 50 if ALL_TOUCHED=False
+
