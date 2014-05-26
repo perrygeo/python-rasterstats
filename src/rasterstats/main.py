@@ -18,7 +18,7 @@ VALID_STATS = DEFAULT_STATS + \
 
 def raster_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None, 
                  global_src_extent=False, categorical=False, stats=None, 
-                 copy_properties=False):
+                 copy_properties=False, all_touched=False):
 
     if not stats:
         if not categorical:
@@ -153,8 +153,11 @@ def raster_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
             # Rasterize it
             rvds = driver.Create('rvds', src_offset[2], src_offset[3], 1, gdal.GDT_Byte)
             rvds.SetGeoTransform(new_gt)
-
-            gdal.RasterizeLayer(rvds, [1], mem_layer, None, None, burn_values=[1])
+            
+            if all_touched:
+                gdal.RasterizeLayer(rvds, [1], mem_layer, None, None, burn_values=[1], options = ['ALL_TOUCHED=True'])
+            else:
+                gdal.RasterizeLayer(rvds, [1], mem_layer, None, None, burn_values=[1], options = ['ALL_TOUCHED=False'])
             rv_array = rvds.ReadAsArray()
 
             # Mask the source data array with our current feature
