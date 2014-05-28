@@ -5,3 +5,6 @@
 
 0.3.4
 - Gaurd against touching (but not overlapping) polygons. Fixes #27... thanks @engelmannjens
+
+0.3.5
+- Add optional "all_touched" rasterization strategy whereby all pixels that touch a geometry are considered
