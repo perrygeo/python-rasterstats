@@ -370,6 +370,7 @@ def test_alias():
 
 
 def test_featurecollection():
+    from geopandas import GeoDataFrame
     polygons = os.path.join(DATA, 'polygons.shp')
     df = GeoDataFrame.from_file(polygons)
     assert df.__geo_interface__['type'] == 'FeatureCollection'
