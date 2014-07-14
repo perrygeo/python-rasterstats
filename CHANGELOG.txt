@@ -8,3 +8,10 @@
 
 0.3.5
 - Add optional "all_touched" rasterization strategy whereby all pixels that touch a geometry are considered (thanks @ozak)
+
+0.4
+- Added examples directory with ipython notebooks
+- proper pip requirements files
+- Deprecated `raster_stats` in favor of `zonal_stats`
+- Support for GeoJSON-like FeatureCollections (any things that implements FeatureCollections in the __geo_interface__)
+- Support for in-memory numpy arrays and geopandas dataframes
