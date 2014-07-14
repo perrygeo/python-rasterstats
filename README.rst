@@ -47,8 +47,8 @@ raster, calculate the mean elevation of each polygon:
 
 ::
 
-    >>> from rasterstats import raster_stats
-    >>> stats = raster_stats("tests/data/polygons.shp", "tests/data/elevation.tif")
+    >>> from rasterstats import zonal_stats
+    >>> stats = zonal_stats("tests/data/polygons.shp", "tests/data/elevation.tif")
 
     >>> stats[1].keys()
         ['__fid__', 'count', 'min', 'max', 'mean']
@@ -59,7 +59,7 @@ raster, calculate the mean elevation of each polygon:
 Statistics
 ^^^^^^^^^^
 
-By default, the ``raster_stats`` function will return the following statistics
+By default, the ``zonal_stats`` function will return the following statistics
 
 - min
 - max
@@ -78,12 +78,12 @@ Optionally, these statistics are also available
 
 You can specify the statistics to calculate using the ``stats`` argument::
 
-    >>> stats = raster_stats("tests/data/polygons.shp", 
+    >>> stats = zonal_stats("tests/data/polygons.shp", 
                              "tests/data/elevation.tif"
                              stats=['min', 'max', 'median', 'majority', 'sum'])
 
     >>> # also takes space-delimited string
-    >>> stats = raster_stats("tests/data/polygons.shp", 
+    >>> stats = zonal_stats("tests/data/polygons.shp", 
                              "tests/data/elevation.tif"
                              stats="min max median majority sum")
 
@@ -105,17 +105,17 @@ It integrates with other python objects that support the geo\_interface
     >>> # an iterable of objects with geo_interface
     >>> lyr = fiona.open('/path/to/vector.shp')
     >>> features = (x for x in lyr if x['properties']['state'] == 'CT')
-    >>> raster_stats(features, '/path/to/elevation.tif')
+    >>> zonal_stats(features, '/path/to/elevation.tif')
     ...
     
     >>> # a single object with a geo_interface
     >>> lyr = fiona.open('/path/to/vector.shp')
-    >>> raster_stats(lyr.next(), '/path/to/elevation.tif')
+    >>> zonal_stats(lyr.next(), '/path/to/elevation.tif')
     ...
 
 Or by using with geometries in "Well-Known" formats::
 
-    >>> raster_stats('POINT(-124 42)', '/path/to/elevation.tif') 
+    >>> zonal_stats('POINT(-124 42)', '/path/to/elevation.tif') 
     ...
 
 Feature Properties
@@ -125,7 +125,7 @@ By default, an \_\_fid\_\_ property is added to each feature's results. None of
 the other feature attributes/proprties are copied over unless ``copy_properties``
 is set to True::
 
-    >>> stats = raster_stats("tests/data/polygons.shp", 
+    >>> stats = zonal_stats("tests/data/polygons.shp", 
                              "tests/data/elevation.tif"
                              copy_properties=True)
                              
@@ -141,7 +141,7 @@ There are two rasterization strategies to consider::
 1. (DEFAULT) Rasterize to the line render path or cells having a center point within the polygon
 2. The ``ALL_TOUCHED`` strategy which rasterizes the geometry according to every cell that it touches. You can enable this specifying::
     
-    >>> raster_stats(..., all_touched=True)
+    >>> zonal_stats(..., all_touched=True)
 
 There is no right or wrong way to rasterize a vector; both approaches are valid and there are tradeoffs to consider. Using the default rasterizer may miss polygons that are smaller than your cell size. Using the ALL_TOUCHED strategy includes many cells along the edges that may not be representative of the geometry and give biased results when your geometries are much larger than your cell size.   
 
@@ -160,7 +160,7 @@ vegetation by polygon. Statistics such as mean, median, sum, etc. don't make muc
 The polygon below is comprised of 12 pixels of oak (raster value
 32) and 78 pixels of grassland (raster value 33)::
 
-    >>> raster_stats(lyr.next(), '/path/to/vegetation.tif', categorical=True)
+    >>> zonal_stats(lyr.next(), '/path/to/vegetation.tif', categorical=True)
 
     >>> [{'__fid__': 1, 32: 12, 33: 78}]
 

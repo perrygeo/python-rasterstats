@@ -6,6 +6,7 @@ from osgeo import gdal, ogr
 from osgeo.gdalconst import GA_ReadOnly
 from .utils import bbox_to_pixel_offsets, shapely_to_ogr_type, get_features, \
                    RasterStatsError, raster_extent_as_bounds
+import warnings
 
 
 if ogr.GetUseExceptions() != 1:
@@ -16,7 +17,16 @@ DEFAULT_STATS = ['count', 'min', 'max', 'mean']
 VALID_STATS = DEFAULT_STATS + \
     ['sum', 'std', 'median', 'majority', 'minority', 'unique', 'range']
 
-def raster_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None, 
+
+def raster_stats(*args, **kwargs):
+    warnings.warn(
+        "'raster_stats' is an alias to 'zonal_stats' and will disappear in 1.0",
+        DeprecationWarning
+    )
+    return zonal_stats(*args, **kwargs)
+
+
+def zonal_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None, 
                  global_src_extent=False, categorical=False, stats=None, 
                  copy_properties=False, all_touched=False, transform=None):
 
@@ -44,7 +54,7 @@ def raster_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
 
     if isinstance(raster, np.ndarray):
         raster_type = 'ndarray'
-        
+
         # must have transform arg
         if not transform:
             raise RasterStatsError("Must provide the 'transform' kwarg when "\
