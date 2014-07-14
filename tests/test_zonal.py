@@ -325,3 +325,37 @@ def test_all_touched():
     assert stats[0]['count'] == 95  # 75 if ALL_TOUCHED=False
     assert stats[1]['count'] == 73  # 50 if ALL_TOUCHED=False
 
+def _get_raster_array_gt(raster):
+    from osgeo import gdal
+    rds = gdal.Open(raster, gdal.GA_ReadOnly)
+    gt = rds.GetGeoTransform()
+    band = rds.GetRasterBand(1)
+    arr = band.ReadAsArray()
+    return arr, gt
+
+def test_ndarray_without_transform():
+    arr, gt = _get_raster_array_gt(raster)
+    polygons = os.path.join(DATA, 'polygons.shp')
+    with pytest.raises(RasterStatsError):
+        raster_stats(polygons, arr)
+
+def test_ndarray_nodata():
+    arr, gt = _get_raster_array_gt(raster)
+    polygons = os.path.join(DATA, 'polygons.shp')
+    with pytest.raises(NotImplementedError):
+        raster_stats(polygons, arr, transform=gt, nodata_value=-999)
+
+def test_ndarray():
+    arr, gt = _get_raster_array_gt(raster)
+    polygons = os.path.join(DATA, 'polygons.shp')
+    stats = raster_stats(polygons, arr, transform=gt)
+    assert stats == raster_stats(polygons, raster)
+    assert stats[0]['count'] == 75
+    assert stats[1]['count'] == 50
+    
+    points = os.path.join(DATA, 'points.shp')
+    stats = raster_stats(points, arr, transform=gt)
+    assert stats == raster_stats(points, raster)
+    assert sum([x['count'] for x in stats]) == 3
+    assert round(stats[0]['mean'], 3) == 11.386
+    assert round(stats[1]['mean'], 3) == 35.547

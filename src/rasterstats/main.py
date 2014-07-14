@@ -18,7 +18,7 @@ VALID_STATS = DEFAULT_STATS + \
 
 def raster_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None, 
                  global_src_extent=False, categorical=False, stats=None, 
-                 copy_properties=False, all_touched=False):
+                 copy_properties=False, all_touched=False, transform=None):
 
     if not stats:
         if not categorical:
@@ -42,23 +42,43 @@ def raster_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
         # run the counter once, only if needed
         run_count = True
 
-    rds = gdal.Open(raster, GA_ReadOnly)
-    if not rds:
-        raise RasterStatsError("Cannot open %r as GDAL raster" % raster)
-    rb = rds.GetRasterBand(band_num)
-    rgt = rds.GetGeoTransform()
-    rsize = (rds.RasterXSize, rds.RasterYSize)
-    rbounds = raster_extent_as_bounds(rgt, rsize)
+    if isinstance(raster, np.ndarray):
+        raster_type = 'ndarray'
+        
+        # must have transform arg
+        if not transform:
+            raise RasterStatsError("Must provide the 'transform' kwarg when "\
+                "using ndarrays as src raster")
+        rgt = transform
+        rsize = (raster.shape[1], raster.shape[0])
 
-    if nodata_value is not None:
-        nodata_value = float(nodata_value)
-        rb.SetNoDataValue(nodata_value)
+        # global_src_extent is implicitly turned on, array is already in memory
+        if not global_src_extent:
+            global_src_extent = True
+
+        if nodata_value:
+            raise NotImplementedError("ndarrays don't support 'nodata_value'")
+
     else:
-        nodata_value = rb.GetNoDataValue()
+        raster_type = 'gdal'
+        rds = gdal.Open(raster, GA_ReadOnly)
+        if not rds:
+            raise RasterStatsError("Cannot open %r as GDAL raster" % raster)
+        rb = rds.GetRasterBand(band_num)
+        rgt = rds.GetGeoTransform()
+        rsize = (rds.RasterXSize, rds.RasterYSize)
+
+        if nodata_value is not None:
+            nodata_value = float(nodata_value)
+            rb.SetNoDataValue(nodata_value)
+        else:
+            nodata_value = rb.GetNoDataValue()
+
+    rbounds = raster_extent_as_bounds(rgt, rsize)
 
     features_iter, strategy, spatial_ref = get_features(vectors, layer_num)
 
-    if global_src_extent:
+    if global_src_extent and raster_type == 'gdal':
         # create an in-memory numpy array of the source raster data
         # covering the whole extent of the vector layer
         if strategy != "ogr":
@@ -73,6 +93,9 @@ def raster_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
 
         global_src_offset = bbox_to_pixel_offsets(rgt, layer_extent)
         global_src_array = rb.ReadAsArray(*global_src_offset)
+    elif global_src_extent and raster_type == 'ndarray':
+        global_src_offset = (0, 0, raster.shape[0], raster.shape[1])
+        global_src_array = raster
 
     mem_drv = ogr.GetDriverByName('Memory')
     driver = gdal.GetDriverByName('MEM')
