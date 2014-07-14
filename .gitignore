@@ -12,4 +12,5 @@ Vagrantfile
 .vagrant/*
 .coverage
 *.aux.xml
+*.ipynb_checkpoints*
 
