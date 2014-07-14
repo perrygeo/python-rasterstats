@@ -1,4 +1,5 @@
-pyshp
+pyshp>=1.1.4
 pytest
 fiona
+coverage
 git+https://github.com/geopandas/geopandas.git@3b7afba679387b6363b#egg=geopandas
