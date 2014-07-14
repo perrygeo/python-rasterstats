@@ -7,7 +7,6 @@ from rasterstats.main import VALID_STATS
 from rasterstats.utils import shapely_to_ogr_type, parse_geo, get_ogr_ds, \
                               OGRError, feature_to_geojson, bbox_to_pixel_offsets
 from shapely.geometry import shape, box
-from geopandas import GeoDataFrame
 import json
 
 DATA = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
