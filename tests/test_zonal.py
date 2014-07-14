@@ -7,6 +7,7 @@ from rasterstats.main import VALID_STATS
 from rasterstats.utils import shapely_to_ogr_type, parse_geo, get_ogr_ds, \
                               OGRError, feature_to_geojson, bbox_to_pixel_offsets
 from shapely.geometry import shape, box
+from geopandas import GeoDataFrame
 import json
 
 DATA = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
@@ -362,9 +363,20 @@ def test_ndarray():
 
 
 def test_alias():
-    arr, gt = _get_raster_array_gt(raster)
     polygons = os.path.join(DATA, 'polygons.shp')
     stats = zonal_stats(polygons, raster)
     stats2 = raster_stats(polygons, raster)
     assert stats == stats2
     pytest.deprecated_call(raster_stats, polygons, raster)
+
+
+def test_featurecollection():
+    polygons = os.path.join(DATA, 'polygons.shp')
+    df = GeoDataFrame.from_file(polygons)
+    assert df.__geo_interface__['type'] == 'FeatureCollection'
+
+    stats = zonal_stats(polygons, raster)
+
+    # geointerface featurecollection
+    stats2 = zonal_stats(df, raster)
+    assert stats == stats2

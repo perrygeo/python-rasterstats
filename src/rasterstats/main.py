@@ -250,12 +250,8 @@ def zonal_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
                     rmax = float(masked.max())
                 feature_stats['range'] = rmax - rmin
         
-        try:
-            # Use the provided feature id as __fid__
-            feature_stats['__fid__'] = feat['id']
-        except KeyError:
-            # use the enumerator
-            feature_stats['__fid__'] = i 
+        # Use the enumerated id as __fid__
+        feature_stats['__fid__'] = i
 
         if feat.has_key('properties') and copy_properties:
             for key, val in feat['properties'].items():

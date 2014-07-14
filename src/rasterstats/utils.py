@@ -107,7 +107,7 @@ def parse_geo(thing):
     try:
         maybe_geo = json.loads(thing)
         assert maybe_geo['type'] in ["Feature", "Point", "LineString", "Polygon", 
-                       "MultiPoint", "MultiLineString", "MultiPolygon"]
+            "FeatureCollection", "MultiPoint", "MultiLineString", "MultiPolygon"]
         return maybe_geo
     except (ValueError, AssertionError):
         pass
@@ -143,6 +143,8 @@ def ogr_srs(vector, layer_num):
 def ogr_records(vector, layer_num=0):  
     ds = get_ogr_ds(vector)
     layer = ds.GetLayer(layer_num)
+    if layer.GetFeatureCount() == 0:
+        raise OGRError("No Features")
     for i in range(layer.GetFeatureCount()):
         feature = layer.GetFeature(i)
         yield feature_to_geojson(feature)
@@ -163,16 +165,22 @@ def get_features(vectors, layer_num=0):
             features_iter = ogr_records(vectors, layer_num)
             spatial_ref = ogr_srs(vectors, layer_num)
             strategy = "ogr"
-        except OGRError:
+        except (OGRError, AttributeError)   :
         # ... or a single string to be parsed as wkt/wkb/json
             feat = parse_geo(vectors)
             features_iter = [feat]
             strategy = "single_geo"
     elif hasattr(vectors, '__geo_interface__'):
-        # ... or an single object
-        feat = parse_geo(vectors)
-        features_iter = [feat]
-        strategy = "single_geo"
+        geotype = vectors.__geo_interface__['type']
+        if geotype.lower() == 'featurecollection':
+            # ... a featurecollection
+            features_iter = geo_records(vectors.__geo_interface__['features'])
+            strategy = "geo_featurecollection"
+        else:
+            # ... or an single object
+            feat = parse_geo(vectors)
+            features_iter = [feat]
+            strategy = "single_geo"
     elif isinstance(vectors, dict):
         # ... or an python mapping
         feat = parse_geo(vectors)

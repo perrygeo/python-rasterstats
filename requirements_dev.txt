@@ -1,3 +1,4 @@
 pyshp
 pytest
 fiona
+git+https://github.com/geopandas/geopandas.git
