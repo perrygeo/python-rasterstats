@@ -380,3 +380,15 @@ def test_featurecollection():
     # geointerface featurecollection
     stats2 = zonal_stats(df, raster)
     assert stats == stats2
+
+
+def test_construct_df():
+    from pandas import DataFrame
+    polygons = os.path.join(DATA, 'polygons.shp')
+
+    df = GeoDataFrame.from_file(polygons)
+    stats = zonal_stats(df, raster)
+    newdf = df.join(DataFrame(stats))
+
+    assert df.shape[0] == newdf.shape[0]  # same number of rows
+    assert df.shape[1] < newdf.shape[1]  # newdf has more columns
