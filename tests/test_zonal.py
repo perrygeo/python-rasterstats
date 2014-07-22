@@ -16,7 +16,7 @@ def test_main():
     polygons = os.path.join(DATA, 'polygons.shp')
     stats = zonal_stats(polygons, raster)
     for key in ['__fid__', 'count', 'min', 'max', 'mean']:
-        assert stats[0].has_key(key)
+        assert key in stats[0]
     assert len(stats) == 2
     assert stats[0]['count'] == 75
     assert stats[1]['count'] == 50
@@ -72,7 +72,7 @@ def test_points_categorical():
     stats = zonal_stats(points, categorical_raster, categorical=True)
     # three features
     assert len(stats) == 3
-    assert not stats[0].has_key('mean')
+    assert 'mean' not in stats[0]
     assert stats[0][1.0] == 1
     assert stats[1][2.0] == 1
 
@@ -121,10 +121,10 @@ def test_iterable_features_geo():
     class FeatureThing(object):
         pass
     fields = reader.fields[1:]  
-    field_names = [field[0] for field in fields]  
+    field_names = [field[0] for field in fields]
     for sr in reader.shapeRecords():
         geom = sr.shape.__geo_interface__  
-        atr = dict(zip(field_names, sr.record))  
+        atr = dict(list(zip(field_names, sr.record)))  
         obj = FeatureThing()
         obj.__geo_interface__ = dict(geometry=geom,properties=atr,type="Feature")
         features.append(obj)
@@ -183,7 +183,7 @@ def test_categorical():
     stats = zonal_stats(polygons, categorical_raster, categorical=True)
     assert len(stats) == 2
     assert stats[0][1.0] == 75
-    assert stats[1].has_key(5.0)
+    assert 5.0 in stats[1]
 
 
 ## Utils
@@ -227,7 +227,7 @@ def test_specify_stats_list():
     polygons = os.path.join(DATA, 'polygons.shp')
     stats = zonal_stats(polygons, raster, stats=['min', 'max'])
     assert sorted(stats[0].keys()) == sorted(['__fid__', 'min', 'max'])
-    assert 'count' not in stats[0].keys()
+    assert 'count' not in list(stats[0].keys())
 
 def test_specify_all_stats():
     polygons = os.path.join(DATA, 'polygons.shp')
@@ -240,7 +240,7 @@ def test_specify_stats_string():
     polygons = os.path.join(DATA, 'polygons.shp')
     stats = zonal_stats(polygons, raster, stats='min max')
     assert sorted(stats[0].keys()) == sorted(['__fid__', 'min', 'max'])
-    assert 'count' not in stats[0].keys()
+    assert 'count' not in list(stats[0].keys())
 
 def test_specify_stats_invalid():
     polygons = os.path.join(DATA, 'polygons.shp')
@@ -255,12 +255,12 @@ def test_optional_stats():
 def test_no_copy_properties():
     polygons = os.path.join(DATA, 'polygons.shp')
     stats = zonal_stats(polygons, raster, copy_properties=False)  # default
-    assert not stats[0].has_key('id')  # attr from original shp
+    assert 'id' not in stats[0]  # attr from original shp
 
 def test_copy_properties():
     polygons = os.path.join(DATA, 'polygons.shp')
     stats = zonal_stats(polygons, raster, copy_properties=True)
-    assert stats[0].has_key('id')  # attr from original shp
+    assert 'id' in stats[0]  # attr from original shp
 
 def test_range():
     polygons = os.path.join(DATA, 'polygons.shp')
@@ -270,7 +270,7 @@ def test_range():
     ranges = [x['range'] for x in stats]
     # without min/max specified
     stats = zonal_stats(polygons, raster, stats="range")
-    assert not stats[0].has_key('min')
+    assert 'min' not in stats[0]
     assert ranges == [x['range'] for x in stats]
 
 def test_csv():
@@ -295,7 +295,7 @@ def test_nodata_value():
     assert stats[0]['count'] == 0  # no pixels; they're all null
     assert stats[1]['minority'] == 2.0
     assert stats[1]['count'] == 49 # used to be 50 if we allowed 1.0
-    assert not stats[0].has_key('1.0')
+    assert '1.0' not in stats[0]
 
 def test_partial_overlap():
     polygons = os.path.join(DATA, 'polygons_partial_overlap.shp')

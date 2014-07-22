@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import sys
 from shapely.geometry import shape, box, MultiPolygon
 import numpy as np
 from collections import Counter
@@ -36,7 +37,7 @@ def zonal_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
         else:
             stats = []
     else:
-        if isinstance(stats, basestring):
+        if isinstance(stats, str):
             if stats in ['*', 'ALL']:
                 stats = VALID_STATS
             else:
@@ -238,7 +239,7 @@ def zonal_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
                 except IndexError:
                     feature_stats['minority'] = None
             if 'unique' in stats:
-                feature_stats['unique'] = len(pixel_count.keys())
+                feature_stats['unique'] = len(list(pixel_count.keys()))
             if 'range' in stats:
                 try:
                     rmin = feature_stats['min']
@@ -253,8 +254,8 @@ def zonal_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
         # Use the enumerated id as __fid__
         feature_stats['__fid__'] = i
 
-        if feat.has_key('properties') and copy_properties:
-            for key, val in feat['properties'].items():
+        if 'properties' in feat and copy_properties:
+            for key, val in list(feat['properties'].items()):
                 feature_stats[key] = val
 
         results.append(feature_stats)
@@ -262,17 +263,20 @@ def zonal_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
     return results
 
 def stats_to_csv(stats):
-    from cStringIO import StringIO
+    if sys.version_info[0] >= 3:
+        from io import StringIO as IO
+    else:
+        from cStringIO import StringIO as IO
     import csv
 
-    csv_fh = StringIO()
+    csv_fh = IO()
 
     keys = set()
     for stat in stats:
-        for key in stat.keys():
+        for key in list(stat.keys()):
             keys.add(key)
 
-    fieldnames = sorted(list(keys))
+    fieldnames = sorted(list(keys), key=str)
 
     csvwriter = csv.DictWriter(csv_fh, delimiter=',', fieldnames=fieldnames)
     csvwriter.writerow(dict((fn,fn) for fn in fieldnames))

@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from __future__ import unicode_literals
 import json
 import math
 
@@ -56,7 +57,7 @@ def feature_to_geojson(feature):
     if fid:
         output['id'] = fid
        
-    for key in feature.keys():
+    for key in list(feature.keys()):
         output['properties'][key] = feature.GetField(key)
    
     return output
@@ -88,11 +89,18 @@ def parse_geo(thing):
     except AttributeError:
         pass
 
+    # wkb
+    try:
+        shape = wkb.loads(thing)
+        return shape.__geo_interface__
+    except (ReadingError, TypeError):
+        pass
+
     # wkt
     try:
         shape = wkt.loads(thing)
         return shape.__geo_interface__
-    except (ReadingError, TypeError):
+    except (ReadingError, TypeError, AttributeError):
         pass
 
     # geojson-like python mapping
@@ -109,14 +117,7 @@ def parse_geo(thing):
         assert maybe_geo['type'] in ["Feature", "Point", "LineString", "Polygon", 
             "FeatureCollection", "MultiPoint", "MultiLineString", "MultiPolygon"]
         return maybe_geo
-    except (ValueError, AssertionError):
-        pass
-
-    # wkb
-    try:
-        shape = wkb.loads(thing)
-        return shape.__geo_interface__
-    except (ReadingError, TypeError):
+    except (ValueError, AssertionError, TypeError):
         pass
 
     raise RasterStatsError("Can't parse %s as a geo-like object" % thing)
@@ -124,7 +125,7 @@ def parse_geo(thing):
 
 def get_ogr_ds(vds):
     from osgeo import ogr
-    if not isinstance(vds, basestring):
+    if not isinstance(vds, str):
         raise OGRError("OGR cannot open %r: not a string" % vds)
 
     ds = ogr.Open(vds)
@@ -158,7 +159,7 @@ def geo_records(vectors):
 def get_features(vectors, layer_num=0):
     from osgeo import osr
     spatial_ref = osr.SpatialReference()
-    if isinstance(vectors, basestring):
+    if isinstance(vectors, str):
         try:
         # either an OGR layer ...
             get_ogr_ds(vectors)
@@ -170,6 +171,11 @@ def get_features(vectors, layer_num=0):
             feat = parse_geo(vectors)
             features_iter = [feat]
             strategy = "single_geo"
+    elif isinstance(vectors, bytes):
+        # wkb
+        feat = parse_geo(vectors)
+        features_iter = [feat]
+        strategy = "single_geo"
     elif hasattr(vectors, '__geo_interface__'):
         geotype = vectors.__geo_interface__['type']
         if geotype.lower() == 'featurecollection':
