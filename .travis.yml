@@ -1,15 +1,35 @@
-# This is the config file for building GDAL and running its autotest suite
-# with Travis-ci.org
-
+# Check on http://lint.travis-ci.org/ after modifying it!
+# See https://gist.github.com/dan-blanchard/7045057
+# and https://github.com/Jorge-C/ordination/blob/master/.travis.yml
 language: python
-before_install:
-  - "sudo apt-get update -qq -y "
-  - "sudo apt-get install -qq -y libgdal-dev gdal-bin python-gdal python-pip python-numpy build-essential git python-dev"
-virtualenv:
-  system_site_packages: true
 python:
   - "2.7"
+  - "3.4"
+
+# Setup anaconda
+before_install:
+  - "sudo apt-get update -qq -y"
+  - "sudo apt-get install -qq -y build-essential git python-dev python3.4-dev"
+
+  # Pin to version? http://repo.continuum.io/miniconda/Miniconda3-3.5.5-Linux-x86_64.sh
+  - wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
+  - chmod +x miniconda.sh
+  - ./miniconda.sh -b
+  - export PATH=/home/travis/anaconda/bin:$PATH
+
+  # Update conda itself
+  - conda update --yes conda
+
+  # The next couple lines fix a crash with multiprocessing on Travis and are not specific to using Miniconda
+  - sudo rm -rf /dev/shm
+  - sudo ln -s /run/shm /dev/shm
+
+# Install packages
 install:
+  - conda create --yes -n env_name python=$TRAVIS_PYTHON_VERSION cython numpy matplotlib pandas gdal
+  - source activate env_name
+  - pip install pytest  # not yet available for py3 in anaconda 
+  - python setup.py install
   - "pip install -r requirements.txt"
   - "pip install -r requirements_dev.txt"
 script: "coverage run --include *rasterstats* setup.py test"
