@@ -49,6 +49,9 @@ before_install:
   - sudo ln -s /run/shm /dev/shm
 
 # Install packages
+env:
+  - GDAL_DATA=/usr/share/gdal/1.10/
+
 install:
   - conda create --yes -n env_name python=$TRAVIS_PYTHON_VERSION pip cython numpy matplotlib pandas gdal
   - source activate env_name
@@ -56,6 +59,7 @@ install:
   - python setup.py install
   - "pip install -r requirements.txt"
   - "pip install -r requirements_dev.txt"
+
 script: "coverage run --include *rasterstats* setup.py test"
 after_success:
   - coveralls
