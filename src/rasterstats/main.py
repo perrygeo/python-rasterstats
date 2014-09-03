@@ -10,9 +10,13 @@ from .utils import bbox_to_pixel_offsets, shapely_to_ogr_type, get_features, \
 import warnings
 
 try:
-    ogr.GetUseExceptions()
+    if ogr.GetUseExceptions() != 1:
+        ogr.UseExceptions()
 except(AttributeError):
-    pass
+    warnings.warn(
+        "This version of GDAL/OGR does not support python Exceptions",
+        Warning
+    )
 
 DEFAULT_STATS = ['count', 'min', 'max', 'mean']
 VALID_STATS = DEFAULT_STATS + \
