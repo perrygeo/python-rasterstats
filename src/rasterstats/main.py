@@ -24,6 +24,7 @@ VALID_STATS = DEFAULT_STATS + \
 
 
 def raster_stats(*args, **kwargs):
+    """Deprecated. Use zonal_stats instead."""
     warnings.warn(
         "'raster_stats' is an alias to 'zonal_stats' and will disappear in 1.0",
         DeprecationWarning
@@ -34,6 +35,57 @@ def raster_stats(*args, **kwargs):
 def zonal_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None, 
                  global_src_extent=False, categorical=False, stats=None, 
                  copy_properties=False, all_touched=False, transform=None):
+    """Summary statistics of a raster, broken out by vector geometries.
+
+    Attributes
+    ----------
+    vectors : path to an OGR vector source, or list of geo_interface, or WKT str
+    raster : ndarray or path to a GDAL raster source
+        If ndarray is passed, the `transform` kwarg is required.
+    layer_num : int, optional
+        If `vectors` is a path to an OGR source, the vector layer to use
+        (counting from 0).
+        defaults to 0.
+    band_num : int, optional
+        If `raster` is a GDAL source, the band number to use (counting from 1).
+        defaults to 1.
+    nodata_value : float, optional
+        If `raster` is a GDAL source, this value overrides any NODATA value
+        specified in the file's metadata.
+        If `None`, the file's metadata's NODATA value (if any) will be used.
+        `ndarray`s don't support `nodata_value`.
+        defaults to `None`.
+    global_src_extent : bool, optional
+        Pre-allocate entire raster before iterating over vector features.
+        Use `True` if limited by disk IO or indexing into raster; can hog memory.
+        Use `False` with fast disks and a well-indexed raster, or when
+        memory-constrained.
+        Ignored when `raster` is an ndarray, because it is already completely in
+        memory.
+        defaults to `False`.
+    categorical : bool, optional
+    stats : list of str, or space-delimited str, optional
+        Which statistics to calculate for each zone.
+        All possible choices are listed in `VALID_STATS`.
+        defaults to `DEFAULT_STATS`, a subset of these.
+    copy_properties : bool, optional
+        Include feature properties alongside the returned stats.
+        defaults to `False`
+    all_touched : bool, optional
+        Whether to include every raster cell touched by a geometry, or only
+        those having a center point within the polygon.
+        defaults to `False`
+    transform : list of float, optional
+        GDAL-style geotransform coordinates when `raster` is an ndarray.
+        Required when `raster` is an ndarray, otherwise ignored.
+
+    Returns
+    -------
+    list of dicts
+        Each dict represents one vector geometry.
+        Its keys include `__fid__` (the geometry feature id)
+        and each of the `stats` requested.
+    """
 
     if not stats:
         if not categorical:
