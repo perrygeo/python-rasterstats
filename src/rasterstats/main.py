@@ -250,6 +250,10 @@ def zonal_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
                 gdal.RasterizeLayer(rvds, [1], mem_layer, None, None, burn_values=[1], options = ['ALL_TOUCHED=False'])
             rv_array = rvds.ReadAsArray()
 
+            if src_array is None:
+                src_array = rv_array.copy()
+                src_array[:] = nodata_value
+                
             # Mask the source data array with our current feature
             # we take the logical_not to flip 0<->1 to get the correct mask effect
             # we also mask out nodata values explictly
