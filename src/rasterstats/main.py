@@ -158,7 +158,7 @@ def zonal_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
         # transform from OGR extent to xmin, ymin, xmax, ymax
         layer_extent = (ex[0], ex[2], ex[1], ex[3])
 
-        global_src_offset = bbox_to_pixel_offsets(rgt, layer_extent)
+        global_src_offset = bbox_to_pixel_offsets(rgt, layer_extent, rsize)
         global_src_array = rb.ReadAsArray(*global_src_offset)
     elif global_src_extent and raster_type == 'ndarray':
         global_src_offset = (0, 0, raster.shape[0], raster.shape[1])
@@ -186,20 +186,10 @@ def zonal_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
 
         ogr_geom_type = shapely_to_ogr_type(geom.type)
 
-        # "Clip" the geometry bounds to the overall raster bounding box
-        # This should avoid any rasterIO errors for partially overlapping polys
         geom_bounds = list(geom.bounds)
-        if geom_bounds[0] < rbounds[0]:
-            geom_bounds[0] = rbounds[0]
-        if geom_bounds[1] < rbounds[1]:
-            geom_bounds[1] = rbounds[1]
-        if geom_bounds[2] > rbounds[2]:
-            geom_bounds[2] = rbounds[2]
-        if geom_bounds[3] > rbounds[3]:
-            geom_bounds[3] = rbounds[3]
 
-        # calculate new geotransform of the feature subset
-        src_offset = bbox_to_pixel_offsets(rgt, geom_bounds)
+        # calculate new pixel coordinates of the feature subset
+        src_offset = bbox_to_pixel_offsets(rgt, geom_bounds, rsize)
 
         new_gt = (
             (rgt[0] + (src_offset[0] * rgt[1])),

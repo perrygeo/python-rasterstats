@@ -11,7 +11,7 @@ class OGRError(Exception):
     pass
 
 
-def bbox_to_pixel_offsets(gt, bbox):
+def bbox_to_pixel_offsets(gt, bbox, rsize):
     originX = gt[0]
     originY = gt[3]
     pixel_width = gt[1]
@@ -23,8 +23,20 @@ def bbox_to_pixel_offsets(gt, bbox):
     y1 = int(math.floor((bbox[3] - originY) / pixel_height))
     y2 = int(math.ceil((bbox[1] - originY) / pixel_height))
 
+    # "Clip" the geometry bounds to the overall raster bounding box
+    # This should avoid any rasterIO errors for partially overlapping polys
+    if x1 < 0:
+        x1 = 0
+    if x2 > rsize[0]:
+        x2 = rsize[0]
+    if y1 < 0:
+        y1 = 0
+    if y2 > rsize[1]:
+        y2 = rsize[1]
+
     xsize = x2 - x1
     ysize = y2 - y1
+
     return (x1, y1, xsize, ysize)
 
 
