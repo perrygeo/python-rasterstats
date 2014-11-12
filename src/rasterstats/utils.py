@@ -41,11 +41,11 @@ def bbox_to_pixel_offsets(gt, bbox, rsize):
 
 
 def raster_extent_as_bounds(gt, size):
-    east1 = gt[0]
-    east2 = gt[0] + (gt[1] * size[0])
-    west1 = gt[3] + (gt[5] * size[1])
-    west2 = gt[3]
-    return (east1, west1, east2, west2)
+    x1 = gt[0]
+    x2 = gt[0] + (gt[1] * size[0])
+    y1 = gt[3] + (gt[5] * size[1])
+    y2 = gt[3]
+    return (x1, y1, x2, y2)
 
 
 def feature_to_geojson(feature):
