@@ -15,3 +15,6 @@
 - Deprecated `raster_stats` in favor of `zonal_stats`
 - Support for GeoJSON-like FeatureCollections (any things that implements FeatureCollections in the __geo_interface__)
 - Support for in-memory numpy arrays and geopandas dataframes
+
+0.5
+- new method for clipping to raster extents, changes bbox_to_pixel_offsets to fix src_array edge cases (thanks @allhailwesttexas and @timcera)
