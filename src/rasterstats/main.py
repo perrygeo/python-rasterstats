@@ -301,8 +301,8 @@ def zonal_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
                 except KeyError:
                     rmax = float(masked.max())
                 feature_stats['range'] = rmax - rmin
-            if add_stats:
-                if add_func:
+            if add_stats!=[None]:
+                if add_func!=[None]:
                     try:
                         exec('from '+add_func+' import *')
                     except:
