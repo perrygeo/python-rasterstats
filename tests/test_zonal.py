@@ -9,6 +9,7 @@ from rasterstats.utils import shapely_to_ogr_type, parse_geo, get_ogr_ds, \
 from shapely.geometry import shape, box
 import json
 import sys
+import numpy as np
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
