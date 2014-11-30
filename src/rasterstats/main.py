@@ -79,9 +79,10 @@ def zonal_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
     transform : list of float, optional
         GDAL-style geotransform coordinates when `raster` is an ndarray.
         Required when `raster` is an ndarray, otherwise ignored.
-    add_stats : List with name additional statistics to compute, optional
+    add_stats : List with name of additional statistics to compute, optional
         Each name in add_stats is a string with the name of a function 
         that takes Numpy (masked) matrices and computes and returns a statistic 
+    add_func : Name of module that defines the functions that compute the add_stats, optional
 
     Returns
     -------
