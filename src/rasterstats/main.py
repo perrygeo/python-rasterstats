@@ -35,7 +35,7 @@ def raster_stats(*args, **kwargs):
 def zonal_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None, 
                  global_src_extent=False, categorical=False, stats=None, 
                  copy_properties=False, all_touched=False, transform=None,
-                 add_stats=None):
+                 add_stats=None, raster_out=False):
     """Summary statistics of a raster, broken out by vector geometries.
 
     Attributes
@@ -80,6 +80,11 @@ def zonal_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
         GDAL-style geotransform coordinates when `raster` is an ndarray.
         Required when `raster` is an ndarray, otherwise ignored.
     add_stats : Dictionary with names and functions of additional statistics to compute, optional
+    mini_raster : Output the clipped raster for each geometry, optional
+        Returns additionally: 
+            clipped raster (mini_raster)
+            Geo-transform (mini_raster_GT)
+            No Data Value (mini_raster_NDV)
 
     Returns
     -------
@@ -301,6 +306,12 @@ def zonal_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
             if add_stats is not None:
                 for stat_name, stat_func in add_stats.items():
                         feature_stats[stat_name] = stat_func(masked)
+            if raster_out:
+                masked.fill_value=nodata_value
+                masked.data[masked.mask]=nodata_value
+                feature_stats['mini_raster'] = masked
+                feature_stats['mini_raster_GT'] = new_gt
+                feature_stats['mini_raster_NDV'] = nodata_value
         
         # Use the enumerated id as __fid__
         feature_stats['__fid__'] = i
