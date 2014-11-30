@@ -8,6 +8,9 @@ from rasterstats.utils import shapely_to_ogr_type, parse_geo, get_ogr_ds, \
                               OGRError, feature_to_geojson, bbox_to_pixel_offsets
 from shapely.geometry import shape, box
 import json
+import sys
+
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 DATA = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
 raster = os.path.join(DATA, 'slope.tif')
@@ -389,3 +392,12 @@ def test_featurecollection():
     # geointerface featurecollection
     stats2 = zonal_stats(df, raster)
     assert stats == stats2
+
+def test_add_stats():
+    from geopandas import GeoDataFrame
+    polygons = os.path.join(DATA, 'polygons.shp')
+    df = GeoDataFrame.from_file(polygons)
+    mymean= lambda x: np.ma.mean(x)
+    stats = zonal_stats(df.geometry, raster, add_stats=['mymean'], add_func='myfunc')
+    for i in range(len(stats)):
+        assert stats[i]['mean'] == stats[i]['mymean']
