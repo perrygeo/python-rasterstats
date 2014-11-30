@@ -393,11 +393,14 @@ def test_featurecollection():
     stats2 = zonal_stats(df, raster)
     assert stats == stats2
 
+def mymean(x):
+    return np.ma.mean(x)
+
 def test_add_stats():
     from geopandas import GeoDataFrame
     polygons = os.path.join(DATA, 'polygons.shp')
     df = GeoDataFrame.from_file(polygons)
     mymean= lambda x: np.ma.mean(x)
-    stats = zonal_stats(df.geometry, raster, add_stats=['mymean'], add_func='myfunc')
+    stats = zonal_stats(df.geometry, raster, add_stats={'mymean':mymean})
     for i in range(len(stats)):
         assert stats[i]['mean'] == stats[i]['mymean']

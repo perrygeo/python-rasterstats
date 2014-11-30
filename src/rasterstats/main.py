@@ -35,7 +35,7 @@ def raster_stats(*args, **kwargs):
 def zonal_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None, 
                  global_src_extent=False, categorical=False, stats=None, 
                  copy_properties=False, all_touched=False, transform=None,
-                 add_stats=[None], add_func=[None]):
+                 add_stats=None):
     """Summary statistics of a raster, broken out by vector geometries.
 
     Attributes
@@ -79,10 +79,7 @@ def zonal_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
     transform : list of float, optional
         GDAL-style geotransform coordinates when `raster` is an ndarray.
         Required when `raster` is an ndarray, otherwise ignored.
-    add_stats : List with name of additional statistics to compute, optional
-        Each name in add_stats is a string with the name of a function 
-        that takes Numpy (masked) matrices and computes and returns a statistic 
-    add_func : Name of module that defines the functions that compute the add_stats, optional
+    add_stats : Dictionary with names and functions of additional statistics to compute, optional
 
     Returns
     -------
@@ -301,19 +298,9 @@ def zonal_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
                 except KeyError:
                     rmax = float(masked.max())
                 feature_stats['range'] = rmax - rmin
-            if add_stats!=[None]:
-                if add_func!=[None]:
-                    try:
-                        exec('from '+add_func+' import *')
-                    except:
-                        print('Could not load module %s') % add_func
-                        break
-                    for mystat in range(len(add_stats)):
-                        adstat=add_stats[mystat]
-                        try:
-                            exec('feature_stats["'+adstat+'"] = '+adstat+'(masked)')
-                        except:
-                            print('Statistic %s in add_stats not defined in add_func') % adstat
+            if add_stats is not None:
+                for stat_name, stat_func in add_stats.items():
+                        feature_stats[stat_name] = stat_func(masked)
         
         # Use the enumerated id as __fid__
         feature_stats['__fid__'] = i
