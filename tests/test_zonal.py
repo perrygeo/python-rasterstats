@@ -405,3 +405,11 @@ def test_add_stats():
     stats = zonal_stats(df.geometry, raster, add_stats={'mymean':mymean})
     for i in range(len(stats)):
         assert stats[i]['mean'] == stats[i]['mymean']
+
+def test_mini_raster():
+    from geopandas import GeoDataFrame
+    polygons = os.path.join(DATA, 'polygons.shp')
+    df = GeoDataFrame.from_file(polygons)
+    stats = zonal_stats(df.geometry, raster, raster_out=True)
+    stats2=zonal_stats(df.geometry, stats[0]['mini_raster'], raster_out=True, transform=stats[0]['mini_raster_GT'])
+    assert (stats[0]['mini_raster'] == stats2[0]['mini_raster']).sum()==stats[0]['count']
