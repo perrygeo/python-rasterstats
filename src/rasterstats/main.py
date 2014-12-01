@@ -79,12 +79,13 @@ def zonal_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
     transform : list of float, optional
         GDAL-style geotransform coordinates when `raster` is an ndarray.
         Required when `raster` is an ndarray, otherwise ignored.
-    add_stats : Dictionary with names and functions of additional statistics to compute, optional
-    mini_raster : Output the clipped raster for each geometry, optional
-        Returns additionally: 
-            clipped raster (mini_raster)
-            Geo-transform (mini_raster_GT)
-            No Data Value (mini_raster_NDV)
+    add_stats : Dictionary with names and functions of additional statistics to 
+                compute, optional
+    raster_out : Include the clipped, masked numpy array for each feature, optional
+        Each feature dictionary will have the following additional keys: 
+            clipped raster (`mini_raster`)
+            Geo-transform (`mini_raster_GT`)
+            No Data Value (`mini_raster_NDV`)
 
     Returns
     -------
