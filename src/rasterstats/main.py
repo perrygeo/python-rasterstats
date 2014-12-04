@@ -10,6 +10,12 @@ from .utils import bbox_to_pixel_offsets, shapely_to_ogr_type, get_features, \
 import warnings
 
 try:
+    import georasters as gr
+    opt_georaster = True
+except:
+    opt_georaster = False
+
+try:
     if ogr.GetUseExceptions() != 1:
         ogr.UseExceptions()
 except(AttributeError):
@@ -307,11 +313,14 @@ def zonal_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
                 for stat_name, stat_func in add_stats.items():
                         feature_stats[stat_name] = stat_func(masked)
             if raster_out:
-                masked.fill_value=nodata_value
-                masked.data[masked.mask]=nodata_value
-                feature_stats['mini_raster'] = masked
-                feature_stats['mini_raster_GT'] = new_gt
-                feature_stats['mini_raster_NDV'] = nodata_value
+                    masked.fill_value=nodata_value
+                    masked.data[masked.mask]=nodata_value
+                if opt_georaster:
+                    feature_stats['mini_raster'] = gr.GeoRaster(masked, new_gt, nodata_value=nodata_value) 
+                else:
+                    feature_stats['mini_raster'] = masked
+                    feature_stats['mini_raster_GT'] = new_gt
+                    feature_stats['mini_raster_NDV'] = nodata_value
         
         # Use the enumerated id as __fid__
         feature_stats['__fid__'] = i
