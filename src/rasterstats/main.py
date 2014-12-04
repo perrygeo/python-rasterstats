@@ -313,8 +313,8 @@ def zonal_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
                 for stat_name, stat_func in add_stats.items():
                         feature_stats[stat_name] = stat_func(masked)
             if raster_out:
-                    masked.fill_value=nodata_value
-                    masked.data[masked.mask]=nodata_value
+                masked.fill_value=nodata_value
+                masked.data[masked.mask]=nodata_value
                 if opt_georaster:
                     feature_stats['mini_raster'] = gr.GeoRaster(masked, new_gt, nodata_value=nodata_value) 
                 else:
