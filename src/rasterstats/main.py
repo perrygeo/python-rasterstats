@@ -41,7 +41,7 @@ def raster_stats(*args, **kwargs):
 def zonal_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None, 
                  global_src_extent=False, categorical=False, stats=None, 
                  copy_properties=False, all_touched=False, transform=None,
-                 add_stats=None, raster_out=False):
+                 add_stats=None, raster_out=False, opt_georaster=opt_georaster):
     """Summary statistics of a raster, broken out by vector geometries.
 
     Attributes
