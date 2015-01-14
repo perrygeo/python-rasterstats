@@ -4,3 +4,4 @@ fiona
 coverage
 git+https://github.com/geopandas/geopandas.git@3b7afba679387b6363b#egg=geopandas
 git+git://github.com/mverteuil/pytest-ipdb.git
+git+git://github.com/ozak/georasters.git

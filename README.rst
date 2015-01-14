@@ -178,11 +178,11 @@ Find a bug? Report it via github issues by providing
 - python code or command to reproduce the error
 - information on your environment: versions of python, gdal and numpy and system memory
 
-.. |BuildStatus| image:: https://api.travis-ci.org/perrygeo/python-raster-stats.png
-.. _BuildStatus: https://travis-ci.org/perrygeo/python-raster-stats
+.. |BuildStatus| image:: https://api.travis-ci.org/ozak/python-raster-stats.png
+.. _BuildStatus: https://travis-ci.org/ozak/python-raster-stats
 
-.. |CoverageStatus| image:: https://coveralls.io/repos/perrygeo/python-raster-stats/badge.png
-.. _CoverageStatus: https://coveralls.io/r/perrygeo/python-raster-stats
+.. |CoverageStatus| image:: https://coveralls.io/repos/ozak/python-raster-stats/badge.png
+.. _CoverageStatus: https://coveralls.io/r/ozak/python-raster-stats
 
 .. |PyPiVersion| image:: https://pypip.in/v/rasterstats/badge.png
 .. _PyPiVersion: http://pypi.python.org/pypi/rasterstats

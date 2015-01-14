@@ -10,6 +10,12 @@ from .utils import bbox_to_pixel_offsets, shapely_to_ogr_type, get_features, \
 import warnings
 
 try:
+    import georasters as gr
+    opt_georaster = True
+except:
+    opt_georaster = False
+
+try:
     if ogr.GetUseExceptions() != 1:
         ogr.UseExceptions()
 except(AttributeError):
@@ -35,7 +41,7 @@ def raster_stats(*args, **kwargs):
 def zonal_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None, 
                  global_src_extent=False, categorical=False, stats=None, 
                  copy_properties=False, all_touched=False, transform=None,
-                 add_stats=None, raster_out=False):
+                 add_stats=None, raster_out=False, opt_georaster=opt_georaster):
     """Summary statistics of a raster, broken out by vector geometries.
 
     Attributes
@@ -310,9 +316,12 @@ def zonal_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
             if raster_out:
                 masked.fill_value=nodata_value
                 masked.data[masked.mask]=nodata_value
-                feature_stats['mini_raster'] = masked
-                feature_stats['mini_raster_GT'] = new_gt
-                feature_stats['mini_raster_NDV'] = nodata_value
+                if opt_georaster:
+                    feature_stats['mini_raster'] = gr.GeoRaster(masked, new_gt, nodata_value=nodata_value, projection=spatial_ref) 
+                else:
+                    feature_stats['mini_raster'] = masked
+                    feature_stats['mini_raster_GT'] = new_gt
+                    feature_stats['mini_raster_NDV'] = nodata_value
         
         # Use the enumerated id as __fid__
         feature_stats['__fid__'] = i

@@ -410,6 +410,14 @@ def test_mini_raster():
     from geopandas import GeoDataFrame
     polygons = os.path.join(DATA, 'polygons.shp')
     df = GeoDataFrame.from_file(polygons)
-    stats = zonal_stats(df.geometry, raster, raster_out=True)
-    stats2=zonal_stats(df.geometry, stats[0]['mini_raster'], raster_out=True, transform=stats[0]['mini_raster_GT'])
+    stats = zonal_stats(df.geometry, raster, raster_out=True, opt_georaster=False)
+    stats2=zonal_stats(df.geometry, stats[0]['mini_raster'], raster_out=True, transform=stats[0]['mini_raster_GT'], opt_georaster=False)
     assert (stats[0]['mini_raster'] == stats2[0]['mini_raster']).sum()==stats[0]['count']
+
+def test_mini_raster2():
+    from geopandas import GeoDataFrame
+    polygons = os.path.join(DATA, 'polygons.shp')
+    df = GeoDataFrame.from_file(polygons)
+    stats = zonal_stats(df.geometry, raster, raster_out=True, opt_georaster=True)
+    stats2=zonal_stats(df.geometry, stats[0]['mini_raster'].raster.data, raster_out=True, transform=stats[0]['mini_raster'].geot, opt_georaster=True)
+    assert (stats[0]['mini_raster'].raster == stats2[0]['mini_raster'].raster).sum()==stats[0]['count']
