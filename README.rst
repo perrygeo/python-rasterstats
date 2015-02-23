@@ -80,12 +80,12 @@ Optionally, these statistics are also available
 You can specify the statistics to calculate using the ``stats`` argument::
 
     >>> stats = zonal_stats("tests/data/polygons.shp", 
-                             "tests/data/elevation.tif"
+                             "tests/data/elevation.tif",
                              stats=['min', 'max', 'median', 'majority', 'sum'])
 
     >>> # also takes space-delimited string
     >>> stats = zonal_stats("tests/data/polygons.shp", 
-                             "tests/data/elevation.tif"
+                             "tests/data/elevation.tif",
                              stats="min max median majority sum")
 
 
