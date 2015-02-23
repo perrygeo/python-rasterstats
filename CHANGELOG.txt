@@ -1,3 +1,6 @@
+0.6.1
+- Use GetNextFeature to iterate over OGR layers
+
 0.6
 - Added a `percentile_q` statistic to calculate the qth percentile for each feature.
 - Removed undocumented rasterstats script (may be replaced with more robust CLI tool by 1.0)
