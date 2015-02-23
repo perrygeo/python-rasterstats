@@ -26,8 +26,7 @@ if __name__ == '__main__':
         opt['VECTOR'] = sys.stdin.readlines()[-1].strip()
     args = []
     kwargs = {}
-    print opt
-    import ipdb; ipdb.set_trace()
+
     if opt['--categorical']:
         stats = raster_stats(opt['VECTOR'], opt['RASTER'],
                              stats="minority majority count unique",
