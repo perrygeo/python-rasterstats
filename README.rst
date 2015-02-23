@@ -91,11 +91,29 @@ You can specify the statistics to calculate using the ``stats`` argument::
 Note that the more complex statistics may require significantly more processing so 
 performance can be impacted based on which statistics you choose to calculate.
 
+User-defined Statistics
+^^^^^^^^^^^^^^^^^^^^^^^
+*New in 0.6*. 
+You can define your own aggregate functions using the ``add_stats`` argument. 
+This is a dictionary with the name(s) of your statistic as keys and the function(s)
+as values. For example, to reimplement the `mean` statistic::
+
+    from __future__ import division
+    import numpy as np
+
+    def mymean(x):
+        return np.ma.mean(x)
+
+then use it in your ``zonal_stats`` call like so::
+
+    stats = zonal_stats(vector, raster, add_stats={'mymean':mymean})
+
+
 Specifying Geometries
 ^^^^^^^^^^^^^^^^^^^^^
 
 In addition to the basic usage above, rasterstats supports other
-mechanisms of specifying vector geometeries.
+mechanisms of specifying vector geometries.
 
 It integrates with other python objects that support the geo\_interface
 (e.g. Fiona, Shapely, ArcPy, PyShp, GeoDjango)::
@@ -155,7 +173,7 @@ values.
 
 For example, you may have a raster vegetation dataset and want to summarize 
 vegetation by polygon. Statistics such as mean, median, sum, etc. don't make much sense in this context
-(What's the sum of oak + grassland?). 
+(What's the sum of ``oak + grassland``?). 
 
 The polygon below is comprised of 12 pixels of oak (raster value
 32) and 78 pixels of grassland (raster value 33)::
@@ -164,10 +182,27 @@ The polygon below is comprised of 12 pixels of oak (raster value
 
     >>> [{'__fid__': 1, 32: 12, 33: 78}]
 
-Keep in mind that rasterstats just
-reports on the pixel values as keys; It is up to the programmer to
-associate the pixel values with their appropriate meaning (e.g. oak ==
-32) for reporting.
+Keep in mind that rasterstats just reports on the pixel values as keys;
+It is up to the programmer to associate the pixel values with their
+appropriate meaning (e.g. ``oak`` is key ``32``) for reporting.
+
+"Mini-Rasters"
+^^^^^^^^^^^^^^^
+
+Internally, we create a masked raster dataset for each feature in order to 
+calculate statistics. Optionally, we can include these data in the output
+of ``zonal_stats`` using the ``raster_out`` argument::
+
+    stats = zonal_stats(vector, raster, raster_out=True)
+
+Which gives us three additional keys for each feature::
+
+    ``mini_raster`` : Numpy ndarray
+    ``mini_raster_GT`` : Six-tuple defining the geotransform (GDAL ordering)
+    ``mini_raster_NDV`` : Nodata value in the returned array
+
+Keep in mind that having ndarrays in your stats dictionary means it is more
+difficult to serialize to json and other text formats.
 
 Issues
 ------
