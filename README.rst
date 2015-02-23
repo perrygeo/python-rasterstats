@@ -75,6 +75,7 @@ Optionally, these statistics are also available
 - minority
 - unique
 - range
+- percentile (see note below for details)
 
 You can specify the statistics to calculate using the ``stats`` argument::
 
@@ -90,6 +91,10 @@ You can specify the statistics to calculate using the ``stats`` argument::
 
 Note that the more complex statistics may require significantly more processing so 
 performance can be impacted based on which statistics you choose to calculate.
+
+*New in 0.6*. 
+You can use a percentile statistic by specifying 
+``percentile_<q>`` where ``<q>`` can be a floating point number between 0 and 100.
 
 User-defined Statistics
 ^^^^^^^^^^^^^^^^^^^^^^^

@@ -6,7 +6,7 @@ from collections import Counter
 from osgeo import gdal, ogr
 from osgeo.gdalconst import GA_ReadOnly
 from .utils import bbox_to_pixel_offsets, shapely_to_ogr_type, get_features, \
-                   RasterStatsError, raster_extent_as_bounds
+                   RasterStatsError, raster_extent_as_bounds, get_percentile
 import warnings
 
 try:
@@ -107,7 +107,13 @@ def zonal_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
             else:
                 stats = stats.split()
     for x in stats:
-        if x not in VALID_STATS:
+        if x.startswith("percentile_"):
+            try:
+                get_percentile(x)
+            except ValueError:
+                raise RasterStatsError("Stat `%s` is not valid; must use"
+                    " `percentile_` followed by a float >= 0 or <= 100" )
+        elif x not in VALID_STATS:
             raise RasterStatsError("Stat `%s` not valid;" \
                 " must be one of \n %r" % (x, VALID_STATS))
 
@@ -304,6 +310,11 @@ def zonal_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
                 except KeyError:
                     rmax = float(masked.max())
                 feature_stats['range'] = rmax - rmin
+
+            for pctile in [s for s in stats if s.startswith('percentile_')]:
+                q = get_percentile(pctile)
+                feature_stats[pctile] = np.percentile(masked.compressed(), q)
+
             if add_stats is not None:
                 for stat_name, stat_func in add_stats.items():
                         feature_stats[stat_name] = stat_func(masked)

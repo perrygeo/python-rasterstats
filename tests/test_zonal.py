@@ -5,7 +5,8 @@ from osgeo import ogr
 from rasterstats import zonal_stats, stats_to_csv, RasterStatsError, raster_stats
 from rasterstats.main import VALID_STATS
 from rasterstats.utils import shapely_to_ogr_type, parse_geo, get_ogr_ds, \
-                              OGRError, feature_to_geojson, bbox_to_pixel_offsets
+                              OGRError, feature_to_geojson, bbox_to_pixel_offsets, \
+                              get_percentile
 from shapely.geometry import shape, box
 import json
 import sys
@@ -413,3 +414,32 @@ def test_mini_raster():
     stats = zonal_stats(df.geometry, raster, raster_out=True)
     stats2=zonal_stats(df.geometry, stats[0]['mini_raster'], raster_out=True, transform=stats[0]['mini_raster_GT'])
     assert (stats[0]['mini_raster'] == stats2[0]['mini_raster']).sum()==stats[0]['count']
+
+def test_get_percentile():
+    assert get_percentile('percentile_0') == 0.0
+    assert get_percentile('percentile_100') == 100.0
+    assert get_percentile('percentile_13.2') == 13.2
+
+    with pytest.raises(ValueError):
+        get_percentile('percentile_101')
+
+    with pytest.raises(ValueError):
+        get_percentile('percentile_-1')
+
+    with pytest.raises(ValueError):
+        get_percentile('percentile_foobar')
+
+
+def test_percentile_good():
+    polygons = os.path.join(DATA, 'polygons.shp')
+    stats = zonal_stats(polygons, raster, stats="median percentile_50 percentile_90")
+    assert 'percentile_50' in stats[0].keys()
+    assert 'percentile_90' in stats[0].keys()
+    assert stats[0]['percentile_50'] == stats[0]['median']
+    assert stats[0]['percentile_50'] <= stats[0]['percentile_90']
+
+def test_percentile_bad():
+    polygons = os.path.join(DATA, 'polygons.shp')
+    with pytest.raises(RasterStatsError):
+        zonal_stats(polygons, raster, stats="percentile_101")
+
