@@ -421,13 +421,13 @@ def test_get_percentile():
     assert get_percentile('percentile_13.2') == 13.2
 
     with pytest.raises(ValueError):
-        assert get_percentile('percentile_101')
+        get_percentile('percentile_101')
 
     with pytest.raises(ValueError):
-        assert get_percentile('percentile_-1')
+        get_percentile('percentile_-1')
 
     with pytest.raises(ValueError):
-        assert get_percentile('percentile_foobar')
+        get_percentile('percentile_foobar')
 
 
 def test_percentile_good():
@@ -437,3 +437,9 @@ def test_percentile_good():
     assert 'percentile_90' in stats[0].keys()
     assert stats[0]['percentile_50'] == stats[0]['median']
     assert stats[0]['percentile_50'] <= stats[0]['percentile_90']
+
+def test_percentile_bad():
+    polygons = os.path.join(DATA, 'polygons.shp')
+    with pytest.raises(RasterStatsError):
+        zonal_stats(polygons, raster, stats="percentile_101")
+
