@@ -1,4 +1,5 @@
 0.6
+- Removed undocumented rasterstats script (may be replaced with more robust CLI tool by 1.0)
 - Optional support for outputing "mini-rasters": the clipped, masked numpy array for each feature. (thanks to @ozak again!)
 - Support for dynamically adding third-party stats functions - which take a masked array and return a scalar value. (thanks to @ozak)
 - Additional examples and ipython notebooks in docs

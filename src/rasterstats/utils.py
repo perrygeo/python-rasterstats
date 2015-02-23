@@ -160,6 +160,9 @@ def ogr_records(vector, layer_num=0):
         raise OGRError("No Features")
     for i in range(layer.GetFeatureCount()):
         feature = layer.GetFeature(i)
+        # if not feature and driver == sqlite:
+        #     #TODO warning
+        #     continue
         yield feature_to_geojson(feature)
 
 
