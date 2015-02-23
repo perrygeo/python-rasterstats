@@ -47,6 +47,16 @@ def raster_extent_as_bounds(gt, size):
     y2 = gt[3]
     return (x1, y1, x2, y2)
 
+def get_percentile(stat):
+    if not stat.startswith('percentile_'):
+        raise ValueError
+    qstr = stat.replace("percentile_", '')
+    q = float(qstr)
+    if q > 100.0:
+        raise ValueError
+    if q < 0.0:
+        raise ValueError
+    return q
 
 def feature_to_geojson(feature):
     """ This duplicates the feature.ExportToJson ogr method
