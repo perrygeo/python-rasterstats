@@ -36,10 +36,7 @@ setup(
         'shapely',
         'numpy',
         'GDAL',
-        'docopt',
-        # pandas, pyproj?
     ],
-    scripts=['scripts/rasterstats'],
     tests_require=['pytest', 'pyshp>=1.1.4', 'coverage'],
     cmdclass = {'test': PyTest},
     classifiers=[
