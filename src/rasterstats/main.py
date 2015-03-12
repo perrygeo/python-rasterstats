@@ -21,6 +21,7 @@ except(AttributeError):
 DEFAULT_STATS = ['count', 'min', 'max', 'mean']
 VALID_STATS = DEFAULT_STATS + \
     ['sum', 'std', 'median', 'majority', 'minority', 'unique', 'range']
+    # also percentile_{q} but that is handled as special case
 
 
 def raster_stats(*args, **kwargs):
@@ -313,7 +314,11 @@ def zonal_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
 
             for pctile in [s for s in stats if s.startswith('percentile_')]:
                 q = get_percentile(pctile)
-                feature_stats[pctile] = np.percentile(masked.compressed(), q)
+                pctarr = masked.compressed()
+                if pctarr.size == 0:
+                    feature_stats[pctile] = None
+                else:
+                    feature_stats[pctile] = np.percentile(pctarr, q)
 
             if add_stats is not None:
                 for stat_name, stat_func in add_stats.items():

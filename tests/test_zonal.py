@@ -438,6 +438,16 @@ def test_percentile_good():
     assert stats[0]['percentile_50'] == stats[0]['median']
     assert stats[0]['percentile_50'] <= stats[0]['percentile_90']
 
+def test_percentile_nulls():
+    polygons = os.path.join(DATA, 'polygons.shp')
+    categorical_raster = os.path.join(DATA, 'slope_classes.tif')
+    # By setting nodata to 1, one of our polygons is within the raster extent
+    # but has an empty masked array
+    stats = zonal_stats(polygons, categorical_raster,
+                        stats=["percentile_90"], nodata_value=1)
+    assert 'percentile_90' in stats[0].keys()
+    assert [None, 5.0] == [x['percentile_90'] for x in stats]
+
 def test_percentile_bad():
     polygons = os.path.join(DATA, 'polygons.shp')
     with pytest.raises(RasterStatsError):
