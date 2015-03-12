@@ -6,7 +6,7 @@ from collections import Counter
 from osgeo import gdal, ogr
 from osgeo.gdalconst import GA_ReadOnly
 from .utils import bbox_to_pixel_offsets, shapely_to_ogr_type, get_features, \
-                   RasterStatsError, raster_extent_as_bounds, get_percentile
+                   RasterStatsError, get_percentile
 import warnings
 
 try:
@@ -21,27 +21,25 @@ except(AttributeError):
 DEFAULT_STATS = ['count', 'min', 'max', 'mean']
 VALID_STATS = DEFAULT_STATS + \
     ['sum', 'std', 'median', 'majority', 'minority', 'unique', 'range']
-    # also percentile_{q} but that is handled as special case
+#  also percentile_{q} but that is handled as special case
 
 
 def raster_stats(*args, **kwargs):
     """Deprecated. Use zonal_stats instead."""
-    warnings.warn(
-        "'raster_stats' is an alias to 'zonal_stats' and will disappear in 1.0",
-        DeprecationWarning
-    )
+    warnings.warn("'raster_stats' is an alias to 'zonal_stats'"
+                  " and will disappear in 1.0", DeprecationWarning)
     return zonal_stats(*args, **kwargs)
 
 
-def zonal_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None, 
-                 global_src_extent=False, categorical=False, stats=None, 
-                 copy_properties=False, all_touched=False, transform=None,
-                 add_stats=None, raster_out=False):
+def zonal_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
+                global_src_extent=False, categorical=False, stats=None,
+                copy_properties=False, all_touched=False, transform=None,
+                add_stats=None, raster_out=False):
     """Summary statistics of a raster, broken out by vector geometries.
 
     Attributes
     ----------
-    vectors : path to an OGR vector source, or list of geo_interface, or WKT str
+    vectors : path to an OGR vector source or list of geo_interface or WKT str
     raster : ndarray or path to a GDAL raster source
         If ndarray is passed, the `transform` kwarg is required.
     layer_num : int, optional
@@ -59,11 +57,12 @@ def zonal_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
         defaults to `None`.
     global_src_extent : bool, optional
         Pre-allocate entire raster before iterating over vector features.
-        Use `True` if limited by disk IO or indexing into raster; can hog memory.
+        Use `True` if limited by disk IO or indexing into raster;
+            requires sufficient RAM to store array in memory
         Use `False` with fast disks and a well-indexed raster, or when
         memory-constrained.
-        Ignored when `raster` is an ndarray, because it is already completely in
-        memory.
+        Ignored when `raster` is an ndarray,
+            because it is already completely in memory.
         defaults to `False`.
     categorical : bool, optional
     stats : list of str, or space-delimited str, optional
@@ -80,10 +79,10 @@ def zonal_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
     transform : list of float, optional
         GDAL-style geotransform coordinates when `raster` is an ndarray.
         Required when `raster` is an ndarray, otherwise ignored.
-    add_stats : Dictionary with names and functions of additional statistics to 
+    add_stats : Dictionary with names and functions of additional statistics to
                 compute, optional
-    raster_out : Include the clipped, masked numpy array for each feature, optional
-        Each feature dictionary will have the following additional keys: 
+    raster_out : Include the masked numpy array for each feature, optional
+        Each feature dictionary will have the following additional keys:
             clipped raster (`mini_raster`)
             Geo-transform (`mini_raster_GT`)
             No Data Value (`mini_raster_NDV`)
@@ -112,11 +111,13 @@ def zonal_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
             try:
                 get_percentile(x)
             except ValueError:
-                raise RasterStatsError("Stat `%s` is not valid; must use"
-                    " `percentile_` followed by a float >= 0 or <= 100" )
+                raise RasterStatsError(
+                    "Stat `%s` is not valid; must use"
+                    " `percentile_` followed by a float >= 0 or <= 100")
         elif x not in VALID_STATS:
-            raise RasterStatsError("Stat `%s` not valid;" \
-                " must be one of \n %r" % (x, VALID_STATS))
+            raise RasterStatsError(
+                "Stat `%s` not valid; "
+                "must be one of \n %r" % (x, VALID_STATS))
 
     run_count = False
     if categorical or 'majority' in stats or 'minority' in stats or \
@@ -129,8 +130,8 @@ def zonal_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
 
         # must have transform arg
         if not transform:
-            raise RasterStatsError("Must provide the 'transform' kwarg when "\
-                "using ndarrays as src raster")
+            raise RasterStatsError("Must provide the 'transform' kwarg when "
+                                   "using ndarrays as src raster")
         rgt = transform
         rsize = (raster.shape[1], raster.shape[0])
 
@@ -155,8 +156,6 @@ def zonal_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
             rb.SetNoDataValue(nodata_value)
         else:
             nodata_value = rb.GetNoDataValue()
-
-    rbounds = raster_extent_as_bounds(rgt, rsize)
 
     features_iter, strategy, spatial_ref = get_features(vectors, layer_num)
 
@@ -194,7 +193,7 @@ def zonal_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
         # convert them into box polygons the size of a raster cell
         buff = rgt[1] / 2.0
         if geom.type == "MultiPoint":
-            geom = MultiPolygon([box(*(pt.buffer(buff).bounds)) 
+            geom = MultiPolygon([box(*(pt.buffer(buff).bounds))
                                 for pt in geom.geoms])
         elif geom.type == 'Point':
             geom = box(*(geom.buffer(buff).bounds))
@@ -222,15 +221,17 @@ def zonal_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
         else:
             if not global_src_extent:
                 # use feature's source extent and read directly from source
-                # fastest option when you have fast disks and well-indexed raster
+                # fastest option when you have fast disks and fast raster
                 # advantage: each feature uses the smallest raster chunk
                 # disadvantage: lots of disk reads on the source raster
                 src_array = rb.ReadAsArray(*src_offset)
             else:
                 # derive array from global source extent array
-                # useful *only* when disk IO or raster format inefficiencies are your limiting factor
+                # useful *only* when disk IO or raster format inefficiencies
+                # are your limiting factor
                 # advantage: reads raster data in one pass before loop
-                # disadvantage: large vector extents combined with big rasters need lotsa memory
+                # disadvantage: large vector extents combined with big rasters
+                #               require lotsa memory
                 xa = src_offset[0] - global_src_offset[0]
                 ya = src_offset[1] - global_src_offset[1]
                 xb = xa + src_offset[2]
@@ -248,16 +249,21 @@ def zonal_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
             # Rasterize it
             rvds = driver.Create('rvds', src_offset[2], src_offset[3], 1, gdal.GDT_Byte)
             rvds.SetGeoTransform(new_gt)
-            
+
             if all_touched:
-                gdal.RasterizeLayer(rvds, [1], mem_layer, None, None, burn_values=[1], options = ['ALL_TOUCHED=True'])
+                gdal.RasterizeLayer(rvds, [1], mem_layer, None, None,
+                                    burn_values=[1],
+                                    options=['ALL_TOUCHED=True'])
             else:
-                gdal.RasterizeLayer(rvds, [1], mem_layer, None, None, burn_values=[1], options = ['ALL_TOUCHED=False'])
+                gdal.RasterizeLayer(rvds, [1], mem_layer, None, None,
+                                    burn_values=[1],
+                                    options=['ALL_TOUCHED=False'])
+
             rv_array = rvds.ReadAsArray()
 
             # Mask the source data array with our current feature
-            # we take the logical_not to flip 0<->1 to get the correct mask effect
-            # we also mask out nodata values explictly
+            # we take the logical_not to flip 0<->1 for the correct mask effect
+            # we also mask out nodata values explicitly
             masked = np.ma.MaskedArray(
                 src_array,
                 mask=np.logical_or(
@@ -269,7 +275,7 @@ def zonal_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
             if run_count:
                 pixel_count = Counter(masked.compressed())
 
-            if categorical:  
+            if categorical:
                 feature_stats = dict(pixel_count)
             else:
                 feature_stats = {}
@@ -324,12 +330,12 @@ def zonal_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
                 for stat_name, stat_func in add_stats.items():
                         feature_stats[stat_name] = stat_func(masked)
             if raster_out:
-                masked.fill_value=nodata_value
-                masked.data[masked.mask]=nodata_value
+                masked.fill_value = nodata_value
+                masked.data[masked.mask] = nodata_value
                 feature_stats['mini_raster'] = masked
                 feature_stats['mini_raster_GT'] = new_gt
                 feature_stats['mini_raster_NDV'] = nodata_value
-        
+
         # Use the enumerated id as __fid__
         feature_stats['__fid__'] = i
 
@@ -340,6 +346,7 @@ def zonal_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
         results.append(feature_stats)
 
     return results
+
 
 def stats_to_csv(stats):
     if sys.version_info[0] >= 3:
@@ -358,10 +365,9 @@ def stats_to_csv(stats):
     fieldnames = sorted(list(keys), key=str)
 
     csvwriter = csv.DictWriter(csv_fh, delimiter=',', fieldnames=fieldnames)
-    csvwriter.writerow(dict((fn,fn) for fn in fieldnames))
+    csvwriter.writerow(dict((fn, fn) for fn in fieldnames))
     for row in stats:
         csvwriter.writerow(row)
     contents = csv_fh.getvalue()
     csv_fh.close()
     return contents
-

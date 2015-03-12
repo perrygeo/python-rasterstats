@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 import json
 import math
 
+
 class RasterStatsError(Exception):
     pass
 
@@ -47,6 +48,7 @@ def raster_extent_as_bounds(gt, size):
     y2 = gt[3]
     return (x1, y1, x2, y2)
 
+
 def get_percentile(stat):
     if not stat.startswith('percentile_'):
         raise ValueError
@@ -57,6 +59,7 @@ def get_percentile(stat):
     if q < 0.0:
         raise ValueError
     return q
+
 
 def feature_to_geojson(feature):
     """ This duplicates the feature.ExportToJson ogr method
@@ -70,18 +73,19 @@ def feature_to_geojson(feature):
     else:
         geom_json_object = None
 
-    output = {'type':'Feature',
-               'geometry': geom_json_object,
-               'properties': {}
-              } 
-   
+    output = {
+        'type': 'Feature',
+        'geometry': geom_json_object,
+        'properties': {}
+    }
+
     fid = feature.GetFID()
     if fid:
         output['id'] = fid
-       
+
     for key in list(feature.keys()):
         output['properties'][key] = feature.GetField(key)
-   
+
     return output
 
 
@@ -126,9 +130,10 @@ def parse_geo(thing):
         pass
 
     # geojson-like python mapping
+    valid_types = ["Feature", "Point", "LineString", "Polygon",
+                   "MultiPoint", "MultiLineString", "MultiPolygon"]
     try:
-        assert thing['type'] in ["Feature", "Point", "LineString", "Polygon", 
-                                "MultiPoint", "MultiLineString", "MultiPolygon"]
+        assert thing['type'] in valid_types
         return thing
     except (AssertionError, TypeError):
         pass
@@ -136,8 +141,7 @@ def parse_geo(thing):
     # geojson string
     try:
         maybe_geo = json.loads(thing)
-        assert maybe_geo['type'] in ["Feature", "Point", "LineString", "Polygon", 
-            "FeatureCollection", "MultiPoint", "MultiLineString", "MultiPolygon"]
+        assert maybe_geo['type'] in valid_types + ["FeatureCollection"]
         return maybe_geo
     except (ValueError, AssertionError, TypeError):
         pass
@@ -163,7 +167,7 @@ def ogr_srs(vector, layer_num):
     return layer.GetSpatialRef()
 
 
-def ogr_records(vector, layer_num=0):  
+def ogr_records(vector, layer_num=0):
     ds = get_ogr_ds(vector)
     layer = ds.GetLayer(layer_num)
     if layer.GetFeatureCount() == 0:
@@ -184,13 +188,13 @@ def get_features(vectors, layer_num=0):
     spatial_ref = osr.SpatialReference()
     if isinstance(vectors, str):
         try:
-        # either an OGR layer ...
+            # either an OGR layer ...
             get_ogr_ds(vectors)
             features_iter = ogr_records(vectors, layer_num)
             spatial_ref = ogr_srs(vectors, layer_num)
             strategy = "ogr"
-        except (OGRError, AttributeError)   :
-        # ... or a single string to be parsed as wkt/wkb/json
+        except (OGRError, AttributeError):
+            # ... or a single string to be parsed as wkt/wkb/json
             feat = parse_geo(vectors)
             features_iter = [feat]
             strategy = "single_geo"
@@ -221,4 +225,3 @@ def get_features(vectors, layer_num=0):
         strategy = "iter_geo"
 
     return features_iter, strategy, spatial_ref
-
