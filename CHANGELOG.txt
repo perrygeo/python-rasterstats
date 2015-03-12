@@ -1,3 +1,7 @@
+0.6.2
+- fix bug in percentiles where feature covers only nodata values
+- pep8 cleanup
+
 0.6.1
 - Use GetNextFeature to iterate over OGR layers
 
