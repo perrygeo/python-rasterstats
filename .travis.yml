@@ -13,9 +13,9 @@ before_install:
   # conditionally because it saves us some downloading if the version is
   # the same.
   - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
-      wget http://repo.continuum.io/miniconda/Miniconda-3.4.2-Linux-x86_64.sh -O miniconda.sh;
+      wget http://repo.continuum.io/miniconda/Miniconda-3.9.1-Linux-x86_64.sh -O miniconda.sh;
     else
-      wget http://repo.continuum.io/miniconda/Miniconda3-3.4.2-Linux-x86_64.sh -O miniconda.sh;
+      wget http://repo.continuum.io/miniconda/Miniconda3-3.9.1-Linux-x86_64.sh -O miniconda.sh;
     fi
   - bash miniconda.sh -b -p $HOME/miniconda
   - export PATH="$HOME/miniconda/bin:$PATH"
@@ -27,10 +27,16 @@ before_install:
   - sudo rm -rf /dev/shm
   - sudo ln -s /run/shm /dev/shm
 env:
-  - GDAL_DATA=/usr/share/gdal/1.10/
+  - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
+      GDAL_DATA=/Users/mperry/miniconda/envs/env_name/share/gdal
+    else
+      GDAL_DATA=/Users/mperry/miniconda3/envs/env_name/share/gdal
+    fi
 install:
-  - conda create --yes -n env_name python=$TRAVIS_PYTHON_VERSION pip cython numpy matplotlib pandas gdal rasterio
+  # See https://gist.github.com/sgillies/f7bfff349a676cffb1ef
+  - conda create --yes -n env_name -c PinguCarsti python=$TRAVIS_PYTHON_VERSION pip cython numpy matplotlib pandas gdal gdal-data
   - source activate env_name
+  - GDAL_CONFIG=`which gdal-config` pip install rasterio
   - pip install pytest  # not yet available for py3 in anaconda
   - python setup.py install
   - "pip install -r requirements.txt"
