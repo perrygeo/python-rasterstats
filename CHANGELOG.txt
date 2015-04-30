@@ -1,4 +1,5 @@
 0.7.0
+- raise builtin Exceptions (IOError, etc) for general errors rather than RasterStatsError
 - global_src_extent doesn’t require OGR vector layer, assumes full raster extent
 - rasterizing geometries and raster reads are now performed with rasterio, a new dependency
 - remove dependency on osgeo.gdal

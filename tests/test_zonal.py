@@ -7,8 +7,7 @@ import sys
 import numpy as np
 import rasterio
 from osgeo import ogr
-from rasterstats import zonal_stats, stats_to_csv, RasterStatsError, \
-                        raster_stats
+from rasterstats import zonal_stats, stats_to_csv, raster_stats
 from rasterstats.main import VALID_STATS
 from rasterstats.utils import shapely_to_ogr_type, parse_geo, get_ogr_ds, \
                               OGRError, feature_to_geojson, \
@@ -56,17 +55,17 @@ def test_zonal_nodata():
 
 def test_doesnt_exist():
     nonexistent = os.path.join(DATA, 'DOESNOTEXIST.shp')
-    with pytest.raises(RasterStatsError):
+    with pytest.raises(ValueError):
         zonal_stats(nonexistent, raster)
 
 
 def test_nonsense():
     polygons = os.path.join(DATA, 'polygons.shp')
-    with pytest.raises(RasterStatsError):
+    with pytest.raises(ValueError):
         zonal_stats("blaghrlargh", raster)
     with pytest.raises(IOError):
         zonal_stats(polygons, "blercherlerch")
-    with pytest.raises(RasterStatsError):
+    with pytest.raises(ValueError):
         zonal_stats(["blaghrlargh", ], raster)
 
 
@@ -288,7 +287,7 @@ def test_specify_stats_string():
 
 def test_specify_stats_invalid():
     polygons = os.path.join(DATA, 'polygons.shp')
-    with pytest.raises(RasterStatsError):
+    with pytest.raises(ValueError):
         zonal_stats(polygons, raster, stats='foo max')
 
 
@@ -402,8 +401,8 @@ def _get_raster_array_gt(raster):
 def test_ndarray_without_transform():
     arr, gt = _get_raster_array_gt(raster)
     polygons = os.path.join(DATA, 'polygons.shp')
-    with pytest.raises(RasterStatsError):
-        zonal_stats(polygons, arr)
+    with pytest.raises(ValueError):
+        zonal_stats(polygons, arr)  # needs transform kwarg
 
 
 def test_ndarray_nodata():
@@ -512,5 +511,5 @@ def test_percentile_nulls():
 
 def test_percentile_bad():
     polygons = os.path.join(DATA, 'polygons.shp')
-    with pytest.raises(RasterStatsError):
+    with pytest.raises(ValueError):
         zonal_stats(polygons, raster, stats="percentile_101")
