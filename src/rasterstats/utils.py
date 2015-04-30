@@ -40,6 +40,7 @@ def bbox_to_pixel_offsets(gt, bbox, rsize):
 
     return (x1, y1, xsize, ysize)
 
+
 def pixel_offsets_to_window(offsets):
     """
     Convert (x1, y1, xsize, ysize)
@@ -50,6 +51,7 @@ def pixel_offsets_to_window(offsets):
         raise RasterStatsError("offset should be a 4-element tuple")
     x1, y1, xsize, ysize = offsets
     return ((y1, y1 + ysize), (x1, x1 + xsize))
+
 
 def raster_extent_as_bounds(gt, shape):
     x1 = gt[0]
@@ -246,39 +248,4 @@ def rasterize_geom(geom, src_offset, new_gt, all_touched):
         transform=new_gt,
         fill=0,
         all_touched=all_touched)
-    return rv_array
-
-
-def rasterize_geom_gdal(geom, src_offset, new_gt, all_touched, spatial_ref):
-    """
-    deprecated, used rasterize_geom instead
-    keeping this around as a reference for other gdal->rasterio efforts
-    and because it's roughly 2x faster than rasterio implementation
-    """
-    from osgeo import ogr, gdal
-    ogr_geom_type = shapely_to_ogr_type(geom.type)
-    # Create a temporary vector layer in memory
-    mem_drv = ogr.GetDriverByName(str("Memory"))
-    mem_ds = mem_drv.CreateDataSource(str('out'))
-    mem_layer = mem_ds.CreateLayer(str('out'), spatial_ref, ogr_geom_type)
-    ogr_feature = ogr.Feature(feature_def=mem_layer.GetLayerDefn())
-    ogr_geom = ogr.CreateGeometryFromWkt(geom.wkt)
-    ogr_feature.SetGeometryDirectly(ogr_geom)
-    mem_layer.CreateFeature(ogr_feature)
-
-    # Rasterize it
-    driver = gdal.GetDriverByName(str('MEM'))
-    rvds = driver.Create(str('rvds'), src_offset[2], src_offset[3], 1, gdal.GDT_Byte)
-    rvds.SetGeoTransform(new_gt)
-
-    if all_touched:
-        gdal.RasterizeLayer(rvds, [1], mem_layer, None, None,
-                            burn_values=[1],
-                            options=['ALL_TOUCHED=True'])
-    else:
-        gdal.RasterizeLayer(rvds, [1], mem_layer, None, None,
-                            burn_values=[1],
-                            options=['ALL_TOUCHED=False'])
-
-    rv_array = rvds.ReadAsArray()
     return rv_array
