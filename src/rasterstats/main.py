@@ -2,6 +2,7 @@
 import sys
 import numpy as np
 import warnings
+import rasterio
 from shapely.geometry import shape, box, MultiPolygon
 from collections import Counter
 from .utils import bbox_to_pixel_offsets, rasterize_geom, get_features, \
@@ -25,7 +26,7 @@ def raster_stats(*args, **kwargs):
 def zonal_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
                 global_src_extent=False, categorical=False, stats=None,
                 copy_properties=False, all_touched=False, transform=None,
-                add_stats=None, raster_out=False):
+                affine=None, add_stats=None, raster_out=False):
     """Summary statistics of a raster, broken out by vector geometries.
 
     Attributes
@@ -67,9 +68,11 @@ def zonal_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
         Whether to include every raster cell touched by a geometry, or only
         those having a center point within the polygon.
         defaults to `False`
-    transform : list of float, optional
-        GDAL-style geotransform coordinates when `raster` is an ndarray.
-        Required when `raster` is an ndarray, otherwise ignored.
+    transform : list or tuple of 6 floats or Affine object, optional
+        Required when `raster` is an ndarray.
+        6-tuple for GDAL-style geotransform coordinates
+        Affine for rasterio-style geotransform coordinates
+        Can use the keyword `affine` which is an alias for `transform`
     add_stats : Dictionary with names and functions of additional statistics to
                 compute, optional
     raster_out : Include the masked numpy array for each feature, optional
@@ -114,26 +117,31 @@ def zonal_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
     if isinstance(raster, np.ndarray):
         raster_type = 'ndarray'
 
-        # must have transform arg
+        # must have transform info
+        if affine:
+            transform = affine
         if not transform:
-            raise ValueError("Must provide the 'transform' kwarg when "
-                             "using ndarrays as src raster")
-        rgt = transform
+            raise ValueError("Must provide the 'transform' kwarg "
+                             "when using ndarrays as src raster")
+        try:
+            rgt = transform.to_gdal()  # an Affine object
+        except AttributeError:
+            rgt = transform  # a GDAL geotransform
+
         rshape = (raster.shape[1], raster.shape[0])
 
         # global_src_extent is implicitly turned on, array is already in memory
-        if not global_src_extent:
-            global_src_extent = True
+        global_src_extent = True
 
         if nodata_value:
             raise NotImplementedError("ndarrays don't support 'nodata_value'")
     else:
         raster_type = 'gdal'
 
-        import rasterio
         with rasterio.drivers():
             with rasterio.open(raster, 'r') as src:
-                rgt = src.transform
+                affine = src.affine
+                rgt = affine.to_gdal()
                 rshape = (src.width, src.height)
                 rnodata = src.nodata
 

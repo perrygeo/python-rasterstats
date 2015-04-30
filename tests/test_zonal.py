@@ -393,7 +393,8 @@ def test_all_touched():
 def _get_raster_array_gt(raster):
     with rasterio.drivers():
         with rasterio.open(raster, 'r') as src:
-            gt = src.transform
+            affine = src.affine
+            gt = affine.to_gdal()
             arr = src.read(1)
     return arr, gt
 
@@ -403,6 +404,20 @@ def test_ndarray_without_transform():
     polygons = os.path.join(DATA, 'polygons.shp')
     with pytest.raises(ValueError):
         zonal_stats(polygons, arr)  # needs transform kwarg
+
+
+def test_ndarray_affine():
+    polygons = os.path.join(DATA, 'polygons.shp')
+    arr, gt = _get_raster_array_gt(raster)
+    stats1 = zonal_stats(polygons, arr, transform=gt)
+
+    from affine import Affine
+    atrans = Affine.from_gdal(*gt)
+    stats2 = zonal_stats(polygons, arr, transform=atrans)
+    assert stats1[0]['count'] == stats2[0]['count']
+
+    stats3 = zonal_stats(polygons, arr, affine=gt)
+    assert stats1[0]['count'] == stats3[0]['count']
 
 
 def test_ndarray_nodata():
