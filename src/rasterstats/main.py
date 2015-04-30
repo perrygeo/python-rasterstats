@@ -288,8 +288,13 @@ def zonal_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
                 feature_stats['mini_raster_GT'] = new_gt
                 feature_stats['mini_raster_NDV'] = nodata_value
 
-        # Use the enumerated id as __fid__
-        feature_stats['__fid__'] = i
+        if 'fid' in feat:
+            # Use the fid directly,
+            # likely came from OGR data via .utils.feature_to_geojson
+            feature_stats['__fid__'] = feat['fid']
+        else:
+            # Use the enumerated id
+            feature_stats['__fid__'] = i
 
         if 'properties' in feat and copy_properties:
             for key, val in list(feat['properties'].items()):

@@ -90,7 +90,7 @@ def feature_to_geojson(feature):
 
     fid = feature.GetFID()
     if fid:
-        output['id'] = fid
+        output['fid'] = fid
 
     for key in list(feature.keys()):
         output['properties'][key] = feature.GetField(key)
