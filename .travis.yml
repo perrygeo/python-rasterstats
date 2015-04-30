@@ -29,9 +29,9 @@ before_install:
 env:
   - GDAL_DATA=/usr/share/gdal/1.10/
 install:
-  - conda create --yes -n env_name python=$TRAVIS_PYTHON_VERSION pip cython numpy matplotlib pandas gdal
+  - conda create --yes -n env_name python=$TRAVIS_PYTHON_VERSION pip cython numpy matplotlib pandas gdal rasterio
   - source activate env_name
-  - pip install pytest  # not yet available for py3 in anaconda 
+  - pip install pytest  # not yet available for py3 in anaconda
   - python setup.py install
   - "pip install -r requirements.txt"
   - "pip install -r requirements_dev.txt"
