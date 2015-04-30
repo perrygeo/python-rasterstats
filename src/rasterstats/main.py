@@ -3,19 +3,10 @@ import sys
 from shapely.geometry import shape, box, MultiPolygon
 import numpy as np
 from collections import Counter
-from osgeo import ogr
 from .utils import bbox_to_pixel_offsets, rasterize_geom, get_features, \
-                   RasterStatsError, get_percentile, pixel_offsets_to_window
+                   RasterStatsError, get_percentile, pixel_offsets_to_window, \
+                   raster_extent_as_bounds
 import warnings
-
-try:
-    if ogr.GetUseExceptions() != 1:
-        ogr.UseExceptions()
-except(AttributeError):
-    warnings.warn(
-        "This version of GDAL/OGR does not support python Exceptions",
-        Warning
-    )
 
 DEFAULT_STATS = ['count', 'min', 'max', 'mean']
 VALID_STATS = DEFAULT_STATS + \
@@ -149,13 +140,6 @@ def zonal_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
                 rgt = src.transform
                 rsize = (src.width, src.height)
 
-        # rds = gdal.Open(raster, GA_ReadOnly)
-        # if not rds:
-        #     raise RasterStatsError("Cannot open %r as GDAL raster" % raster)
-        # rb = rds.GetRasterBand(band_num)
-        # rgt = rds.GetGeoTransform()
-        # rsize = (rds.RasterXSize, rds.RasterYSize)
-
         if nodata_value is not None:
             pass  # TODO, just set
             # nodata_value = float(nodata_value)
@@ -168,23 +152,12 @@ def zonal_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
 
     if global_src_extent and raster_type == 'gdal':
         # create an in-memory numpy array of the source raster data
-        # covering the whole extent of the vector layer
-        if strategy != "ogr":
-            raise RasterStatsError("global_src_extent requires OGR vector")
-
-        # find extent of ALL features
-        ds = ogr.Open(vectors)
-        layer = ds.GetLayer(layer_num)
-        ex = layer.GetExtent()
-        # transform from OGR extent to xmin, ymin, xmax, ymax
-        layer_extent = (ex[0], ex[2], ex[1], ex[3])
-
-        global_src_offset = bbox_to_pixel_offsets(rgt, layer_extent, rsize)
-
+        extent = raster_extent_as_bounds(rgt, rsize)
+        global_src_offset = bbox_to_pixel_offsets(rgt, extent, rsize)
         window = pixel_offsets_to_window(global_src_offset)
         with rasterio.drivers():
             with rasterio.open(raster, 'r') as src:
-                global_src_array = src.read_band(
+                global_src_array = src.read(
                     band_num, window=window, masked=False)
     elif global_src_extent and raster_type == 'ndarray':
         global_src_offset = (0, 0, raster.shape[0], raster.shape[1])
@@ -231,7 +204,7 @@ def zonal_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
                 window = pixel_offsets_to_window(src_offset)
                 with rasterio.drivers():
                     with rasterio.open(raster, 'r') as src:
-                        src_array = src.read_band(
+                        src_array = src.read(
                             band_num, window=window, masked=False)
             else:
                 # subset feature array from global source extent array

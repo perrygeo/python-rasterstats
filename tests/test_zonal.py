@@ -37,11 +37,12 @@ def test_zonal_global_extent():
     assert stats == global_stats
 
 
-def test_global_non_ogr():
-    reader = shapefile.Reader(os.path.join(DATA, 'polygons.shp'))
-    geoms = (x.shape for x in reader.shapeRecords())
-    with pytest.raises(RasterStatsError):
-        zonal_stats(geoms, raster, global_src_extent=True)
+# Invalid test, New global_src_extent strategy does not require ogr layer
+# def test_global_non_ogr():
+#     reader = shapefile.Reader(os.path.join(DATA, 'polygons.shp'))
+#     geoms = (x.shape for x in reader.shapeRecords())
+#     with pytest.raises(RasterStatsError):
+#         zonal_stats(geoms, raster, global_src_extent=True)
 
 
 def test_zonal_nodata():

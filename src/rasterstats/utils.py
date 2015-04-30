@@ -51,10 +51,10 @@ def pixel_offsets_to_window(offsets):
     x1, y1, xsize, ysize = offsets
     return ((y1, y1 + ysize), (x1, x1 + xsize))
 
-def raster_extent_as_bounds(gt, size):
+def raster_extent_as_bounds(gt, shape):
     x1 = gt[0]
-    x2 = gt[0] + (gt[1] * size[0])
-    y1 = gt[3] + (gt[5] * size[1])
+    x2 = gt[0] + (gt[1] * shape[0])
+    y1 = gt[3] + (gt[5] * shape[1])
     y2 = gt[3]
     return (x1, y1, x2, y2)
 
