@@ -2,6 +2,10 @@
 import os
 import pytest
 import shapefile
+import json
+import sys
+import numpy as np
+import rasterio
 from osgeo import ogr
 from rasterstats import zonal_stats, stats_to_csv, RasterStatsError, \
                         raster_stats
@@ -10,9 +14,6 @@ from rasterstats.utils import shapely_to_ogr_type, parse_geo, get_ogr_ds, \
                               OGRError, feature_to_geojson, \
                               bbox_to_pixel_offsets, get_percentile
 from shapely.geometry import shape, box
-import json
-import sys
-import numpy as np
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
@@ -37,11 +38,12 @@ def test_zonal_global_extent():
     assert stats == global_stats
 
 
-def test_global_non_ogr():
-    reader = shapefile.Reader(os.path.join(DATA, 'polygons.shp'))
-    geoms = (x.shape for x in reader.shapeRecords())
-    with pytest.raises(RasterStatsError):
-        zonal_stats(geoms, raster, global_src_extent=True)
+# Invalid test, New global_src_extent strategy does not require ogr layer
+# def test_global_non_ogr():
+#     reader = shapefile.Reader(os.path.join(DATA, 'polygons.shp'))
+#     geoms = (x.shape for x in reader.shapeRecords())
+#     with pytest.raises(RasterStatsError):
+#         zonal_stats(geoms, raster, global_src_extent=True)
 
 
 def test_zonal_nodata():
@@ -62,7 +64,7 @@ def test_nonsense():
     polygons = os.path.join(DATA, 'polygons.shp')
     with pytest.raises(RasterStatsError):
         zonal_stats("blaghrlargh", raster)
-    with pytest.raises(RasterStatsError):
+    with pytest.raises(IOError):
         zonal_stats(polygons, "blercherlerch")
     with pytest.raises(RasterStatsError):
         zonal_stats(["blaghrlargh", ], raster)
@@ -390,11 +392,10 @@ def test_all_touched():
 
 
 def _get_raster_array_gt(raster):
-    from osgeo import gdal
-    rds = gdal.Open(raster, gdal.GA_ReadOnly)
-    gt = rds.GetGeoTransform()
-    band = rds.GetRasterBand(1)
-    arr = band.ReadAsArray()
+    with rasterio.drivers():
+        with rasterio.open(raster, 'r') as src:
+            gt = src.transform
+            arr = src.read(1)
     return arr, gt
 
 

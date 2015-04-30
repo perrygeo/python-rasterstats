@@ -41,10 +41,22 @@ def bbox_to_pixel_offsets(gt, bbox, rsize):
     return (x1, y1, xsize, ysize)
 
 
-def raster_extent_as_bounds(gt, size):
+def pixel_offsets_to_window(offsets):
+    """
+    Convert (x1, y1, xsize, ysize)
+    to a rasterio-compatible window
+    https://github.com/mapbox/rasterio/blob/master/docs/windowed-rw.rst#windows
+    """
+    if len(offsets) != 4:
+        raise RasterStatsError("offset should be a 4-element tuple")
+    x1, y1, xsize, ysize = offsets
+    return ((y1, y1 + ysize), (x1, x1 + xsize))
+
+
+def raster_extent_as_bounds(gt, shape):
     x1 = gt[0]
-    x2 = gt[0] + (gt[1] * size[0])
-    y1 = gt[3] + (gt[5] * size[1])
+    x2 = gt[0] + (gt[1] * shape[0])
+    y1 = gt[3] + (gt[5] * shape[1])
     y2 = gt[3]
     return (x1, y1, x2, y2)
 
@@ -225,3 +237,15 @@ def get_features(vectors, layer_num=0):
         strategy = "iter_geo"
 
     return features_iter, strategy, spatial_ref
+
+
+def rasterize_geom(geom, src_offset, new_gt, all_touched):
+    from rasterio import features
+    geoms = [(geom, 1)]
+    rv_array = features.rasterize(
+        geoms,
+        out_shape=(src_offset[3], src_offset[2]),
+        transform=new_gt,
+        fill=0,
+        all_touched=all_touched)
+    return rv_array

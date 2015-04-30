@@ -22,7 +22,7 @@ class PyTest(TestCommand):
 
 setup(
     name="rasterstats",
-    version="0.6.2",
+    version='0.7.0',
     author="Matthew Perry",
     author_email="perrygeo@gmail.com",
     description=("Summarize geospatial raster datasets based on vector geometries"),
@@ -36,6 +36,7 @@ setup(
         'shapely',
         'numpy',
         'GDAL',
+        'rasterio'
     ],
     tests_require=['pytest', 'pyshp>=1.1.4', 'coverage'],
     cmdclass = {'test': PyTest},

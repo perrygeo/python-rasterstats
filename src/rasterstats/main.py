@@ -1,22 +1,13 @@
 # -*- coding: utf-8 -*-
 import sys
-from shapely.geometry import shape, box, MultiPolygon
 import numpy as np
-from collections import Counter
-from osgeo import gdal, ogr
-from osgeo.gdalconst import GA_ReadOnly
-from .utils import bbox_to_pixel_offsets, shapely_to_ogr_type, get_features, \
-                   RasterStatsError, get_percentile
 import warnings
+from shapely.geometry import shape, box, MultiPolygon
+from collections import Counter
+from .utils import bbox_to_pixel_offsets, rasterize_geom, get_features, \
+                   RasterStatsError, get_percentile, pixel_offsets_to_window, \
+                   raster_extent_as_bounds
 
-try:
-    if ogr.GetUseExceptions() != 1:
-        ogr.UseExceptions()
-except(AttributeError):
-    warnings.warn(
-        "This version of GDAL/OGR does not support python Exceptions",
-        Warning
-    )
 
 DEFAULT_STATS = ['count', 'min', 'max', 'mean']
 VALID_STATS = DEFAULT_STATS + \
@@ -141,45 +132,36 @@ def zonal_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
 
         if nodata_value:
             raise NotImplementedError("ndarrays don't support 'nodata_value'")
-
     else:
         raster_type = 'gdal'
-        rds = gdal.Open(raster, GA_ReadOnly)
-        if not rds:
-            raise RasterStatsError("Cannot open %r as GDAL raster" % raster)
-        rb = rds.GetRasterBand(band_num)
-        rgt = rds.GetGeoTransform()
-        rsize = (rds.RasterXSize, rds.RasterYSize)
+
+        import rasterio
+        with rasterio.drivers():
+            with rasterio.open(raster, 'r') as src:
+                rgt = src.transform
+                rsize = (src.width, src.height)
+                rnodata = src.nodata
 
         if nodata_value is not None:
+            # override with specified nodata
             nodata_value = float(nodata_value)
-            rb.SetNoDataValue(nodata_value)
         else:
-            nodata_value = rb.GetNoDataValue()
+            nodata_value = rnodata
 
     features_iter, strategy, spatial_ref = get_features(vectors, layer_num)
 
     if global_src_extent and raster_type == 'gdal':
         # create an in-memory numpy array of the source raster data
-        # covering the whole extent of the vector layer
-        if strategy != "ogr":
-            raise RasterStatsError("global_src_extent requires OGR vector")
-
-        # find extent of ALL features
-        ds = ogr.Open(vectors)
-        layer = ds.GetLayer(layer_num)
-        ex = layer.GetExtent()
-        # transform from OGR extent to xmin, ymin, xmax, ymax
-        layer_extent = (ex[0], ex[2], ex[1], ex[3])
-
-        global_src_offset = bbox_to_pixel_offsets(rgt, layer_extent, rsize)
-        global_src_array = rb.ReadAsArray(*global_src_offset)
+        extent = raster_extent_as_bounds(rgt, rsize)
+        global_src_offset = bbox_to_pixel_offsets(rgt, extent, rsize)
+        window = pixel_offsets_to_window(global_src_offset)
+        with rasterio.drivers():
+            with rasterio.open(raster, 'r') as src:
+                global_src_array = src.read(
+                    band_num, window=window, masked=False)
     elif global_src_extent and raster_type == 'ndarray':
         global_src_offset = (0, 0, raster.shape[0], raster.shape[1])
         global_src_array = raster
-
-    mem_drv = ogr.GetDriverByName('Memory')
-    driver = gdal.GetDriverByName('MEM')
 
     results = []
 
@@ -197,8 +179,6 @@ def zonal_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
                                 for pt in geom.geoms])
         elif geom.type == 'Point':
             geom = box(*(geom.buffer(buff).bounds))
-
-        ogr_geom_type = shapely_to_ogr_type(geom.type)
 
         geom_bounds = list(geom.bounds)
 
@@ -221,45 +201,22 @@ def zonal_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
         else:
             if not global_src_extent:
                 # use feature's source extent and read directly from source
-                # fastest option when you have fast disks and fast raster
-                # advantage: each feature uses the smallest raster chunk
-                # disadvantage: lots of disk reads on the source raster
-                src_array = rb.ReadAsArray(*src_offset)
+                window = pixel_offsets_to_window(src_offset)
+                with rasterio.drivers():
+                    with rasterio.open(raster, 'r') as src:
+                        src_array = src.read(
+                            band_num, window=window, masked=False)
             else:
-                # derive array from global source extent array
-                # useful *only* when disk IO or raster format inefficiencies
-                # are your limiting factor
-                # advantage: reads raster data in one pass before loop
-                # disadvantage: large vector extents combined with big rasters
-                #               require lotsa memory
+                # subset feature array from global source extent array
                 xa = src_offset[0] - global_src_offset[0]
                 ya = src_offset[1] - global_src_offset[1]
                 xb = xa + src_offset[2]
                 yb = ya + src_offset[3]
                 src_array = global_src_array[ya:yb, xa:xb]
 
-            # Create a temporary vector layer in memory
-            mem_ds = mem_drv.CreateDataSource('out')
-            mem_layer = mem_ds.CreateLayer('out', spatial_ref, ogr_geom_type)
-            ogr_feature = ogr.Feature(feature_def=mem_layer.GetLayerDefn())
-            ogr_geom = ogr.CreateGeometryFromWkt(geom.wkt)
-            ogr_feature.SetGeometryDirectly(ogr_geom)
-            mem_layer.CreateFeature(ogr_feature)
-
-            # Rasterize it
-            rvds = driver.Create('rvds', src_offset[2], src_offset[3], 1, gdal.GDT_Byte)
-            rvds.SetGeoTransform(new_gt)
-
-            if all_touched:
-                gdal.RasterizeLayer(rvds, [1], mem_layer, None, None,
-                                    burn_values=[1],
-                                    options=['ALL_TOUCHED=True'])
-            else:
-                gdal.RasterizeLayer(rvds, [1], mem_layer, None, None,
-                                    burn_values=[1],
-                                    options=['ALL_TOUCHED=False'])
-
-            rv_array = rvds.ReadAsArray()
+            # create ndarray of rasterized geometry
+            rv_array = rasterize_geom(geom, src_offset, new_gt, all_touched)
+            assert rv_array.shape == src_array.shape
 
             # Mask the source data array with our current feature
             # we take the logical_not to flip 0<->1 for the correct mask effect
