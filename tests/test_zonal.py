@@ -62,7 +62,7 @@ def test_nonsense():
     polygons = os.path.join(DATA, 'polygons.shp')
     with pytest.raises(RasterStatsError):
         zonal_stats("blaghrlargh", raster)
-    with pytest.raises(RasterStatsError):
+    with pytest.raises(IOError):
         zonal_stats(polygons, "blercherlerch")
     with pytest.raises(RasterStatsError):
         zonal_stats(["blaghrlargh", ], raster)
