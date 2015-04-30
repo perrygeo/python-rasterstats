@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 import sys
-from shapely.geometry import shape, box, MultiPolygon
 import numpy as np
+import warnings
+from shapely.geometry import shape, box, MultiPolygon
 from collections import Counter
 from .utils import bbox_to_pixel_offsets, rasterize_geom, get_features, \
                    RasterStatsError, get_percentile, pixel_offsets_to_window, \
                    raster_extent_as_bounds
-import warnings
+
 
 DEFAULT_STATS = ['count', 'min', 'max', 'mean']
 VALID_STATS = DEFAULT_STATS + \
