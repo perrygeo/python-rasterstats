@@ -8,45 +8,46 @@ class OGRError(Exception):
     pass
 
 
-def bbox_to_pixel_offsets(gt, bbox, rsize):
+def bbox_to_pixel_offsets(gt, bbox, rshape):
     originX = gt[0]
     originY = gt[3]
     pixel_width = gt[1]
     pixel_height = gt[5]
 
-    x1 = int(math.floor((bbox[0] - originX) / pixel_width))
-    x2 = int(math.ceil((bbox[2] - originX) / pixel_width))
+    col1 = int(math.floor((bbox[0] - originX) / pixel_width))
+    col2 = int(math.ceil((bbox[2] - originX) / pixel_width))
 
-    y1 = int(math.floor((bbox[3] - originY) / pixel_height))
-    y2 = int(math.ceil((bbox[1] - originY) / pixel_height))
+    row1 = int(math.floor((bbox[3] - originY) / pixel_height))
+    row2 = int(math.ceil((bbox[1] - originY) / pixel_height))
 
     # "Clip" the geometry bounds to the overall raster bounding box
     # This should avoid any rasterIO errors for partially overlapping polys
-    if x1 < 0:
-        x1 = 0
-    if x2 > rsize[0]:
-        x2 = rsize[0]
-    if y1 < 0:
-        y1 = 0
-    if y2 > rsize[1]:
-        y2 = rsize[1]
+    if col1 < 0:
+        col1 = 0
+    if col2 > rshape[0]:
+        col2 = rshape[0]
+    if row1 < 0:
+        row1 = 0
+    if row2 > rshape[1]:
+        row2 = rshape[1]
 
-    xsize = x2 - x1
-    ysize = y2 - y1
+    cols = col2 - col1
+    rows = row2 - row1
 
-    return (x1, y1, xsize, ysize)
+    return (col1, row1, cols, rows)
 
 
 def pixel_offsets_to_window(offsets):
     """
-    Convert (x1, y1, xsize, ysize)
+    Convert (col1, row1, cols, rows)
     to a rasterio-compatible window
     https://github.com/mapbox/rasterio/blob/master/docs/windowed-rw.rst#windows
     """
     if len(offsets) != 4:
         raise ValueError("offset should be a 4-element tuple")
     x1, y1, xsize, ysize = offsets
-    return ((y1, y1 + ysize), (x1, x1 + xsize))
+    col1, row1, cols, rows = offsets
+    return ((row1, row1 + rows), (col1, col1 + cols))
 
 
 def raster_extent_as_bounds(gt, shape):

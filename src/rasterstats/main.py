@@ -119,7 +119,7 @@ def zonal_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
             raise ValueError("Must provide the 'transform' kwarg when "
                              "using ndarrays as src raster")
         rgt = transform
-        rsize = (raster.shape[1], raster.shape[0])
+        rshape = (raster.shape[1], raster.shape[0])
 
         # global_src_extent is implicitly turned on, array is already in memory
         if not global_src_extent:
@@ -134,7 +134,7 @@ def zonal_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
         with rasterio.drivers():
             with rasterio.open(raster, 'r') as src:
                 rgt = src.transform
-                rsize = (src.width, src.height)
+                rshape = (src.width, src.height)
                 rnodata = src.nodata
 
         if nodata_value is not None:
@@ -147,8 +147,8 @@ def zonal_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
 
     if global_src_extent and raster_type == 'gdal':
         # create an in-memory numpy array of the source raster data
-        extent = raster_extent_as_bounds(rgt, rsize)
-        global_src_offset = bbox_to_pixel_offsets(rgt, extent, rsize)
+        extent = raster_extent_as_bounds(rgt, rshape)
+        global_src_offset = bbox_to_pixel_offsets(rgt, extent, rshape)
         window = pixel_offsets_to_window(global_src_offset)
         with rasterio.drivers():
             with rasterio.open(raster, 'r') as src:
@@ -178,7 +178,7 @@ def zonal_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
         geom_bounds = list(geom.bounds)
 
         # calculate new pixel coordinates of the feature subset
-        src_offset = bbox_to_pixel_offsets(rgt, geom_bounds, rsize)
+        src_offset = bbox_to_pixel_offsets(rgt, geom_bounds, rshape)
 
         new_gt = (
             (rgt[0] + (src_offset[0] * rgt[1])),
