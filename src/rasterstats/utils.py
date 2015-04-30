@@ -4,10 +4,6 @@ import json
 import math
 
 
-class RasterStatsError(Exception):
-    pass
-
-
 class OGRError(Exception):
     pass
 
@@ -48,7 +44,7 @@ def pixel_offsets_to_window(offsets):
     https://github.com/mapbox/rasterio/blob/master/docs/windowed-rw.rst#windows
     """
     if len(offsets) != 4:
-        raise RasterStatsError("offset should be a 4-element tuple")
+        raise ValueError("offset should be a 4-element tuple")
     x1, y1, xsize, ysize = offsets
     return ((y1, y1 + ysize), (x1, x1 + xsize))
 
@@ -63,13 +59,13 @@ def raster_extent_as_bounds(gt, shape):
 
 def get_percentile(stat):
     if not stat.startswith('percentile_'):
-        raise ValueError
+        raise ValueError("must start with 'percentile_'")
     qstr = stat.replace("percentile_", '')
     q = float(qstr)
     if q > 100.0:
-        raise ValueError
+        raise ValueError('percentiles must be <= 100')
     if q < 0.0:
-        raise ValueError
+        raise ValueError('percentiles must be >= 0')
     return q
 
 
@@ -158,7 +154,7 @@ def parse_geo(thing):
     except (ValueError, AssertionError, TypeError):
         pass
 
-    raise RasterStatsError("Can't parse %s as a geo-like object" % thing)
+    raise ValueError("Can't parse %s as a geo-like object" % thing)
 
 
 def get_ogr_ds(vds):

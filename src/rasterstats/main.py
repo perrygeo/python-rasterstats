@@ -5,7 +5,7 @@ import warnings
 from shapely.geometry import shape, box, MultiPolygon
 from collections import Counter
 from .utils import bbox_to_pixel_offsets, rasterize_geom, get_features, \
-                   RasterStatsError, get_percentile, pixel_offsets_to_window, \
+                   get_percentile, pixel_offsets_to_window, \
                    raster_extent_as_bounds
 
 
@@ -99,14 +99,9 @@ def zonal_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
                 stats = stats.split()
     for x in stats:
         if x.startswith("percentile_"):
-            try:
-                get_percentile(x)
-            except ValueError:
-                raise RasterStatsError(
-                    "Stat `%s` is not valid; must use"
-                    " `percentile_` followed by a float >= 0 or <= 100")
+            get_percentile(x)
         elif x not in VALID_STATS:
-            raise RasterStatsError(
+            raise ValueError(
                 "Stat `%s` not valid; "
                 "must be one of \n %r" % (x, VALID_STATS))
 
@@ -121,8 +116,8 @@ def zonal_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
 
         # must have transform arg
         if not transform:
-            raise RasterStatsError("Must provide the 'transform' kwarg when "
-                                   "using ndarrays as src raster")
+            raise ValueError("Must provide the 'transform' kwarg when "
+                             "using ndarrays as src raster")
         rgt = transform
         rsize = (raster.shape[1], raster.shape[0])
 
