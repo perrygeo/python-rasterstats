@@ -140,14 +140,13 @@ def zonal_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
             with rasterio.open(raster, 'r') as src:
                 rgt = src.transform
                 rsize = (src.width, src.height)
+                rnodata = src.nodata
 
         if nodata_value is not None:
-            pass  # TODO, just set
-            # nodata_value = float(nodata_value)
-            # rb.SetNoDataValue(nodata_value)
+            # override with specified nodata
+            nodata_value = float(nodata_value)
         else:
-            pass  # TODO
-            # nodata_value = rb.GetNoDataValue()
+            nodata_value = rnodata
 
     features_iter, strategy, spatial_ref = get_features(vectors, layer_num)
 
