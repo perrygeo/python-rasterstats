@@ -34,7 +34,7 @@ env:
     fi
 install:
   # See https://gist.github.com/sgillies/f7bfff349a676cffb1ef
-  - conda create --yes -n env_name -c PinguCarsti python=$TRAVIS_PYTHON_VERSION pip cython numpy matplotlib pandas gdal gdal-data
+  - conda create --yes -n env_name -c PinguCarsti python=$TRAVIS_PYTHON_VERSION pip cython numpy matplotlib pandas gdal gdal-data scipy
   - source activate env_name
   - GDAL_CONFIG=`which gdal-config` pip install rasterio
   - if [ ${TRAVIS_PYTHON_VERSION:0:1} == "2" ]; then conda install --yes imaging; else pip install pillow; fi
