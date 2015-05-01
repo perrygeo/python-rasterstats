@@ -88,7 +88,6 @@ def zonal_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
         Its keys include `__fid__` (the geometry feature id)
         and each of the `stats` requested.
     """
-
     if not stats:
         if not categorical:
             stats = DEFAULT_STATS
@@ -233,7 +232,7 @@ def zonal_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
             )
 
             if run_count:
-                pixel_count = Counter(masked.compressed())
+                pixel_count = Counter(masked.compressed().tolist())
 
             if categorical:
                 feature_stats = dict(pixel_count)
