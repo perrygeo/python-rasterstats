@@ -257,12 +257,12 @@ def zonal_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
                 feature_stats['median'] = float(np.median(masked.compressed()))
             if 'majority' in stats:
                 try:
-                    feature_stats['majority'] = pixel_count.most_common(1)[0][0]
+                    feature_stats['majority'] = float(pixel_count.most_common(1)[0][0])
                 except IndexError:
                     feature_stats['majority'] = None
             if 'minority' in stats:
                 try:
-                    feature_stats['minority'] = pixel_count.most_common()[-1][0]
+                    feature_stats['minority'] = float(pixel_count.most_common()[-1][0])
                 except IndexError:
                     feature_stats['minority'] = None
             if 'unique' in stats:
