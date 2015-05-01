@@ -2,6 +2,8 @@
 from __future__ import unicode_literals
 import json
 import math
+from rasterio import features
+from affine import Affine
 
 
 class OGRError(Exception):
@@ -237,12 +239,12 @@ def get_features(vectors, layer_num=0):
 
 
 def rasterize_geom(geom, src_offset, new_gt, all_touched):
-    from rasterio import features
     geoms = [(geom, 1)]
+    affinetrans = Affine.from_gdal(*new_gt)
     rv_array = features.rasterize(
         geoms,
         out_shape=(src_offset[3], src_offset[2]),
-        transform=new_gt,
+        transform=affinetrans,
         fill=0,
         all_touched=all_touched)
     return rv_array
