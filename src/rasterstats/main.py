@@ -112,6 +112,7 @@ def zonal_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
             opt_georaster = True
         except:
             opt_georaster = False
+            warnings.warn('You requested GeoRasters, but do not have it installed. Please install the package if you want to use this feature.')
 
     run_count = False
     if categorical or 'majority' in stats or 'minority' in stats or \
