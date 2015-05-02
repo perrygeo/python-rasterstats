@@ -2,6 +2,7 @@
 import os
 import pytest
 import shapefile
+import simplejson
 import json
 import sys
 import numpy as np
@@ -529,11 +530,28 @@ def test_percentile_bad():
     with pytest.raises(ValueError):
         zonal_stats(polygons, raster, stats="percentile_101")
 
+
 def test_mini_raster2():
     from geopandas import GeoDataFrame
     polygons = os.path.join(DATA, 'polygons.shp')
     df = GeoDataFrame.from_file(polygons)
-    stats = zonal_stats(df.geometry, raster, raster_out=True, opt_georaster=True)
-    stats2=zonal_stats(df.geometry, stats[0]['mini_raster'].raster.data, raster_out=True, 
-                        transform=stats[0]['mini_raster'].geot, opt_georaster=True)
-    assert (stats[0]['mini_raster'].raster == stats2[0]['mini_raster'].raster).sum()==stats[0]['count']
+    stats = zonal_stats(df.geometry, raster, raster_out=True,
+                        opt_georaster=True)
+    stats2 = zonal_stats(df.geometry, stats[0]['mini_raster'].raster.data,
+                         raster_out=True,
+                         transform=stats[0]['mini_raster'].geot,
+                         opt_georaster=True)
+    assert (stats[0]['mini_raster'].raster ==
+            stats2[0]['mini_raster'].raster).sum() == stats[0]['count']
+
+
+def test_json_serializable():
+    polygons = os.path.join(DATA, 'polygons.shp')
+    stats = zonal_stats(polygons, raster,
+                        stats=VALID_STATS + ["percentile_90"],
+                        categorical=True)
+    try:
+        json.dumps(stats)
+        simplejson.dumps(stats)
+    except TypeError:
+        pytest.fail("zonal_stats returned a list that wasn't JSON-serializable")
