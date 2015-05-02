@@ -3,8 +3,6 @@ rasterstats
 
 |BuildStatus|_
 |CoverageStatus|_
-|PyPiVersion|_
-|PyPiDownloads|_
 
 The ``rasterstats`` python module provides a fast and flexible
 tool to summarize geospatial raster datasets based on vector geometries
@@ -114,7 +112,6 @@ You can also use a percentile statistic by specifying
 
 User-defined Statistics
 ^^^^^^^^^^^^^^^^^^^^^^^
-*New in 0.6*.
 You can define your own aggregate functions using the ``add_stats`` argument.
 This is a dictionary with the name(s) of your statistic as keys and the function(s)
 as values. For example, to reimplement the `mean` statistic::
@@ -240,8 +237,3 @@ Find a bug? Report it via github issues by providing
 .. |CoverageStatus| image:: https://coveralls.io/repos/perrygeo/python-raster-stats/badge.png
 .. _CoverageStatus: https://coveralls.io/r/perrygeo/python-raster-stats
 
-.. |PyPiVersion| image:: https://pypip.in/v/rasterstats/badge.png
-.. _PyPiVersion: http://pypi.python.org/pypi/rasterstats
-
-.. |PyPiDownloads| image:: https://pypip.in/d/rasterstats/badge.png
-.. _PyPiDownloads: http://pypi.python.org/pypi/rasterstats
