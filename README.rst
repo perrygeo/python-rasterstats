@@ -1,14 +1,14 @@
 rasterstats
 ===========
 
-|BuildStatus|_ 
+|BuildStatus|_
 |CoverageStatus|_
 |PyPiVersion|_
 |PyPiDownloads|_
 
 The ``rasterstats`` python module provides a fast and flexible
 tool to summarize geospatial raster datasets based on vector geometries
-(i.e. zonal statistics). 
+(i.e. zonal statistics).
 
 -  Raster data support
 
@@ -19,7 +19,7 @@ tool to summarize geospatial raster datasets based on vector geometries
 
    -  Points, Lines, Polygon and Multi-\* geometries
    -  Flexible input formats
-   
+
       -  Any vector data source supported by OGR
       -  Python objects that are geojson-like mappings or support the `geo\_interface <https://gist.github.com/sgillies/2217756>`_
       -  Well-Known Text/Binary (WKT/WKB) geometries
@@ -31,12 +31,12 @@ Install
 
 Using ubuntu 12.04::
 
-   sudo apt-get install python-numpy python-gdal 
+   sudo apt-get install python-numpy python-gdal
    pip install rasterstats
 
 
-Example Usage
--------------
+Example Usage - Python
+------------------------
 
 Given a polygon vector layer and a digitial elevation model (DEM)
 raster, calculate the mean elevation of each polygon:
@@ -55,6 +55,23 @@ raster, calculate the mean elevation of each polygon:
 
     >>> [(f['__fid__'], f['mean']) for f in stats]
         [(1, 756.6057470703125), (2, 114.660084635416666)]
+
+
+Example Usage - Command Line
+------------------------------
+
+The ``zonalstats`` command line utility is useful for interoperating with other
+software that speaks GeoJSON. The input and output of ``zonalstats`` are both GeoJSON
+FeatureCollections with the output containing additional fields for the aggregate
+raster statistics overlapping the geometry::
+
+    # Find mean rainfall of each state
+    zonalstats states.geojson states_w_rainfall.geojson --stats="mean" -r rainfall.tif
+
+Rather than deal with with files, you can use the default input and output (stdin and stdout) to pipe data::
+
+    ogr2ogr -f GeoJSON /vsistdout/ states.shp | zonalstats -r rainfall.tif > states_w_rainfall.geojson
+
 
 Statistics
 ^^^^^^^^^^
@@ -79,27 +96,26 @@ Optionally, these statistics are also available
 
 You can specify the statistics to calculate using the ``stats`` argument::
 
-    >>> stats = zonal_stats("tests/data/polygons.shp", 
+    >>> stats = zonal_stats("tests/data/polygons.shp",
                              "tests/data/elevation.tif",
                              stats=['min', 'max', 'median', 'majority', 'sum'])
 
     >>> # also takes space-delimited string
-    >>> stats = zonal_stats("tests/data/polygons.shp", 
+    >>> stats = zonal_stats("tests/data/polygons.shp",
                              "tests/data/elevation.tif",
                              stats="min max median majority sum")
 
 
-Note that the more complex statistics may require significantly more processing so 
-performance can be impacted based on which statistics you choose to calculate.
+Note that certain statistics (majority, minority, and unique) require significantly more processing
+due to expensive counting of unique occurences for each pixel value.
 
-*New in 0.6*. 
-You can use a percentile statistic by specifying 
+You can also use a percentile statistic by specifying
 ``percentile_<q>`` where ``<q>`` can be a floating point number between 0 and 100.
 
 User-defined Statistics
 ^^^^^^^^^^^^^^^^^^^^^^^
-*New in 0.6*. 
-You can define your own aggregate functions using the ``add_stats`` argument. 
+*New in 0.6*.
+You can define your own aggregate functions using the ``add_stats`` argument.
 This is a dictionary with the name(s) of your statistic as keys and the function(s)
 as values. For example, to reimplement the `mean` statistic::
 
@@ -130,7 +146,7 @@ It integrates with other python objects that support the geo\_interface
     >>> features = (x for x in lyr if x['properties']['state'] == 'CT')
     >>> zonal_stats(features, '/path/to/elevation.tif')
     ...
-    
+
     >>> # a single object with a geo_interface
     >>> lyr = fiona.open('/path/to/vector.shp')
     >>> zonal_stats(lyr.next(), '/path/to/elevation.tif')
@@ -138,7 +154,7 @@ It integrates with other python objects that support the geo\_interface
 
 Or by using with geometries in "Well-Known" formats::
 
-    >>> zonal_stats('POINT(-124 42)', '/path/to/elevation.tif') 
+    >>> zonal_stats('POINT(-124 42)', '/path/to/elevation.tif')
     ...
 
 Feature Properties
@@ -148,10 +164,10 @@ By default, an \_\_fid\_\_ property is added to each feature's results. None of
 the other feature attributes/proprties are copied over unless ``copy_properties``
 is set to True::
 
-    >>> stats = zonal_stats("tests/data/polygons.shp", 
+    >>> stats = zonal_stats("tests/data/polygons.shp",
                              "tests/data/elevation.tif"
                              copy_properties=True)
-                             
+
     >>> stats[0].has_key('name')  # name field from original shapefile is retained
     True
 
@@ -163,22 +179,22 @@ There are two rasterization strategies to consider::
 
 1. (DEFAULT) Rasterize to the line render path or cells having a center point within the polygon
 2. The ``ALL_TOUCHED`` strategy which rasterizes the geometry according to every cell that it touches. You can enable this specifying::
-    
+
     >>> zonal_stats(..., all_touched=True)
 
-There is no right or wrong way to rasterize a vector; both approaches are valid and there are tradeoffs to consider. Using the default rasterizer may miss polygons that are smaller than your cell size. Using the ALL_TOUCHED strategy includes many cells along the edges that may not be representative of the geometry and give biased results when your geometries are much larger than your cell size.   
+There is no right or wrong way to rasterize a vector; both approaches are valid and there are tradeoffs to consider. Using the default rasterizer may miss polygons that are smaller than your cell size. Using the ALL_TOUCHED strategy includes many cells along the edges that may not be representative of the geometry and give biased results when your geometries are much larger than your cell size.
 
 
-Working with categorical rasters 
+Working with categorical rasters
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 You can treat rasters as categorical (i.e. raster values represent
 discrete classes) if you're only interested in the counts of unique pixel
 values.
 
-For example, you may have a raster vegetation dataset and want to summarize 
+For example, you may have a raster vegetation dataset and want to summarize
 vegetation by polygon. Statistics such as mean, median, sum, etc. don't make much sense in this context
-(What's the sum of ``oak + grassland``?). 
+(What's the sum of ``oak + grassland``?).
 
 The polygon below is comprised of 12 pixels of oak (raster value
 32) and 78 pixels of grassland (raster value 33)::
@@ -194,7 +210,7 @@ appropriate meaning (e.g. ``oak`` is key ``32``) for reporting.
 "Mini-Rasters"
 ^^^^^^^^^^^^^^^
 
-Internally, we create a masked raster dataset for each feature in order to 
+Internally, we create a masked raster dataset for each feature in order to
 calculate statistics. Optionally, we can include these data in the output
 of ``zonal_stats`` using the ``raster_out`` argument::
 
