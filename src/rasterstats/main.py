@@ -26,7 +26,7 @@ def raster_stats(*args, **kwargs):
 def zonal_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
                 global_src_extent=False, categorical=False, stats=None,
                 copy_properties=False, all_touched=False, transform=None,
-                affine=None, add_stats=None, raster_out=False):
+                affine=None, add_stats=None, raster_out=False, opt_georaster=False):
     """Summary statistics of a raster, broken out by vector geometries.
 
     Attributes
@@ -80,6 +80,7 @@ def zonal_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
             clipped raster (`mini_raster`)
             Geo-transform (`mini_raster_GT`)
             No Data Value (`mini_raster_NDV`)
+    opt_georaster : Whether the raster should be GeoRaster or not (Boolean, default=False)
 
     Returns
     -------
@@ -106,6 +107,14 @@ def zonal_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
             raise ValueError(
                 "Stat `%s` not valid; "
                 "must be one of \n %r" % (x, VALID_STATS))
+
+    if opt_georaster:
+        try:
+            import georasters as gr
+            opt_georaster = True
+        except:
+            opt_georaster = False
+            warnings.warn('You requested GeoRasters, but do not have it installed. Please install the package if you want to use this feature.')
 
     run_count = False
     if categorical or 'majority' in stats or 'minority' in stats or \
@@ -289,11 +298,14 @@ def zonal_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
                 for stat_name, stat_func in add_stats.items():
                         feature_stats[stat_name] = stat_func(masked)
             if raster_out:
-                masked.fill_value = nodata_value
-                masked.data[masked.mask] = nodata_value
-                feature_stats['mini_raster'] = masked
-                feature_stats['mini_raster_GT'] = new_gt
-                feature_stats['mini_raster_NDV'] = nodata_value
+                masked.fill_value=nodata_value
+                masked.data[masked.mask]=nodata_value
+                if opt_georaster:
+                    feature_stats['mini_raster'] = gr.GeoRaster(masked, new_gt, nodata_value=nodata_value, projection=spatial_ref)
+                else:
+                    feature_stats['mini_raster'] = masked
+                    feature_stats['mini_raster_GT'] = new_gt
+                    feature_stats['mini_raster_NDV'] = nodata_value
 
         if 'fid' in feat:
             # Use the fid directly,
