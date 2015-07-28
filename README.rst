@@ -172,14 +172,13 @@ is set to True::
 Rasterization Strategy
 ^^^^^^^^^^^^^^^^^^^^^^
 
-There are two rasterization strategies to consider::
+There is no right or wrong way to rasterize a vector. The default strategy is to include all pixels along the line render path (for lines), or cells where the *center point* is within the polygon (for polygons). 
 
-1. (DEFAULT) Rasterize to the line render path or cells having a center point within the polygon
-2. The ``ALL_TOUCHED`` strategy which rasterizes the geometry according to every cell that it touches. You can enable this specifying::
+Alternatively, you can opt for the ``ALL_TOUCHED`` strategy which rasterizes the geometry by including all pixels that it touches. You can enable this specifying::
 
     >>> zonal_stats(..., all_touched=True)
 
-There is no right or wrong way to rasterize a vector; both approaches are valid and there are tradeoffs to consider. Using the default rasterizer may miss polygons that are smaller than your cell size. Using the ALL_TOUCHED strategy includes many cells along the edges that may not be representative of the geometry and give biased results when your geometries are much larger than your cell size.
+Both approaches are valid and there are tradeoffs to consider. Using the default rasterizer may miss polygons that are smaller than your cell size resulting in ``None`` stats for those geometries. Using the ``ALL_TOUCHED`` strategy includes many cells along the edges that may not be representative of the geometry and may give severly biased results in some cases.
 
 
 Working with categorical rasters
