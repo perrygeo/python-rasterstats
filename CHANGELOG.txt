@@ -1,3 +1,9 @@
+0.7.2
+- install bug, completely remove GDAL dep
+
+0.7.1
+- Utility function to enable CLI with geojson features
+
 0.7.0
 - Removed dependency on osgeo.gdal
 - Added dependency on rasterio; used for rasterizing geometries and raster reads
