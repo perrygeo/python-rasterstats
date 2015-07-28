@@ -1,10 +1,11 @@
 0.7.0
-- use OGR fids if available
-- raise builtin Exceptions (IOError, etc) for general errors rather than RasterStatsError
+- Removed dependency on osgeo.gdal
+- Added dependency on rasterio; used for rasterizing geometries and raster reads
+- Optional use of the affine library to handle transformations ala rasterio
+- Use OGR fids if available
+- Raise builtin Exceptions (IOError, etc) for general errors rather than RasterStatsError
 - global_src_extent doesn’t require OGR vector layer, assumes full raster extent
-- rasterizing geometries and raster reads are now performed with rasterio, a new dependency
-- optionally use the affine library to handle transformations ala rasterio
-- remove dependency on osgeo.gdal
+- Optional support for GeoRaster output (http://github.com/ozak/georasters)
 
 0.6.2
 - fix bug in percentiles where feature covers only nodata values
