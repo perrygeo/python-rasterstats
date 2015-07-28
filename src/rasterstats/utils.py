@@ -293,7 +293,7 @@ def stats_to_csv(stats):
 
     fieldnames = sorted(list(keys), key=str)
 
-    csvwriter = csv.DictWriter(csv_fh, delimiter=',', fieldnames=fieldnames)
+    csvwriter = csv.DictWriter(csv_fh, delimiter=str(","), fieldnames=fieldnames)
     csvwriter.writerow(dict((fn, fn) for fn in fieldnames))
     for row in stats:
         csvwriter.writerow(row)
