@@ -248,3 +248,18 @@ def rasterize_geom(geom, src_offset, new_gt, all_touched):
         fill=0,
         all_touched=all_touched)
     return rv_array
+
+
+def combine_features_results(features, results, prefix):
+    """
+    Given a list of geojson features and a list of zonal stats results
+    Append the zonal stats to the feature's properties and yield the feature
+    """
+    assert len(features) == len(results)
+    for feat, res in zip(features, results):
+        for key, val in res.items():
+            if key == "__fid__":
+                continue
+            prefixed_key = "{}{}".format(prefix, key)
+            feat['properties'][prefixed_key] = val
+        yield feat
