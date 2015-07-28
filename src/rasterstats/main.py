@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import sys
 import numpy as np
 import warnings
 import rasterio
@@ -320,27 +319,3 @@ def zonal_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
 
     return results
 
-
-def stats_to_csv(stats):
-    if sys.version_info[0] >= 3:
-        from io import StringIO as IO
-    else:
-        from cStringIO import StringIO as IO
-    import csv
-
-    csv_fh = IO()
-
-    keys = set()
-    for stat in stats:
-        for key in list(stat.keys()):
-            keys.add(key)
-
-    fieldnames = sorted(list(keys), key=str)
-
-    csvwriter = csv.DictWriter(csv_fh, delimiter=',', fieldnames=fieldnames)
-    csvwriter.writerow(dict((fn, fn) for fn in fieldnames))
-    for row in stats:
-        csvwriter.writerow(row)
-    contents = csv_fh.getvalue()
-    csv_fh.close()
-    return contents

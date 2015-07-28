@@ -2,6 +2,7 @@
 from __future__ import unicode_literals
 import json
 import math
+import sys
 from rasterio import features
 from affine import Affine
 
@@ -250,16 +251,52 @@ def rasterize_geom(geom, src_offset, new_gt, all_touched):
     return rv_array
 
 
-def combine_features_results(features, results, prefix):
+def is_nan(x):
+    return isinstance(x, float) and math.isnan(x)
+
+
+def combine_features_results(features, results, prefix, nan_to_None=True):
     """
     Given a list of geojson features and a list of zonal stats results
     Append the zonal stats to the feature's properties and yield the feature
     """
+    # TODO call this join instead of combine?
     assert len(features) == len(results)
     for feat, res in zip(features, results):
         for key, val in res.items():
             if key == "__fid__":
                 continue
             prefixed_key = "{}{}".format(prefix, key)
+
+            # TODO Not certain if this is the correct place for this functionality
+            # maybe belongs in zonal_stats?
+            if nan_to_None and is_nan(val):
+                val = None
+
             feat['properties'][prefixed_key] = val
         yield feat
+
+
+def stats_to_csv(stats):
+    if sys.version_info[0] >= 3:
+        from io import StringIO as IO
+    else:
+        from cStringIO import StringIO as IO
+    import csv
+
+    csv_fh = IO()
+
+    keys = set()
+    for stat in stats:
+        for key in list(stat.keys()):
+            keys.add(key)
+
+    fieldnames = sorted(list(keys), key=str)
+
+    csvwriter = csv.DictWriter(csv_fh, delimiter=',', fieldnames=fieldnames)
+    csvwriter.writerow(dict((fn, fn) for fn in fieldnames))
+    for row in stats:
+        csvwriter.writerow(row)
+    contents = csv_fh.getvalue()
+    csv_fh.close()
+    return contents
