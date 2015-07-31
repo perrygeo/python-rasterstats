@@ -72,6 +72,3 @@ def zonalstats(input_geojson, raster, output_geojson, all_touched, band, categor
     output_geojson.write(json.dumps(feature_collection, indent=indent))
     output_geojson.write("\n")
 
-
-if __name__ == '__main__':
-    zonalstats()
