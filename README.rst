@@ -74,7 +74,7 @@ Or use stdin/stdout to pipe geojson data between processes
 
     $ ogr2ogr -f GeoJSON /vsistdout/ countries.shp | rio zonalstats -r srtm5k.tif | geojsonio
 
-For full usage, see ``rio zonalstats --help``
+For more comprehensive documentation of the command line interface, see `the docs <https://github.com/perrygeo/python-raster-stats/blob/master/docs/cli.rst>`_.
 
 Statistics
 ^^^^^^^^^^

@@ -139,14 +139,15 @@ The great part about working at the command line is the ability to pipe the data
 
 In this example, we take our original country data and
 
-    * filter the features to limit the analysis to the Latin America & Caribbean region (using `TurfJS <http://turfjs.org>`_ written in javascript)
-    * flatten the multipart geometries so I can analyze each island individually (using `geojson-flatten <https://github.com/mapbox/geojson-flatten>`_ written in javascript)
-    * run zonal statistics against the raster elevation data (using ``rio zonalstats`` written in python)
-    * save the geojson locally (using the `tee` unix command)
-    * and finally display the data in an HTML interface (using the geojson.io web service)
+* filter the features to limit the analysis to the Latin America & Caribbean region (using `TurfJS <http://turfjs.org>`_ written in javascript)
+* flatten the multipart geometries so I can analyze each island individually (using `geojson-flatten <https://github.com/mapbox/geojson-flatten>`_ written in javascript)
+* run zonal statistics against the raster elevation data (using ``rio zonalstats`` written in python)
+* save the geojson locally (using the `tee` unix command)
+* and finally display the data in an HTML interface (using the geojson.io web service)
 
 To implement this as a shell script::
 
+    #!/bin/bash
     countries="countries.shp"
     dem="dem.tif"
     output="elevation_centralsouthamerica.geojson"
@@ -162,11 +163,10 @@ And the result: a geojson-based web map of South & Central American islands cont
 
 .. image:: bahamas.png
 
-For analysts, if you've ever performed similar work in a Desktop GIS environment, you might imagine the pages of screenshots and elaborate instructions necessary to document a process like this. Scripting on the command line allows you to write your workflows in a concise, precise, sharable, composable, repeatable, self-documenting and automated way.
+For analysts, if you've ever performed similar work in a Desktop GIS environment, you might imagine the pages of screenshots and elaborate instructions necessary to document a process like this. By contrast, our script is only 10 lines and is nearly as easy to understand as our narrative description (if just a bit more terse). Scripting on the command line also means that your workflows are now sharable in version control systems, repeatable and automated.
 
-For developers, each tool in the pipeline needs only concern itself with doing one thing well in the language of your choice; a truly modular system which avoids the pitfalls of monolithic solutions.
+For developers, each tool in the pipeline needs only concern itself with doing one thing well in the language of your choice; a truly modular system composed of smaller parts which help to avoid the pitfalls of monolithic solutions.
 
 It is now possible to do many (though not all) common GIS data analyses at the shell using open source software.
 The ecosystem of command line spatial data processing tools (particularly in the JavaScript and Python communities) are constantly evolving and fairly soon I suspect that all but the most specialized spatial tools will be readily available and easily integrated at the shell, just a ``pip install`` or ``npm install`` away.
-
 
