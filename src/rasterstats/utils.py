@@ -258,9 +258,8 @@ def is_nan(x):
 def combine_features_results(features, results, prefix, nan_to_None=True):
     """
     Given a list of geojson features and a list of zonal stats results
-    Append the zonal stats to the feature's properties and yield the feature
+    Append the zonal stats to the feature's properties and yield a new feature
     """
-    # TODO call this join instead of combine?
     assert len(features) == len(results)
     for feat, res in zip(features, results):
         for key, val in res.items():
@@ -268,8 +267,7 @@ def combine_features_results(features, results, prefix, nan_to_None=True):
                 continue
             prefixed_key = "{}{}".format(prefix, key)
 
-            # TODO Not certain if this is the correct place for this functionality
-            # maybe belongs in zonal_stats?
+            # normalize
             if nan_to_None and is_nan(val):
                 val = None
 
