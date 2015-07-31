@@ -13,7 +13,7 @@ version = 0.1
 
 @click.command(context_settings=SETTINGS)
 @click.argument('input-geojson', type=click.File('rb'), default='-')
-@click.argument('output-geojson', type=click.File('wb'), default='-')
+@click.argument('output-geojson', type=click.File('w'), default='-')
 @click.version_option(version=version, message='%(version)s')
 @click.option('--raster', '-r', required=True, type=click.Path(exists=True))
 @click.option('--all-touched/--no-all-touched', default=False)
