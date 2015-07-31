@@ -58,18 +58,23 @@ raster, calculate the mean elevation of each polygon:
 Example Usage - Command Line
 ------------------------------
 
-The ``zonalstats`` command line utility is useful for interoperating with other
-software that speaks GeoJSON. The input and output of ``zonalstats`` are both GeoJSON
-FeatureCollections with the output containing additional fields for the aggregate
-raster statistics overlapping the geometry::
+``rasterstats`` includes a `rasterio plugin <https://github.com/mapbox/rasterio/blob/master/docs/cli.rst#rio-plugins>`_ 
+for performing zonal statistics at the command line. 
+Given a raster and geojson input, the ``rio zonalstats`` command will summarize the raster cell values for all features and output to geojson. In the resulting GeoJSON FeatureCollection, each Feature will have additional properties containing summary statistics of the overlapping raster cells. 
 
-    # Find mean rainfall of each state
-    zonalstats states.geojson states_w_rainfall.geojson --stats="mean" -r rainfall.tif
+For example, you could summarize the elevation (``srtm5k.tif``) by country (``countries.json``) using the following command:
 
-Rather than deal with with files, you can use the default input and output (stdin and stdout) to pipe data::
+.. code-block:: console
 
-    ogr2ogr -f GeoJSON /vsistdout/ states.shp | zonalstats -r rainfall.tif > states_w_rainfall.geojson
+    $ rio zonalstats -r srtm5k.tif countries.json countries_with_elevation.geojson
 
+Or use stdin/stdout to pipe geojson data between processes 
+
+.. code-block:: console
+
+    $ ogr2ogr -f GeoJSON /vsistdout/ countries.shp | rio zonalstats -r srtm5k.tif | geojsonio
+
+For full usage, see ``rio zonalstats --help``
 
 Statistics
 ^^^^^^^^^^
