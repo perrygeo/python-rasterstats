@@ -219,9 +219,10 @@ of ``zonal_stats`` using the ``raster_out`` argument::
 
 Which gives us three additional keys for each feature::
 
-    ``mini_raster`` : Numpy ndarray
-    ``mini_raster_GT`` : Six-tuple defining the geotransform (GDAL ordering)
-    ``mini_raster_NDV`` : Nodata value in the returned array
+   mini_raster     | Numpy ndarray                                       
+   mini_raster_GT  | Six-tuple defining the geotransform (GDAL ordering) 
+   mini_raster_NDV | Nodata value in the returned array                  
+
 
 Keep in mind that having ndarrays in your stats dictionary means it is more
 difficult to serialize to json and other text formats.
@@ -235,8 +236,8 @@ Find a bug? Report it via github issues by providing
 - python code or command to reproduce the error
 - information on your environment: versions of python, gdal and numpy and system memory
 
-.. |BuildStatus| image:: https://api.travis-ci.org/perrygeo/python-raster-stats.png
-.. _BuildStatus: https://travis-ci.org/perrygeo/python-raster-stats
+.. |BuildStatus| image:: https://api.travis-ci.org/perrygeo/python-rasterstats.png
+.. _BuildStatus: https://travis-ci.org/perrygeo/python-rasterstats
 
 .. |CoverageStatus| image:: https://coveralls.io/repos/perrygeo/python-raster-stats/badge.png
 .. _CoverageStatus: https://coveralls.io/r/perrygeo/python-raster-stats
