@@ -261,7 +261,7 @@ def test_ogr_geojson_nogeom():
     feat.SetGeometryDirectly(None)
     res = feature_to_geojson(feat)
     assert res['type'] == 'Feature'
-    assert res['geometry'] == None
+    assert res['geometry'] is None
 
 
 def test_specify_stats_list():
@@ -343,7 +343,7 @@ def test_nodata_value():
     categorical_raster = os.path.join(DATA, 'slope_classes.tif')
     stats = zonal_stats(polygons, categorical_raster, stats="*",
                         categorical=True, nodata_value=1.0)
-    assert stats[0]['majority'] == None
+    assert stats[0]['majority'] is None
     assert stats[0]['count'] == 0  # no pixels; they're all null
     assert stats[1]['minority'] == 2.0
     assert stats[1]['count'] == 49  # used to be 50 if we allowed 1.0
