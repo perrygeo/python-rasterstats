@@ -7,13 +7,10 @@ import json
 import sys
 import numpy as np
 import rasterio
-from osgeo import ogr
 from rasterstats import zonal_stats, raster_stats
 from rasterstats.main import VALID_STATS
-from rasterstats.utils import (parse_geo, get_ogr_ds,
-                               OGRError, feature_to_geojson, stats_to_csv,
-                               bbox_to_pixel_offsets, get_percentile)
-from shapely.geometry import shape, box
+from rasterstats.utils import parse_geo, stats_to_csv, bbox_to_pixel_offsets, get_percentile
+from shapely.geometry import shape
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
@@ -228,32 +225,6 @@ def test_jsonstr():
     [244697.45179524383, 1000369.2307574936]
     ]]}'''
     assert parse_geo(jsonstr)
-
-
-def test_ogr_ds_nonstring():
-    a = box(0, 1, 2, 3)
-    with pytest.raises(OGRError):
-        get_ogr_ds(a)
-
-
-def test_ogr_geojson():
-    polygons = os.path.join(DATA, 'polygons.shp')
-    ds = ogr.Open(polygons)
-    lyr = ds.GetLayer(0)
-    feat = lyr.GetNextFeature()
-    res = feature_to_geojson(feat)
-    assert res['type'] == 'Feature'
-
-
-def test_ogr_geojson_nogeom():
-    polygons = os.path.join(DATA, 'polygons.shp')
-    ds = ogr.Open(polygons)
-    lyr = ds.GetLayer(0)
-    feat = lyr.GetNextFeature()
-    feat.SetGeometryDirectly(None)
-    res = feature_to_geojson(feat)
-    assert res['type'] == 'Feature'
-    assert res['geometry'] is None
 
 
 def test_specify_stats_list():

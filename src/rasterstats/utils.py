@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 import json
 import math
 import sys
+import fiona
 from rasterio import features
 from affine import Affine
 
@@ -72,34 +73,6 @@ def get_percentile(stat):
     return q
 
 
-def feature_to_geojson(feature):
-    """ This duplicates the feature.ExportToJson ogr method
-    but is safe across gdal versions since it was fixed only in 1.8+
-    see http://trac.osgeo.org/gdal/ticket/3870"""
-
-    geom = feature.GetGeometryRef()
-    if geom is not None:
-        geom_json_string = geom.ExportToJson()
-        geom_json_object = json.loads(geom_json_string)
-    else:
-        geom_json_object = None
-
-    output = {
-        'type': 'Feature',
-        'geometry': geom_json_object,
-        'properties': {}
-    }
-
-    fid = feature.GetFID()
-    if fid:
-        output['fid'] = fid
-
-    for key in list(feature.keys()):
-        output['properties'][key] = feature.GetField(key)
-
-    return output
-
-
 def parse_geo(thing):
     """ Given a python object, try to get a geo-json like mapping from it
     """
@@ -147,29 +120,6 @@ def parse_geo(thing):
     raise ValueError("Can't parse %s as a geo-like object" % thing)
 
 
-def get_ogr_ds(vds):
-    from osgeo import ogr
-    if not isinstance(vds, str):
-        raise OGRError("OGR cannot open %r: not a string" % vds)
-
-    ds = ogr.Open(vds)
-    if not ds:
-        raise OGRError("OGR cannot open %r" % vds)
-
-    return ds
-
-
-def ogr_records(vector, layer_num=0):
-    ds = get_ogr_ds(vector)
-    layer = ds.GetLayer(layer_num)
-    if layer.GetFeatureCount() == 0:
-        raise OGRError("No Features")
-    feature = layer.GetNextFeature()
-    while feature is not None:
-        yield feature_to_geojson(feature)
-        feature = layer.GetNextFeature()
-
-
 def geo_records(vectors):
     for vector in vectors:
         yield parse_geo(vector)
@@ -178,11 +128,18 @@ def geo_records(vectors):
 def get_features(vectors, layer_num=0):
     if isinstance(vectors, str):
         try:
-            # either an OGR layer ...
-            get_ogr_ds(vectors)
-            features_iter = ogr_records(vectors, layer_num)
-            strategy = "ogr"
-        except (OGRError, AttributeError):
+            # test it as fiona data source
+            with fiona.open(vectors, 'r') as src:
+                assert len(src) > 0
+
+            def fiona_generator(vectors):
+                with fiona.open(vectors, 'r') as src:
+                    for feature in src:
+                        yield feature
+
+            features_iter = fiona_generator(vectors)
+            strategy = 'fiona'
+        except (AssertionError, OSError):
             # ... or a single string to be parsed as wkt/wkb/json
             feat = parse_geo(vectors)
             features_iter = [feat]
