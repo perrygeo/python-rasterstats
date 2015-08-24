@@ -196,14 +196,11 @@ def geo_records(vectors):
 
 
 def get_features(vectors, layer_num=0):
-    from osgeo import osr
-    spatial_ref = osr.SpatialReference()
     if isinstance(vectors, str):
         try:
             # either an OGR layer ...
             get_ogr_ds(vectors)
             features_iter = ogr_records(vectors, layer_num)
-            spatial_ref = ogr_srs(vectors, layer_num)
             strategy = "ogr"
         except (OGRError, AttributeError):
             # ... or a single string to be parsed as wkt/wkb/json
@@ -236,7 +233,7 @@ def get_features(vectors, layer_num=0):
         features_iter = geo_records(vectors)
         strategy = "iter_geo"
 
-    return features_iter, strategy, spatial_ref
+    return features_iter, strategy
 
 
 def rasterize_geom(geom, src_offset, new_gt, all_touched):
