@@ -48,7 +48,6 @@ def pixel_offsets_to_window(offsets):
     """
     if len(offsets) != 4:
         raise ValueError("offset should be a 4-element tuple")
-    x1, y1, xsize, ysize = offsets
     col1, row1, cols, rows = offsets
     return ((row1, row1 + rows), (col1, col1 + cols))
 
