@@ -10,9 +10,9 @@ import rasterio
 from osgeo import ogr
 from rasterstats import zonal_stats, raster_stats
 from rasterstats.main import VALID_STATS
-from rasterstats.utils import shapely_to_ogr_type, parse_geo, get_ogr_ds, \
-                              OGRError, feature_to_geojson, stats_to_csv, \
-                              bbox_to_pixel_offsets, get_percentile
+from rasterstats.utils import (shapely_to_ogr_type, parse_geo, get_ogr_ds,
+                               OGRError, feature_to_geojson, stats_to_csv,
+                               bbox_to_pixel_offsets, get_percentile)
 from shapely.geometry import shape, box
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))

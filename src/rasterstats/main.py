@@ -4,9 +4,9 @@ import warnings
 import rasterio
 from shapely.geometry import shape, box, MultiPolygon
 from collections import Counter
-from .utils import bbox_to_pixel_offsets, rasterize_geom, get_features, \
-                   get_percentile, pixel_offsets_to_window, \
-                   raster_extent_as_bounds
+from .utils import (bbox_to_pixel_offsets, rasterize_geom, get_features,
+                    get_percentile, pixel_offsets_to_window,
+                    raster_extent_as_bounds)
 
 
 DEFAULT_STATS = ['count', 'min', 'max', 'mean']
@@ -309,4 +309,3 @@ def zonal_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
         results.append(feature_stats)
 
     return results
-
