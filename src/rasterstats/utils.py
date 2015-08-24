@@ -159,12 +159,6 @@ def get_ogr_ds(vds):
     return ds
 
 
-def ogr_srs(vector, layer_num):
-    ds = get_ogr_ds(vector)
-    layer = ds.GetLayer(layer_num)
-    return layer.GetSpatialRef()
-
-
 def ogr_records(vector, layer_num=0):
     ds = get_ogr_ds(vector)
     layer = ds.GetLayer(layer_num)
