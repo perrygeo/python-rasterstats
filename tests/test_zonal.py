@@ -10,7 +10,7 @@ import rasterio
 from osgeo import ogr
 from rasterstats import zonal_stats, raster_stats
 from rasterstats.main import VALID_STATS
-from rasterstats.utils import (shapely_to_ogr_type, parse_geo, get_ogr_ds,
+from rasterstats.utils import (parse_geo, get_ogr_ds,
                                OGRError, feature_to_geojson, stats_to_csv,
                                bbox_to_pixel_offsets, get_percentile)
 from shapely.geometry import shape, box
@@ -214,14 +214,6 @@ def test_categorical():
     assert len(stats) == 2
     assert stats[0][1.0] == 75
     assert 5.0 in stats[1]
-
-
-# Utils
-def test_nopoints():
-    with pytest.raises(TypeError):
-        shapely_to_ogr_type('Point')
-    with pytest.raises(TypeError):
-        shapely_to_ogr_type('MultiPoint')
 
 
 def test_jsonstr():

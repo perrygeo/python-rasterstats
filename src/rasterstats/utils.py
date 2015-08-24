@@ -100,19 +100,6 @@ def feature_to_geojson(feature):
     return output
 
 
-def shapely_to_ogr_type(shapely_type):
-    from osgeo import ogr
-    if shapely_type == "Polygon":
-        return ogr.wkbPolygon
-    elif shapely_type == "LineString":
-        return ogr.wkbLineString
-    elif shapely_type == "MultiPolygon":
-        return ogr.wkbMultiPolygon
-    elif shapely_type == "MultiLineString":
-        return ogr.wkbLineString
-    raise TypeError("shapely type %s not supported" % shapely_type)
-
-
 def parse_geo(thing):
     """ Given a python object, try to get a geo-json like mapping from it
     """
