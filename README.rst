@@ -18,8 +18,8 @@ tool to summarize geospatial raster datasets based on vector geometries
    -  Points, Lines, Polygon and Multi-\* geometries
    -  Flexible input formats
 
-      -  Any vector data source supported by OGR
-      -  Python objects that are geojson-like mappings or support the `geo\_interface <https://gist.github.com/sgillies/2217756>`_
+      -  Any vector data source supported by [fiona](http://toblerity.org/fiona/)
+      -  Python objects that are GeoJSON-like mappings or support the `geo\_interface <https://gist.github.com/sgillies/2217756>`_
       -  Well-Known Text/Binary (WKT/WKB) geometries
 -  Depends on GDAL, Shapely and numpy
 
@@ -27,10 +27,19 @@ tool to summarize geospatial raster datasets based on vector geometries
 Install
 -------
 
-Using ubuntu 12.04::
+Using Ubuntu 14.04::
 
-   sudo apt-get install python-numpy python-gdal
+   sudo apt-get install python-numpy libgdal1h gdal-bin libgdal-dev
    pip install rasterstats
+
+Or homebrew on OS X::
+
+    brew install gdal
+    pip install rasterstats
+
+For Windows, follow the `rasterio installation <https://github.com/mapbox/rasterio#windows-1>`_ and then run::
+
+    pip install rasterstats
 
 
 Example Usage - Python
