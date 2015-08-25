@@ -6,6 +6,12 @@ from rasterio import features
 from affine import Affine
 
 
+DEFAULT_STATS = ['count', 'min', 'max', 'mean']
+VALID_STATS = DEFAULT_STATS + \
+    ['sum', 'std', 'median', 'majority', 'minority', 'unique', 'range']
+#  also percentile_{q} but that is handled as special case
+
+
 def bbox_to_pixel_offsets(gt, bbox, rshape):
     originX = gt[0]
     originY = gt[3]
@@ -127,3 +133,24 @@ def stats_to_csv(stats):
     csv_fh.close()
     return contents
 
+
+def check_stats(stats, categorical):
+    if not stats:
+        if not categorical:
+            stats = DEFAULT_STATS
+        else:
+            stats = []
+    else:
+        if isinstance(stats, str):
+            if stats in ['*', 'ALL']:
+                stats = VALID_STATS
+            else:
+                stats = stats.split()
+    for x in stats:
+        if x.startswith("percentile_"):
+            get_percentile(x)
+        elif x not in VALID_STATS:
+            raise ValueError(
+                "Stat `%s` not valid; "
+                "must be one of \n %r" % (x, VALID_STATS))
+    return stats

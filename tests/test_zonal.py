@@ -8,7 +8,7 @@ import sys
 import numpy as np
 import rasterio
 from rasterstats import zonal_stats, raster_stats
-from rasterstats.main import VALID_STATS
+from rasterstats.utils import VALID_STATS
 from shapely.geometry import shape
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -269,8 +269,6 @@ def test_range():
     stats = zonal_stats(polygons, raster, stats="range")
     assert 'min' not in stats[0]
     assert ranges == [x['range'] for x in stats]
-
-
 
 
 def test_nodata_value():

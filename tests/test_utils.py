@@ -3,7 +3,7 @@ import os
 import pytest
 from rasterstats.utils import stats_to_csv, bbox_to_pixel_offsets, get_percentile
 from rasterstats import zonal_stats
-from rasterstats.main import VALID_STATS
+from rasterstats.utils import VALID_STATS
 
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))

@@ -3,8 +3,10 @@ import fiona
 from shapely.geos import ReadingError
 from shapely import wkt, wkb
 
+
 def parse_geo(thing):
-    """ Given a python object, try to get a geo-json like mapping from it
+    """ Given a python object
+    attemp to a geojson like Feature from it
     """
 
     # object implementing geo_interface

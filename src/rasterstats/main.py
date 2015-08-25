@@ -5,14 +5,8 @@ import rasterio
 from shapely.geometry import shape, box, MultiPolygon
 from collections import Counter
 from .io import get_features
-from .utils import (bbox_to_pixel_offsets, rasterize_geom, get_percentile,
+from .utils import (bbox_to_pixel_offsets, rasterize_geom, get_percentile, check_stats,
                     pixel_offsets_to_window, raster_extent_as_bounds)
-
-
-DEFAULT_STATS = ['count', 'min', 'max', 'mean']
-VALID_STATS = DEFAULT_STATS + \
-    ['sum', 'std', 'median', 'majority', 'minority', 'unique', 'range']
-#  also percentile_{q} but that is handled as special case
 
 
 def raster_stats(*args, **kwargs):
@@ -58,7 +52,7 @@ def zonal_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
     categorical : bool, optional
     stats : list of str, or space-delimited str, optional
         Which statistics to calculate for each zone.
-        All possible choices are listed in `VALID_STATS`.
+        All possible choices are listed in `utils.VALID_STATS`.
         defaults to `DEFAULT_STATS`, a subset of these.
     copy_properties : bool, optional
         Include feature properties alongside the returned stats.
@@ -79,7 +73,8 @@ def zonal_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
             clipped raster (`mini_raster`)
             Geo-transform (`mini_raster_GT`)
             No Data Value (`mini_raster_NDV`)
-
+    category_map : A dictionary mapping raster values to human-readable categorical names
+        Only applies when categorical is True
     Returns
     -------
     list of dicts
@@ -87,24 +82,7 @@ def zonal_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
         Its keys include `__fid__` (the geometry feature id)
         and each of the `stats` requested.
     """
-    if not stats:
-        if not categorical:
-            stats = DEFAULT_STATS
-        else:
-            stats = []
-    else:
-        if isinstance(stats, str):
-            if stats in ['*', 'ALL']:
-                stats = VALID_STATS
-            else:
-                stats = stats.split()
-    for x in stats:
-        if x.startswith("percentile_"):
-            get_percentile(x)
-        elif x not in VALID_STATS:
-            raise ValueError(
-                "Stat `%s` not valid; "
-                "must be one of \n %r" % (x, VALID_STATS))
+    stats = check_stats(stats, categorical)
 
     run_count = False
     if categorical or 'majority' in stats or 'minority' in stats or \
