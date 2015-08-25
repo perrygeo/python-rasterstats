@@ -88,14 +88,17 @@ def get_features(vectors, layer_num=0):
             feat = parse_geo(vectors)
             features_iter = [feat]
             strategy = "single_geo"
-    # elif 'type' in vectors and vectors['type'] == 'FeatureCollection':
-    #     features_iter = geo_records([f for f in vectors['features']])
-    #     strategy = "featurecollection"
     elif isinstance(vectors, dict):
-        # ... or an python mapping
-        feat = parse_geo(vectors)
-        features_iter = [feat]
-        strategy = "single_geo"
+        # a python mapping
+        if 'type' in vectors and vectors['type'] == 'FeatureCollection':
+            # a feature collection
+            features_iter = geo_records([f for f in vectors['features']])
+            strategy = "featurecollection"
+        else:
+            # a single feature
+            feat = parse_geo(vectors)
+            features_iter = [feat]
+            strategy = "single_geo"
     else:
         # ... or an iterable of objects
         features_iter = geo_records(vectors)

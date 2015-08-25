@@ -9,7 +9,6 @@ import numpy as np
 import rasterio
 from rasterstats import zonal_stats, raster_stats
 from rasterstats.main import VALID_STATS
-from rasterstats.utils import parse_geo, stats_to_csv, bbox_to_pixel_offsets, get_percentile
 from shapely.geometry import shape
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -213,20 +212,6 @@ def test_categorical():
     assert 5.0 in stats[1]
 
 
-def test_jsonstr():
-    jsonstr = '''
-    {"type": "Polygon", "coordinates": [[
-    [244697.45179524383, 1000369.2307574936],
-    [244827.15493968062, 1000373.0455558595],
-    [244933.9692939227, 1000353.9715640305],
-    [244933.9692939227, 1000353.9715640305],
-    [244930.15449555693, 1000147.9724522779],
-    [244697.45179524383, 1000159.4168473752],
-    [244697.45179524383, 1000369.2307574936]
-    ]]}'''
-    assert parse_geo(jsonstr)
-
-
 def test_specify_stats_list():
     polygons = os.path.join(DATA, 'polygons.shp')
     stats = zonal_stats(polygons, raster, stats=['min', 'max'])
@@ -286,19 +271,6 @@ def test_range():
     assert ranges == [x['range'] for x in stats]
 
 
-def test_csv():
-    polygons = os.path.join(DATA, 'polygons.shp')
-    stats = zonal_stats(polygons, raster, stats="*")
-    csv = stats_to_csv(stats)
-    assert csv.split()[0] == ','.join(sorted(VALID_STATS + ['__fid__']))
-
-
-def test_categorical_csv():
-    polygons = os.path.join(DATA, 'polygons.shp')
-    categorical_raster = os.path.join(DATA, 'slope_classes.tif')
-    stats = zonal_stats(polygons, categorical_raster, categorical=True)
-    csv = stats_to_csv(stats)
-    assert csv.split()[0] == "1.0,2.0,5.0,__fid__"
 
 
 def test_nodata_value():
@@ -327,25 +299,6 @@ def test_no_overlap():
     for res in stats:
         # no polygon should have any overlap
         assert res['count'] is None
-
-
-def test_bbox_offbyone():
-    # Make sure we don't get the off-by-one error in calculating src offset
-    rgt = (-4418000.0, 250.0, 0.0, 4876500.0, 0.0, -250.0)
-    geom_bounds = [4077943.9961, -3873500.0, 4462000.0055, -3505823.7582]
-    rshape = (37000, 35000)
-    so = bbox_to_pixel_offsets(rgt, geom_bounds, rshape)
-    assert so[1] + so[3] == rshape[1]
-
-    # Another great example
-    # based on https://github.com/perrygeo/python-raster-stats/issues/46
-    rgt = (151.2006, 0.025, 0.0, -25.4896, 0.0, -0.025)
-    geom_bounds = [153.39775866026284, -28.903022885889843,
-                   153.51344076545288, -28.80117672778147]
-    rshape = (92, 135)
-    # should only be 5 pixels wide, not 6 due to rounding errors
-    assert bbox_to_pixel_offsets(rgt, geom_bounds, rshape) == (87, 132, 5, 3)
-
 
 def test_all_touched():
     polygons = os.path.join(DATA, 'polygons.shp')
@@ -415,56 +368,24 @@ def test_alias():
     pytest.deprecated_call(raster_stats, polygons, raster)
 
 
-def test_featurecollection():
-    from geopandas import GeoDataFrame
-    polygons = os.path.join(DATA, 'polygons.shp')
-    df = GeoDataFrame.from_file(polygons)
-    assert df.__geo_interface__['type'] == 'FeatureCollection'
-
-    stats = zonal_stats(polygons, raster)
-
-    # geointerface featurecollection
-    stats2 = zonal_stats(df, raster)
-    assert stats == stats2
-
-
 def test_add_stats():
-    from geopandas import GeoDataFrame
     polygons = os.path.join(DATA, 'polygons.shp')
-    df = GeoDataFrame.from_file(polygons)
 
     def mymean(x):
         return np.ma.mean(x)
 
-    stats = zonal_stats(df.geometry, raster, add_stats={'mymean': mymean})
+    stats = zonal_stats(polygons, raster, add_stats={'mymean': mymean})
     for i in range(len(stats)):
         assert stats[i]['mean'] == stats[i]['mymean']
 
 
 def test_mini_raster():
-    from geopandas import GeoDataFrame
     polygons = os.path.join(DATA, 'polygons.shp')
-    df = GeoDataFrame.from_file(polygons)
-    stats = zonal_stats(df.geometry, raster, raster_out=True)
-    stats2 = zonal_stats(df.geometry, stats[0]['mini_raster'],
+    stats = zonal_stats(polygons, raster, raster_out=True)
+    stats2 = zonal_stats(polygons, stats[0]['mini_raster'],
                          raster_out=True, transform=stats[0]['mini_raster_GT'])
     assert (stats[0]['mini_raster'] == stats2[0]['mini_raster']).sum() == \
         stats[0]['count']
-
-
-def test_get_percentile():
-    assert get_percentile('percentile_0') == 0.0
-    assert get_percentile('percentile_100') == 100.0
-    assert get_percentile('percentile_13.2') == 13.2
-
-    with pytest.raises(ValueError):
-        get_percentile('percentile_101')
-
-    with pytest.raises(ValueError):
-        get_percentile('percentile_-1')
-
-    with pytest.raises(ValueError):
-        get_percentile('percentile_foobar')
 
 
 def test_percentile_good():
