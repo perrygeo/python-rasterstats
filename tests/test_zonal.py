@@ -202,7 +202,6 @@ def test_single_jsonstr():
     assert stats[0]['count'] == 75
 
 
-# Categorical
 def test_categorical():
     polygons = os.path.join(DATA, 'polygons.shp')
     categorical_raster = os.path.join(DATA, 'slope_classes.tif')
@@ -210,6 +209,18 @@ def test_categorical():
     assert len(stats) == 2
     assert stats[0][1.0] == 75
     assert 5.0 in stats[1]
+
+
+def test_categorical_map():
+    polygons = os.path.join(DATA, 'polygons.shp')
+    categorical_raster = os.path.join(DATA, 'slope_classes.tif')
+    catmap = {5.0: 'cat5'}
+    stats = zonal_stats(polygons, categorical_raster,
+                        categorical=True, category_map=catmap)
+    assert len(stats) == 2
+    assert stats[0][1.0] == 75
+    assert 5.0 not in stats[1]
+    assert 'cat5' in stats[1]
 
 
 def test_specify_stats_list():

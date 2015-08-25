@@ -154,3 +154,16 @@ def check_stats(stats, categorical):
                 "Stat `%s` not valid; "
                 "must be one of \n %r" % (x, VALID_STATS))
     return stats
+
+
+def remap_categories(category_map, stats):
+    def lookup(m, k):
+        """ Dict lookup but returns original key if not found
+        """
+        try:
+            return m[k]
+        except KeyError:
+            return k
+
+    return {lookup(category_map, k): v
+            for k, v in stats.items()}

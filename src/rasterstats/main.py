@@ -6,7 +6,7 @@ from shapely.geometry import shape, box, MultiPolygon
 from collections import Counter
 from .io import get_features
 from .utils import (bbox_to_pixel_offsets, rasterize_geom, get_percentile, check_stats,
-                    pixel_offsets_to_window, raster_extent_as_bounds)
+                    pixel_offsets_to_window, raster_extent_as_bounds, remap_categories)
 
 
 def raster_stats(*args, **kwargs):
@@ -19,7 +19,7 @@ def raster_stats(*args, **kwargs):
 def zonal_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
                 global_src_extent=False, categorical=False, stats=None,
                 copy_properties=False, all_touched=False, transform=None,
-                affine=None, add_stats=None, raster_out=False):
+                affine=None, add_stats=None, raster_out=False, category_map=None):
     """Summary statistics of a raster, broken out by vector geometries.
 
     Attributes
@@ -75,6 +75,7 @@ def zonal_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
             No Data Value (`mini_raster_NDV`)
     category_map : A dictionary mapping raster values to human-readable categorical names
         Only applies when categorical is True
+
     Returns
     -------
     list of dicts
@@ -213,6 +214,8 @@ def zonal_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
 
             if categorical:
                 feature_stats = dict(pixel_count)
+                if category_map:
+                    feature_stats = remap_categories(category_map, feature_stats)
             else:
                 feature_stats = {}
 

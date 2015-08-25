@@ -1,7 +1,8 @@
 import sys
 import os
 import pytest
-from rasterstats.utils import stats_to_csv, bbox_to_pixel_offsets, get_percentile
+from rasterstats.utils import (stats_to_csv, bbox_to_pixel_offsets,
+                               get_percentile, remap_categories)
 from rasterstats import zonal_stats
 from rasterstats.utils import VALID_STATS
 
@@ -57,3 +58,13 @@ def test_get_percentile():
 
     with pytest.raises(ValueError):
         get_percentile('percentile_foobar')
+
+
+def test_remap_categories():
+    feature_stats = {1: 22.343, 2: 54.34, 3: 987.5}
+    category_map = {1: 'grassland', 2: 'forest'}
+    new_stats = remap_categories(category_map, feature_stats)
+    assert 1 not in new_stats.keys()
+    assert 'grassland' in new_stats.keys()
+    assert 3 in new_stats.keys()
+
