@@ -217,9 +217,9 @@ def zonal_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
                     feature_stats['count'] = 0
             else:
                 if run_count:
-                    pixel_count = dict([(np.asscalar(pair[0]), pair[1]) for pair in
-                                       zip(*np.unique(masked.compressed(),
-                                                      return_counts=True))])
+                    keys, counts = np.unique(masked.compressed(), return_counts=True)
+                    pixel_count = dict(zip([np.asscalar(k) for k in keys],
+                                           [np.asscalar(c) for c in counts]))
 
                 if categorical:
                     feature_stats = dict(pixel_count)
