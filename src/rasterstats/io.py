@@ -68,49 +68,41 @@ def get_features(vectors, layer_num=0):
                         yield feature
 
             features_iter = fiona_generator(vectors)
-            strategy = 'fiona'
         except (AssertionError, TypeError, IOError, OSError):
             # ... or a single string to be parsed as wkt/wkb/json
             feat = parse_geo(vectors)
             features_iter = [feat]
-            strategy = "single_geo"
     elif isinstance(vectors, bytes):
         # wkb
         feat = parse_geo(vectors)
         features_iter = [feat]
-        strategy = "single_geo"
     elif hasattr(vectors, '__geo_interface__'):
         geotype = vectors.__geo_interface__['type']
         if geotype.lower() == 'featurecollection':
             # ... a featurecollection
             features_iter = geo_records(vectors.__geo_interface__['features'])
-            strategy = "geo_featurecollection"
         else:
             # ... or an single object
             feat = parse_geo(vectors)
             features_iter = [feat]
-            strategy = "single_geo"
     elif isinstance(vectors, dict):
         # a python mapping
         if 'type' in vectors and vectors['type'] == 'FeatureCollection':
             # a feature collection
             features_iter = geo_records([f for f in vectors['features']])
-            strategy = "featurecollection"
         else:
             # a single feature
             feat = parse_geo(vectors)
             features_iter = [feat]
-            strategy = "single_geo"
     else:
         # ... or an iterable of objects
         features_iter = geo_records(vectors)
-        strategy = "iter_geo"
 
-    return features_iter, strategy
+    return features_iter
 
 
 def get_featurecollection(path):
-    features, _ = get_features(path)
+    features = get_features(path)
     fc = {'type': 'FeatureCollection', 'features': []}
     for feature in features:
         fc['features'].append(feature)

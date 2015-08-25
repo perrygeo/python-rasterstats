@@ -129,7 +129,7 @@ def zonal_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
         else:
             nodata_value = rnodata
 
-    features_iter, strategy = get_features(vectors, layer_num)
+    features_iter = get_features(vectors, layer_num)
 
     if global_src_extent and raster_type == 'gdal':
         # create an in-memory numpy array of the source raster data
