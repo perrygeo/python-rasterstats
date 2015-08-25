@@ -67,7 +67,7 @@ def get_features(vectors, layer_num=0):
 
             features_iter = fiona_generator(vectors)
             strategy = 'fiona'
-        except (AssertionError, OSError):
+        except (AssertionError, IOError, OSError):
             # ... or a single string to be parsed as wkt/wkb/json
             feat = parse_geo(vectors)
             features_iter = [feat]
