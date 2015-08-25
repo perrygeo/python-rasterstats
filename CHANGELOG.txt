@@ -1,3 +1,15 @@
+0.9.0
+- Loosened coupling with GeoRaster lib
+- Completely removed osgeo.ogr in favor of fiona
+- Completely removed osgeo.osr, spatial referencing is external to this module
+- Extensive cleanup of tests
+- Code refactoring and cleanup
+- Support for Category maps to get human readable keys for categorical rasters 
+- Greatly improve speed of categorical and any stat requiring pixel counts
+- Simplified and sped up travis builds for faster feedback
+- Nones returned when polygon doesn't intersect raster pixels
+- Removed deprecated rasterstats script
+
 0.8.0
 - Rasterio CLI plugin; rio zonalstats
 
