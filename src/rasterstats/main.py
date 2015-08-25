@@ -3,10 +3,11 @@ import numpy as np
 import warnings
 import rasterio
 from shapely.geometry import shape, box, MultiPolygon
-from collections import Counter
+# from collections import Counter
 from .io import get_features
 from .utils import (bbox_to_pixel_offsets, rasterize_geom, get_percentile, check_stats,
-                    pixel_offsets_to_window, raster_extent_as_bounds, remap_categories)
+                    pixel_offsets_to_window, raster_extent_as_bounds, remap_categories,
+                    key_assoc_val)
 
 
 def raster_stats(*args, **kwargs):
@@ -209,65 +210,71 @@ def zonal_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
                 )
             )
 
-            if run_count:
-                pixel_count = Counter(masked.compressed().tolist())
-
-            if categorical:
-                feature_stats = dict(pixel_count)
-                if category_map:
-                    feature_stats = remap_categories(category_map, feature_stats)
+            if masked.compressed().size == 0:
+                # nothing here, fill with None and move on
+                feature_stats = dict([(stat, None) for stat in stats])
             else:
-                feature_stats = {}
-
-            if 'min' in stats:
-                feature_stats['min'] = float(masked.min())
-            if 'max' in stats:
-                feature_stats['max'] = float(masked.max())
-            if 'mean' in stats:
-                feature_stats['mean'] = float(masked.mean())
-            if 'count' in stats:
-                feature_stats['count'] = int(masked.count())
-            # optional
-            if 'sum' in stats:
-                feature_stats['sum'] = float(masked.sum())
-            if 'std' in stats:
-                feature_stats['std'] = float(masked.std())
-            if 'median' in stats:
-                feature_stats['median'] = float(np.median(masked.compressed()))
-            if 'majority' in stats:
-                try:
-                    feature_stats['majority'] = float(pixel_count.most_common(1)[0][0])
-                except IndexError:
-                    feature_stats['majority'] = None
-            if 'minority' in stats:
-                try:
-                    feature_stats['minority'] = float(pixel_count.most_common()[-1][0])
-                except IndexError:
-                    feature_stats['minority'] = None
-            if 'unique' in stats:
-                feature_stats['unique'] = len(list(pixel_count.keys()))
-            if 'range' in stats:
-                try:
-                    rmin = feature_stats['min']
-                except KeyError:
-                    rmin = float(masked.min())
-                try:
-                    rmax = feature_stats['max']
-                except KeyError:
-                    rmax = float(masked.max())
-                feature_stats['range'] = rmax - rmin
-
-            for pctile in [s for s in stats if s.startswith('percentile_')]:
-                q = get_percentile(pctile)
-                pctarr = masked.compressed()
-                if pctarr.size == 0:
-                    feature_stats[pctile] = None
+                if run_count:
+                    # pixel_count = dict(Counter(masked.compressed().tolist()))
+                    pixel_count = dict(zip(*np.unique(masked.compressed(),
+                                                      return_counts=True)))
+                if categorical:
+                    feature_stats = dict(pixel_count)
+                    if category_map:
+                        feature_stats = remap_categories(category_map, feature_stats)
                 else:
-                    feature_stats[pctile] = np.percentile(pctarr, q)
+                    feature_stats = {}
+
+                if 'min' in stats:
+                    feature_stats['min'] = float(masked.min())
+                if 'max' in stats:
+                    feature_stats['max'] = float(masked.max())
+                if 'mean' in stats:
+                    feature_stats['mean'] = float(masked.mean())
+                if 'count' in stats:
+                    feature_stats['count'] = int(masked.count())
+                # optional
+                if 'sum' in stats:
+                    feature_stats['sum'] = float(masked.sum())
+                if 'std' in stats:
+                    feature_stats['std'] = float(masked.std())
+                if 'median' in stats:
+                    feature_stats['median'] = float(np.median(masked.compressed()))
+                if 'majority' in stats:
+                    try:
+                        feature_stats['majority'] = float(key_assoc_val(pixel_count, max))
+                    except IndexError:
+                        feature_stats['majority'] = None
+                if 'minority' in stats:
+                    try:
+                        feature_stats['minority'] = float(key_assoc_val(pixel_count, min))
+                    except IndexError:
+                        feature_stats['minority'] = None
+                if 'unique' in stats:
+                    feature_stats['unique'] = len(list(pixel_count.keys()))
+                if 'range' in stats:
+                    try:
+                        rmin = feature_stats['min']
+                    except KeyError:
+                        rmin = float(masked.min())
+                    try:
+                        rmax = feature_stats['max']
+                    except KeyError:
+                        rmax = float(masked.max())
+                    feature_stats['range'] = rmax - rmin
+
+                for pctile in [s for s in stats if s.startswith('percentile_')]:
+                    q = get_percentile(pctile)
+                    pctarr = masked.compressed()
+                    if pctarr.size == 0:
+                        feature_stats[pctile] = None
+                    else:
+                        feature_stats[pctile] = np.percentile(pctarr, q)
 
             if add_stats is not None:
                 for stat_name, stat_func in add_stats.items():
                         feature_stats[stat_name] = stat_func(masked)
+
             if raster_out:
                 masked.fill_value = nodata_value
                 masked.data[masked.mask] = nodata_value

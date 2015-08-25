@@ -167,3 +167,12 @@ def remap_categories(category_map, stats):
 
     return {lookup(category_map, k): v
             for k, v in stats.items()}
+
+
+def key_assoc_val(d, func, exclude=None):
+    """return the key associated with the value returned by func
+    """
+    vs = list(d.values())
+    ks = list(d.keys())
+    key = ks[vs.index(func(vs))]
+    return key
