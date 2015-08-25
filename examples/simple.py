@@ -1,5 +1,8 @@
-from rasterstats import raster_stats
+from rasterstats import zonal_stats
+
+polys = "../tests/data/multilines.shp"
+raster = "../tests/data/slope.tif"
+stats = zonal_stats(polys, raster, stats="*")
+
 from pprint import pprint
-polys = "tests/data/multilines.shp"
-raster = "tests/data/slope.tif"
-pprint(raster_stats(polys, raster, stats="*"))
+pprint(stats)
