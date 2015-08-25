@@ -10,7 +10,7 @@ tool to summarize geospatial raster datasets based on vector geometries
 
 -  Raster data support
 
-   -  Any raster data source supported by GDAL
+   -  Any raster data source supported by `rasterio <https://github.com/mapbox/rasterio>`_ and GDAL
    -  Support for continuous and categorical
    -  Respects null/no-data metadata or takes argument
 -  Vector data support
@@ -18,10 +18,10 @@ tool to summarize geospatial raster datasets based on vector geometries
    -  Points, Lines, Polygon and Multi-\* geometries
    -  Flexible input formats
 
-      -  Any vector data source supported by [fiona](http://toblerity.org/fiona/)
+      -  Any vector data source supported by `fiona <http://toblerity.org/fiona/>`_
       -  Python objects that are GeoJSON-like mappings or support the `geo\_interface <https://gist.github.com/sgillies/2217756>`_
       -  Well-Known Text/Binary (WKT/WKB) geometries
--  Depends on GDAL, Shapely and numpy
+-  Depends on libgdal, rasterio, fiona, shapely and numpy
 
 
 Install
@@ -210,12 +210,16 @@ The polygon below is comprised of 12 pixels of oak (raster value
 32) and 78 pixels of grassland (raster value 33)::
 
     >>> zonal_stats(lyr.next(), '/path/to/vegetation.tif', categorical=True)
+    [{'__fid__': 1, 32: 12, 33: 78}]
 
-    >>> [{'__fid__': 1, 32: 12, 33: 78}]
+rasterstats will report using the pixel values as keys. 
+To associate the pixel values with their appropriate meaning 
+(for example ``oak`` instead of ``32``), you can use a ``category_map``::
 
-Keep in mind that rasterstats just reports on the pixel values as keys;
-It is up to the programmer to associate the pixel values with their
-appropriate meaning (e.g. ``oak`` is key ``32``) for reporting.
+    >>> cmap = {32: 'oak', 33: 'grassland'}
+    >>> zonal_stats(lyr.next(), '/path/to/vegetation.tif',
+                    categorical=True, category_map=cmap)
+    [{'__fid__': 1, 'oak': 12, 'grassland': 78}]
 
 "Mini-Rasters"
 ^^^^^^^^^^^^^^^
@@ -231,7 +235,6 @@ Which gives us three additional keys for each feature::
    mini_raster     | Numpy ndarray                                       
    mini_raster_GT  | Six-tuple defining the geotransform (GDAL ordering) 
    mini_raster_NDV | Nodata value in the returned array                  
-
 
 Keep in mind that having ndarrays in your stats dictionary means it is more
 difficult to serialize to json and other text formats.
