@@ -1,47 +1,15 @@
-# Check on http://lint.travis-ci.org/ after modifying it!
-# See https://gist.github.com/dan-blanchard/7045057
-# and https://github.com/Jorge-C/ordination/blob/master/.travis.yml
 language: python
 python:
   - "2.7"
   - "3.4"
 before_install:
-  - sudo apt-get update
-  # - sudo apt-get install libgdal-dev gdal-bin
-  # You may want to periodically update this, although the conda update
-  # conda line below will keep everything up-to-date.  We do this
-  # conditionally because it saves us some downloading if the version is
-  # the same.
-  - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
-      wget http://repo.continuum.io/miniconda/Miniconda-3.9.1-Linux-x86_64.sh -O miniconda.sh;
-    else
-      wget http://repo.continuum.io/miniconda/Miniconda3-3.9.1-Linux-x86_64.sh -O miniconda.sh;
-    fi
-  - bash miniconda.sh -b -p $HOME/miniconda
-  - export PATH="$HOME/miniconda/bin:$PATH"
-  - hash -r
-  - conda config --set always_yes yes --set changeps1 no
-  - conda update -q conda
-  # Useful for debugging any issues with conda
-  - conda info -a
-  - sudo rm -rf /dev/shm
-  - sudo ln -s /run/shm /dev/shm
-env:
-  - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
-      GDAL_DATA=/Users/mperry/miniconda/envs/env_name/share/gdal
-    else
-      GDAL_DATA=/Users/mperry/miniconda3/envs/env_name/share/gdal
-    fi
+  - sudo add-apt-repository -y ppa:ubuntugis/ppa
+  - sudo apt-get update -qq
+  - sudo apt-get install -y libgdal1h gdal-bin libgdal-dev
 install:
-  # See https://gist.github.com/sgillies/f7bfff349a676cffb1ef
-  - conda create --yes -n env_name -c PinguCarsti python=$TRAVIS_PYTHON_VERSION pip cython numpy matplotlib pandas "gdal<2.0" gdal-data scipy
-  - source activate env_name
-  - GDAL_CONFIG=`which gdal-config` pip install rasterio
-  - if [ ${TRAVIS_PYTHON_VERSION:0:1} == "2" ]; then conda install --yes imaging; else pip install pillow; fi
-  - pip install pytest  # not yet available for py3 in anaconda
-  - python setup.py install
-  - "pip install -r requirements.txt"
-  - "pip install -r requirements_dev.txt"
+  - pip install -r requirements.txt
+  - pip install -r requirements_dev.txt
+  - pip install -e .
 script: "coverage run --include *rasterstats* setup.py test"
 after_success:
   - coveralls
