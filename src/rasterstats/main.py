@@ -213,11 +213,14 @@ def zonal_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
             if masked.compressed().size == 0:
                 # nothing here, fill with None and move on
                 feature_stats = dict([(stat, None) for stat in stats])
+                if 'count' in stats:  # special case, zero makes sense here
+                    feature_stats['count'] = 0
             else:
                 if run_count:
-                    # pixel_count = dict(Counter(masked.compressed().tolist()))
-                    pixel_count = dict(zip(*np.unique(masked.compressed(),
-                                                      return_counts=True)))
+                    pixel_count = dict([(np.asscalar(pair[0]), pair[1]) for pair in
+                                       zip(*np.unique(masked.compressed(),
+                                                      return_counts=True))])
+
                 if categorical:
                     feature_stats = dict(pixel_count)
                     if category_map:
