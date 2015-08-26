@@ -33,14 +33,6 @@ def test_zonal_global_extent():
     assert stats == global_stats
 
 
-# Invalid test, New global_src_extent strategy does not require ogr layer
-# def test_global_non_ogr():
-#     reader = shapefile.Reader(os.path.join(DATA, 'polygons.shp'))
-#     geoms = (x.shape for x in reader.shapeRecords())
-#     with pytest.raises(RasterStatsError):
-#         zonal_stats(geoms, raster, global_src_extent=True)
-
-
 def test_zonal_nodata():
     polygons = os.path.join(DATA, 'polygons.shp')
     stats = zonal_stats(polygons, raster, nodata_value=0)
@@ -263,13 +255,6 @@ def test_ndarray_affine():
     assert stats1[0]['count'] == stats3[0]['count']
 
 
-def test_ndarray_nodata():
-    arr, gt = _get_raster_array_gt(raster)
-    polygons = os.path.join(DATA, 'polygons.shp')
-    with pytest.raises(NotImplementedError):
-        zonal_stats(polygons, arr, transform=gt, nodata_value=-999)
-
-
 def test_ndarray():
     arr, gt = _get_raster_array_gt(raster)
     polygons = os.path.join(DATA, 'polygons.shp')
@@ -382,3 +367,23 @@ def test_some_nulls():
     assert stats[0]['count'] == 39
     assert stats[1]['nulls'] == 19
     assert stats[1]['count'] == 31
+
+def test_some_nulls_ndarray():
+    polygons = os.path.join(DATA, 'polygons.shp')
+    raster = os.path.join(DATA, 'slope_nulls.tif')
+    with rasterio.open(raster) as src:
+        arr = src.read(1)
+        affine = src.affine
+
+    # without nodata
+    stats = zonal_stats(polygons, arr, affine=affine, stats=['nulls', 'count', 'min'])
+    assert stats[0]['min'] == -9999.0
+    assert stats[0]['nulls'] == 0
+    assert stats[0]['count'] == 75
+
+    # with nodata_value
+    stats = zonal_stats(polygons, arr, affine=affine,
+                        nodata_value=-9999.0, stats=['nulls', 'count', 'min'])
+    assert stats[0]['min'] >= 0.0
+    assert stats[0]['nulls'] == 36
+    assert stats[0]['count'] == 39

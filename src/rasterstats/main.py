@@ -111,9 +111,6 @@ def zonal_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
         # global_src_extent is implicitly turned on, array is already in memory
         global_src_extent = True
 
-        # TODO, should we support this?
-        if nodata_value:
-            raise NotImplementedError("ndarrays don't support 'nodata_value'")
     else:
         raster_type = 'gdal'
 
