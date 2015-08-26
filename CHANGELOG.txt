@@ -9,6 +9,7 @@
 - Simplified and sped up travis builds for faster feedback
 - Nones returned when polygon doesn't intersect raster pixels
 - Removed deprecated rasterstats script
+- Added support for `nodata` count
 
 0.8.0
 - Rasterio CLI plugin; rio zonalstats

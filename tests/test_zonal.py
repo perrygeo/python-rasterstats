@@ -309,7 +309,7 @@ def test_percentile_good():
     assert stats[0]['percentile_50'] <= stats[0]['percentile_90']
 
 
-def test_percentile_nulls():
+def test_percentile_nodata():
     polygons = os.path.join(DATA, 'polygons.shp')
     categorical_raster = os.path.join(DATA, 'slope_classes.tif')
     # By setting nodata to 1, one of our polygons is within the raster extent
@@ -350,40 +350,40 @@ def test_direct_features_collections():
     assert stats_direct == stats_features == stats_collection
 
 
-def test_all_nulls():
+def test_all_nodata():
     polygons = os.path.join(DATA, 'polygons.shp')
-    raster = os.path.join(DATA, 'all_nulls.tif')
-    stats = zonal_stats(polygons, raster, stats=['nulls', 'count'])
-    assert stats[0]['nulls'] == 75
+    raster = os.path.join(DATA, 'all_nodata.tif')
+    stats = zonal_stats(polygons, raster, stats=['nodata', 'count'])
+    assert stats[0]['nodata'] == 75
     assert stats[0]['count'] == 0
-    assert stats[1]['nulls'] == 50
+    assert stats[1]['nodata'] == 50
     assert stats[1]['count'] == 0
 
-def test_some_nulls():
+def test_some_nodata():
     polygons = os.path.join(DATA, 'polygons.shp')
-    raster = os.path.join(DATA, 'slope_nulls.tif')
-    stats = zonal_stats(polygons, raster, stats=['nulls', 'count'])
-    assert stats[0]['nulls'] == 36
+    raster = os.path.join(DATA, 'slope_nodata.tif')
+    stats = zonal_stats(polygons, raster, stats=['nodata', 'count'])
+    assert stats[0]['nodata'] == 36
     assert stats[0]['count'] == 39
-    assert stats[1]['nulls'] == 19
+    assert stats[1]['nodata'] == 19
     assert stats[1]['count'] == 31
 
-def test_some_nulls_ndarray():
+def test_some_nodata_ndarray():
     polygons = os.path.join(DATA, 'polygons.shp')
-    raster = os.path.join(DATA, 'slope_nulls.tif')
+    raster = os.path.join(DATA, 'slope_nodata.tif')
     with rasterio.open(raster) as src:
         arr = src.read(1)
         affine = src.affine
 
     # without nodata
-    stats = zonal_stats(polygons, arr, affine=affine, stats=['nulls', 'count', 'min'])
+    stats = zonal_stats(polygons, arr, affine=affine, stats=['nodata', 'count', 'min'])
     assert stats[0]['min'] == -9999.0
-    assert stats[0]['nulls'] == 0
+    assert stats[0]['nodata'] == 0
     assert stats[0]['count'] == 75
 
     # with nodata_value
     stats = zonal_stats(polygons, arr, affine=affine,
-                        nodata_value=-9999.0, stats=['nulls', 'count', 'min'])
+                        nodata_value=-9999.0, stats=['nodata', 'count', 'min'])
     assert stats[0]['min'] >= 0.0
-    assert stats[0]['nulls'] == 36
+    assert stats[0]['nodata'] == 36
     assert stats[0]['count'] == 39
