@@ -8,7 +8,7 @@ from affine import Affine
 
 DEFAULT_STATS = ['count', 'min', 'max', 'mean']
 VALID_STATS = DEFAULT_STATS + \
-    ['sum', 'std', 'median', 'majority', 'minority', 'unique', 'range']
+    ['sum', 'std', 'median', 'majority', 'minority', 'unique', 'range', 'nulls']
 #  also percentile_{q} but that is handled as special case
 
 
@@ -101,7 +101,8 @@ def combine_features_results(features, results, prefix, nan_to_None=True):
                 continue
             prefixed_key = "{}{}".format(prefix, key)
 
-            # normalize
+            # normalize for the sake of json-serializability
+            # TODO write test and is it even neccesary anymore?
             if nan_to_None and is_nan(val):
                 val = None
 
