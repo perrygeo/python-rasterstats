@@ -363,3 +363,22 @@ def test_direct_features_collections():
     stats_collection = zonal_stats(collection, raster)
 
     assert stats_direct == stats_features == stats_collection
+
+
+def test_all_nulls():
+    polygons = os.path.join(DATA, 'polygons.shp')
+    raster = os.path.join(DATA, 'all_nulls.tif')
+    stats = zonal_stats(polygons, raster, stats=['nulls', 'count'])
+    assert stats[0]['nulls'] == 75
+    assert stats[0]['count'] == 0
+    assert stats[1]['nulls'] == 50
+    assert stats[1]['count'] == 0
+
+def test_some_nulls():
+    polygons = os.path.join(DATA, 'polygons.shp')
+    raster = os.path.join(DATA, 'slope_nulls.tif')
+    stats = zonal_stats(polygons, raster, stats=['nulls', 'count'])
+    assert stats[0]['nulls'] == 36
+    assert stats[0]['count'] == 39
+    assert stats[1]['nulls'] == 19
+    assert stats[1]['count'] == 31

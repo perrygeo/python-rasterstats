@@ -111,6 +111,7 @@ def zonal_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
         # global_src_extent is implicitly turned on, array is already in memory
         global_src_extent = True
 
+        # TODO, should we support this?
         if nodata_value:
             raise NotImplementedError("ndarrays don't support 'nodata_value'")
     else:
@@ -270,6 +271,14 @@ def zonal_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
                         feature_stats[pctile] = None
                     else:
                         feature_stats[pctile] = np.percentile(pctarr, q)
+
+            if 'nulls' in stats:
+                # TODO naive implementation, feels a bit wasteful to redo
+                featmasked = np.ma.MaskedArray(src_array, mask=np.logical_not(rv_array))
+                keys, counts = np.unique(featmasked.compressed(), return_counts=True)
+                pixel_count = dict(zip([np.asscalar(k) for k in keys],
+                                       [np.asscalar(c) for c in counts]))
+                feature_stats['nulls'] = pixel_count.get(nodata_value, 0)
 
             if add_stats is not None:
                 for stat_name, stat_func in add_stats.items():
