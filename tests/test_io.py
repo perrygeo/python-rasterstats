@@ -4,6 +4,7 @@ import fiona
 from shapely.geometry import shape
 from rasterstats.io import read_features, read_featurecollection  # todo parse_feature
 import json
+import pytest
 from collections import Mapping
 
 
@@ -28,7 +29,8 @@ def _test_read_features(indata):
     geoms = [shape(f['geometry']) for f in features]
     _compare_geomlists(geoms, target_geoms)
     # single (only applies to lists, not str or mapping)
-    if not isinstance(indata, str) and not isinstance(indata, Mapping):
+    if not isinstance(indata, str) and not isinstance(indata, Mapping) and \
+       not hasattr(indata, '__geo_interface__'):
         geom = shape(list(read_features(indata[0]))[0]['geometry'])
         assert geom.almost_equals(target_geoms[0])
 
@@ -41,16 +43,6 @@ def test_featurecollection():
     assert read_featurecollection(polygons)['features'] == \
         list(read_features(polygons)) == \
         target_features
-
-#     class GeoInt:
-#         def __init__(self, f):
-#             self.__geo_interface__ == f
-# def test_geo_interface():
-#     """ feature-level geo_interface
-#     """
-#     with fiona.open(polygons, 'r') as src:
-#         indata = [GeoInt(f) for f in src]
-#     assert read_features(indata[0]) == target_features
 
 
 def test_shapely():
@@ -115,9 +107,40 @@ def test_jsonstr_collection():
     _test_read_features(indata)
 
 
-# TODO
-# object with __geo_interface__
-# geopandas dataframe
-# .. list of featurecollections (should fail)
-# .. list of data sources (should fail)
-# .. non-fiona supported sources (fail with warning)
+class MockGeoInterface:
+    def __init__(self, f):
+        self.__geo_interface__ = f
+
+
+def test_geo_interface():
+    with fiona.open(polygons, 'r') as src:
+        indata = [MockGeoInterface(f) for f in src]
+    _test_read_features(indata)
+
+
+def test_geo_interface_geom():
+    with fiona.open(polygons, 'r') as src:
+        indata = [MockGeoInterface(f['geometry']) for f in src]
+    _test_read_features(indata)
+
+
+def test_geo_interface_collection():
+    # geointerface for featurecollection?
+    indata = {'type': "FeatureCollection"}
+    with fiona.open(polygons, 'r') as src:
+        indata['features'] = [f for f in src]
+    indata = MockGeoInterface(indata)
+    _test_read_features(indata)
+
+
+# Optional tests
+def test_geodataframe():
+    try:
+        import geopandas as gpd
+        df = gpd.GeoDataFrame.from_file(polygons)
+        import ipdb; ipdb.set_trace()
+        if not hasattr(df, '__geo_interface__'):
+            pytest.skip("This version of geopandas doesn't support df.__geo_interface__")
+    except ImportError:
+        pytest.skip("Can't import geopands")
+    assert read_features(df)

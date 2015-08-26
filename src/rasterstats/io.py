@@ -93,6 +93,12 @@ def read_features(obj, layer_num=0):
     elif isinstance(obj, Iterable):
         # Iterable of feature-like objects
         features_iter = (parse_feature(x) for x in obj)
+    elif hasattr(obj, '__geo_interface__'):
+        mapping = obj.__geo_interface__
+        if mapping['type'] == 'FeatureCollection':
+            features_iter = mapping['features']
+        else:
+            features_iter = [parse_feature(mapping)]
     else:
         # Single feature-like object
         features_iter = [parse_feature(obj)]
