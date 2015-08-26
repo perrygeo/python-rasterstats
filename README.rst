@@ -104,6 +104,7 @@ Optionally, these statistics are also available
 - minority
 - unique
 - range
+- nodata
 - percentile (see note below for details)
 
 You can specify the statistics to calculate using the ``stats`` argument::
