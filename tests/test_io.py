@@ -28,11 +28,12 @@ def _test_read_features(indata):
     # multi
     geoms = [shape(f['geometry']) for f in features]
     _compare_geomlists(geoms, target_geoms)
-    # single (only applies to lists, not str or mapping)
-    if not isinstance(indata, str) and not isinstance(indata, Mapping) and \
-       not hasattr(indata, '__geo_interface__'):
-        geom = shape(list(read_features(indata[0]))[0]['geometry'])
-        assert geom.almost_equals(target_geoms[0])
+
+
+def _test_read_features_single(indata):
+    # single (first target geom)
+    geom = shape(list(read_features(indata))[0]['geometry'])
+    assert geom.almost_equals(target_geoms[0])
 
 
 def test_fiona_path():
@@ -49,18 +50,21 @@ def test_shapely():
     with fiona.open(polygons, 'r') as src:
         indata = [shape(f['geometry']) for f in src]
     _test_read_features(indata)
+    _test_read_features_single(indata[0])
 
 
 def test_wkt():
     with fiona.open(polygons, 'r') as src:
         indata = [shape(f['geometry']).wkt for f in src]
     _test_read_features(indata)
+    _test_read_features_single(indata[0])
 
 
 def test_wkb():
     with fiona.open(polygons, 'r') as src:
         indata = [shape(f['geometry']).wkb for f in src]
     _test_read_features(indata)
+    _test_read_features_single(indata[0])
 
 
 def test_mapping_features():
@@ -138,7 +142,6 @@ def test_geodataframe():
     try:
         import geopandas as gpd
         df = gpd.GeoDataFrame.from_file(polygons)
-        import ipdb; ipdb.set_trace()
         if not hasattr(df, '__geo_interface__'):
             pytest.skip("This version of geopandas doesn't support df.__geo_interface__")
     except ImportError:

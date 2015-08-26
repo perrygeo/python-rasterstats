@@ -90,6 +90,9 @@ def read_features(obj, layer_num=0):
             features_iter = obj['features']
         else:
             features_iter = [parse_feature(obj)]
+    elif isinstance(obj, bytes):
+        # Single binary object, probably a wkb
+        features_iter = [parse_feature(obj)]
     elif isinstance(obj, Iterable):
         # Iterable of feature-like objects
         features_iter = (parse_feature(x) for x in obj)
