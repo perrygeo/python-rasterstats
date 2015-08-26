@@ -1,7 +1,6 @@
 # test zonal stats
 import os
 import pytest
-import shapefile
 import simplejson
 import json
 import sys
@@ -9,7 +8,7 @@ import numpy as np
 import rasterio
 from rasterstats import zonal_stats, raster_stats
 from rasterstats.utils import VALID_STATS
-from shapely.geometry import shape
+from rasterstats.io import read_featurecollection, read_features
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
@@ -118,88 +117,6 @@ def test_multipoints():
     stats = zonal_stats(multipoints, raster)
     assert len(stats) == 1
     assert stats[0]['count'] == 3
-
-
-# Geo interface
-def test_iterable_geoms_geo():
-    reader = shapefile.Reader(os.path.join(DATA, 'polygons.shp'))
-    geoms = (x.shape for x in reader.shapeRecords())
-    stats = zonal_stats(geoms, raster)
-    assert len(stats) == 2
-    assert stats[0]['count'] == 75
-    assert stats[1]['count'] == 50
-
-
-def test_iterable_features_geo():
-    # pyshp doesnt do feature-level geo_interface so we need to construct it
-    reader = shapefile.Reader(os.path.join(DATA, 'polygons.shp'))
-    features = []
-
-    class FeatureThing(object):
-        pass
-
-    fields = reader.fields[1:]
-    field_names = [field[0] for field in fields]
-    for sr in reader.shapeRecords():
-        geom = sr.shape.__geo_interface__
-        atr = dict(list(zip(field_names, sr.record)))
-        obj = FeatureThing()
-        obj.__geo_interface__ = dict(geometry=geom, properties=atr,
-                                     type="Feature")
-        features.append(obj)
-    stats = zonal_stats(features, raster)
-    assert len(stats) == 2
-    assert stats[0]['count'] == 75
-    assert stats[1]['count'] == 50
-
-
-def test_single_geo():
-    reader = shapefile.Reader(os.path.join(DATA, 'polygons.shp'))
-    geoms = [x.shape for x in reader.shapeRecords()]
-    stats = zonal_stats(geoms[0], raster)
-    assert len(stats) == 1
-    assert stats[0]['count'] == 75
-
-
-def test_single_geolike():
-    reader = shapefile.Reader(os.path.join(DATA, 'polygons.shp'))
-    geoms = [x.shape.__geo_interface__ for x in reader.shapeRecords()]
-    stats = zonal_stats(geoms[0], raster)
-    assert len(stats) == 1
-    assert stats[0]['count'] == 75
-
-
-def test_iterable_geolike():
-    reader = shapefile.Reader(os.path.join(DATA, 'polygons.shp'))
-    geoms = [x.shape.__geo_interface__ for x in reader.shapeRecords()]
-    stats = zonal_stats(geoms, raster)
-    assert len(stats) == 2
-    assert stats[0]['count'] == 75
-    assert stats[1]['count'] == 50
-
-
-def test_single_wkt():
-    reader = shapefile.Reader(os.path.join(DATA, 'polygons.shp'))
-    geoms = [shape(x.shape).wkt for x in reader.shapeRecords()]
-    stats = zonal_stats(geoms[0], raster)
-    assert len(stats) == 1
-    assert stats[0]['count'] == 75
-
-
-def test_single_wkb():
-    reader = shapefile.Reader(os.path.join(DATA, 'polygons.shp'))
-    geoms = [shape(x.shape).wkb for x in reader.shapeRecords()]
-    stats = zonal_stats(geoms[0], raster)
-    assert len(stats) == 1
-    assert stats[0]['count'] == 75
-
-
-def test_single_jsonstr():
-    reader = shapefile.Reader(os.path.join(DATA, 'polygons.shp'))
-    geoms = [json.dumps(x.shape.__geo_interface__) for x in reader.shapeRecords()]
-    stats = zonal_stats(geoms[0], raster)
-    assert len(stats) == 1
-    assert stats[0]['count'] == 75
 
 
 def test_categorical():
@@ -434,3 +351,15 @@ def test_json_serializable():
         simplejson.dumps(stats)
     except TypeError:
         pytest.fail("zonal_stats returned a list that wasn't JSON-serializable")
+
+
+def test_direct_features_collections():
+    polygons = os.path.join(DATA, 'polygons.shp')
+    features = read_features(polygons)
+    collection = read_featurecollection(polygons)
+
+    stats_direct = zonal_stats(polygons, raster)
+    stats_features = zonal_stats(features, raster)
+    stats_collection = zonal_stats(collection, raster)
+
+    assert stats_direct == stats_features == stats_collection

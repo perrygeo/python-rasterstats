@@ -2,108 +2,111 @@ import json
 import fiona
 from shapely.geos import ReadingError
 from shapely import wkt, wkb
+from collections import Iterable, Mapping
 
 
-def parse_geo(thing):
+geom_types = ["Point", "LineString", "Polygon",
+              "MultiPoint", "MultiLineString", "MultiPolygon"]
+
+
+def wrap_geom(geom):
+    """ Wraps a geometry dict in an GeoJSON Feature
+    """
+    return {'type': 'Feature',
+            'properties': {},
+            'geometry': geom}
+
+
+def parse_feature(obj):
     """ Given a python object
-    attemp to a geojson like Feature from it
+    attemp to a GeoJSON-like Feature from it
     """
 
     # object implementing geo_interface
+    if hasattr(obj, '__geo_interface__'):
+        gi = obj.__geo_interface__
+        if gi['type'] in geom_types:
+            return wrap_geom(gi)
+        elif gi['type'] == 'Feature':
+            return gi
+
+    # wkt
     try:
-        geo = thing.__geo_interface__
-        return geo
-    except AttributeError:
+        shape = wkt.loads(obj)
+        return wrap_geom(shape.__geo_interface__)
+    except (ReadingError, TypeError, AttributeError):
         pass
 
     # wkb
     try:
-        shape = wkb.loads(thing)
-        return shape.__geo_interface__
+        shape = wkb.loads(obj)
+        return wrap_geom(shape.__geo_interface__)
     except (ReadingError, TypeError):
         pass
 
-    # wkt
-    try:
-        shape = wkt.loads(thing)
-        return shape.__geo_interface__
-    except (ReadingError, TypeError, AttributeError):
-        pass
-
     # geojson-like python mapping
-    valid_types = ["Feature", "Point", "LineString", "Polygon",
-                   "MultiPoint", "MultiLineString", "MultiPolygon"]
     try:
-        assert thing['type'] in valid_types
-        return thing
+        if obj['type'] in geom_types:
+            return wrap_geom(obj)
+        elif obj['type'] == 'Feature':
+            return obj
     except (AssertionError, TypeError):
         pass
 
-    # geojson string
-    try:
-        maybe_geo = json.loads(thing)
-        assert maybe_geo['type'] in valid_types + ["FeatureCollection"]
-        return maybe_geo
-    except (ValueError, AssertionError, TypeError):
-        pass
-
-    raise ValueError("Can't parse %s as a geo-like object" % thing)
+    raise ValueError("Can't parse %s as a geojson Feature object" % obj)
 
 
 def geo_records(vectors):
     for vector in vectors:
-        yield parse_geo(vector)
+        yield parse_feature(vector)
 
 
-def get_features(vectors, layer_num=0):
-    if isinstance(vectors, str):
+def read_features(obj, layer_num=0):
+    features_iter = None
+    if isinstance(obj, str):
         try:
             # test it as fiona data source
-            with fiona.open(vectors, 'r') as src:
+            with fiona.open(obj, 'r') as src:
                 assert len(src) > 0
 
-            def fiona_generator(vectors):
-                with fiona.open(vectors, 'r') as src:
+            def fiona_generator(obj):
+                with fiona.open(obj, 'r') as src:
                     for feature in src:
                         yield feature
 
-            features_iter = fiona_generator(vectors)
+            features_iter = fiona_generator(obj)
         except (AssertionError, TypeError, IOError, OSError):
-            # ... or a single string to be parsed as wkt/wkb/json
-            feat = parse_geo(vectors)
-            features_iter = [feat]
-    elif isinstance(vectors, bytes):
-        # wkb
-        feat = parse_geo(vectors)
-        features_iter = [feat]
-    elif hasattr(vectors, '__geo_interface__'):
-        geotype = vectors.__geo_interface__['type']
-        if geotype.lower() == 'featurecollection':
-            # ... a featurecollection
-            features_iter = geo_records(vectors.__geo_interface__['features'])
+            try:
+                mapping = json.loads(obj)
+                if 'type' in mapping and mapping['type'] == 'FeatureCollection':
+                    features_iter = mapping['features']
+                elif mapping['type'] in geom_types + ['Feature']:
+                    features_iter = [parse_feature(mapping)]
+            except ValueError:
+                # Single feature-like string
+                features_iter = [parse_feature(obj)]
+    elif isinstance(obj, Mapping):
+        if 'type' in obj and obj['type'] == 'FeatureCollection':
+            features_iter = obj['features']
         else:
-            # ... or an single object
-            feat = parse_geo(vectors)
-            features_iter = [feat]
-    elif isinstance(vectors, dict):
-        # a python mapping
-        if 'type' in vectors and vectors['type'] == 'FeatureCollection':
-            # a feature collection
-            features_iter = geo_records([f for f in vectors['features']])
-        else:
-            # a single feature
-            feat = parse_geo(vectors)
-            features_iter = [feat]
+            features_iter = [parse_feature(obj)]
+    elif isinstance(obj, Iterable):
+        # Iterable of feature-like objects
+        features_iter = (parse_feature(x) for x in obj)
     else:
-        # ... or an iterable of objects
-        features_iter = geo_records(vectors)
+        # Single feature-like object
+        features_iter = [parse_feature(obj)]
 
+    if not features_iter:
+        raise ValueError("Object is not a recognized source of Features")
     return features_iter
 
 
-def get_featurecollection(path):
-    features = get_features(path)
+def read_featurecollection(obj, lazy=False):
+    features = read_features(obj)
     fc = {'type': 'FeatureCollection', 'features': []}
-    for feature in features:
-        fc['features'].append(feature)
+    if lazy:
+        fc['features'] = (f for f in features)
+    else:
+        fc['features'] = [f for f in features]
     return fc

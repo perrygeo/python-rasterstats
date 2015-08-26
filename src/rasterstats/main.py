@@ -4,7 +4,7 @@ import warnings
 import rasterio
 from shapely.geometry import shape, box, MultiPolygon
 # from collections import Counter
-from .io import get_features
+from .io import read_features
 from .utils import (bbox_to_pixel_offsets, rasterize_geom, get_percentile, check_stats,
                     pixel_offsets_to_window, raster_extent_as_bounds, remap_categories,
                     key_assoc_val)
@@ -129,7 +129,7 @@ def zonal_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
         else:
             nodata_value = rnodata
 
-    features_iter = get_features(vectors, layer_num)
+    features_iter = read_features(vectors, layer_num)
 
     if global_src_extent and raster_type == 'gdal':
         # create an in-memory numpy array of the source raster data
@@ -147,10 +147,7 @@ def zonal_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
     results = []
 
     for i, feat in enumerate(features_iter):
-        if feat['type'] == "Feature":
-            geom = shape(feat['geometry'])
-        else:  # it's just a geometry
-            geom = shape(feat)
+        geom = shape(feat['geometry'])
 
         # Point and MultiPoint don't play well with GDALRasterize
         # convert them into box polygons the size of a raster cell

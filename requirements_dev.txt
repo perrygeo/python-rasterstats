@@ -1,4 +1,3 @@
-pyshp>=1.1.4
 pytest
 coverage
 simplejson
