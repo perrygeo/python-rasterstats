@@ -1,6 +1,7 @@
 import click
 from rasterstats import zonal_stats
 from rasterstats.utils import combine_features_results
+from rasterstats.io import read_features
 import logging
 try:
     import simplejson as json
@@ -42,11 +43,14 @@ def zonalstats(input_geojson, raster, output_geojson, all_touched, band, categor
 
     if info:
         logging.basicConfig(level=logging.INFO)
-    feature_collection = json.loads(input_geojson.read())
+    mapping = json.loads(input_geojson.read())
     input_geojson.close()
     try:
-        assert feature_collection['type'] == "FeatureCollection"
-        features = feature_collection['features']
+        if mapping['type'] == "FeatureCollection":
+            feature_collection = mapping
+        else:
+            feature_collection = {'type': 'FeatureCollection'}
+        features = read_features(mapping)
     except (AssertionError, KeyError):
         raise ValueError("input_geojson must be a GeoJSON Feature Collection")
 
