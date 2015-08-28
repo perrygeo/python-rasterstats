@@ -1,4 +1,3 @@
-import math
 import rasterio
 from shapely.geometry import shape
 from .io import read_features, raster_info
@@ -17,13 +16,16 @@ def _point_window_frc(x, y, rgt):
     frow, fcol = (y-f)/e, (x-c)/a
     r, c = int(round(frow)), int(round(fcol))
 
+    # The new source window for our 2x2 array
     new_win = ((r - 1, r + 1), (c - 1, c + 1))
-    frc = ( 0.5 - (r - frow), 0.5 - (c - fcol))  # the fractional row, col of the point
+    # the fractional row, col of the point on the unit square
+    frc = (0.5 - (r - frow), 0.5 - (c - fcol))
+
     return new_win, frc
 
 
 def _bilinear(arr, frow, fcol):
-    """ Given an array, return the value for the fractional row/col
+    """ Given a 2x2 array, return the value for the fractional row/col
     using bilinear interpolation between the cells"
     """
     # for now, only 2x2 arrays
@@ -52,34 +54,44 @@ def point_query(vectors, raster, band_num=1, layer_num=1, interpolate='bilinear'
                 nodata_value=None, affine=None, transform=None):
     features_iter = read_features(vectors, layer_num)
 
-    rtype, rgt, rshape, global_src_extent, nodata_value = \
+    rtype, rgt, _, global_src_extent, nodata_value = \
         raster_info(raster, False, nodata_value, affine, transform)
 
-    for feat in features_iter:
-        geom = shape(feat['geometry'])
+    with rasterio.drivers():
+        with rasterio.open(raster, 'r') as src:
+            for feat in features_iter:
+                geom = shape(feat['geometry'])
 
-        # TODO check if point, otherwise ???
-        window, frc = _point_window_frc(geom.x, geom.y, rgt)
+                # TODO check if point, otherwise loop through verticies
+                x, y = geom.x, geom.y
 
-        with rasterio.drivers():
-            with rasterio.open(raster, 'r') as src:
-                src_array = src.read(band_num, window=window, masked=False)
+                if interpolate == 'bilinear':
+                    window, frc = _point_window_frc(x, y, rgt)
+                    src_array = src.read(band_num, window=window, masked=False)
+                    val = _bilinear(src_array, *frc)
+                    yield val
+                elif interpolate == 'nearest':
+                    r, c = src.index(x, y)
+                    window = ((r, r+1), (c, c+1))
+                    src_array = src.read(band_num, window=window, masked=False)
+                    val = src_array[0, 0]
+                    yield val
+                else:
+                    raise Exception("nearest or bilinear")
 
-        val = _bilinear(src_array, *frc)
-        yield val
-
-        # TODO do we support global_src_extent? not yet...
-        # if not global_src_extent:
-        #     # use feature's source extent and read directly from source
-        #     window = pixel_offsets_to_window(src_offset)
-        #     with rasterio.drivers():
-        #         with rasterio.open(raster, 'r') as src:
-        #             src_array = src.read(
-        #                 band_num, window=window, masked=False)
-        # else:
-        #     # subset feature array from global source extent array
-        #     xa = src_offset[0] - global_src_offset[0]
-        #     ya = src_offset[1] - global_src_offset[1]
-        #     xb = xa + src_offset[2]
-        #     yb = ya + src_offset[3]
-        #     src_array = global_src_array[ya:yb, xa:xb]
+    # TODO nodata?
+    # TODO do we support global_src_extent? not yet...
+    # if not global_src_extent:
+    #     # use feature's source extent and read directly from source
+    #     window = pixel_offsets_to_window(src_offset)
+    #     with rasterio.drivers():
+    #         with rasterio.open(raster, 'r') as src:
+    #             src_array = src.read(
+    #                 band_num, window=window, masked=False)
+    # else:
+    #     # subset feature array from global source extent array
+    #     xa = src_offset[0] - global_src_offset[0]
+    #     ya = src_offset[1] - global_src_offset[1]
+    #     xb = xa + src_offset[2]
+    #     yb = ya + src_offset[3]
+    #     src_array = global_src_array[ya:yb, xa:xb]
