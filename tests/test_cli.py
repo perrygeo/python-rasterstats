@@ -17,6 +17,7 @@ def test_cli_geometry():
     assert len(outdata['features']) == 1
     feature = outdata['features'][0]
     assert 'test_mean' in feature['properties']
+    assert round(feature['properties']['test_mean'], 2) == 14.66
     assert 'test_count' not in feature['properties']
 
 def test_cli_feature():
@@ -32,6 +33,7 @@ def test_cli_feature():
     assert len(outdata['features']) == 1
     feature = outdata['features'][0]
     assert 'test_mean' in feature['properties']
+    assert round(feature['properties']['test_mean'], 2) == 14.66
     assert 'test_count' not in feature['properties']
 
 def test_cli_featurecollection():
@@ -47,4 +49,5 @@ def test_cli_featurecollection():
     assert len(outdata['features']) == 2
     feature = outdata['features'][0]
     assert 'test_mean' in feature['properties']
+    assert round(feature['properties']['test_mean'], 2) == 14.66
     assert 'test_count' not in feature['properties']

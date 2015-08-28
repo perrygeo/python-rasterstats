@@ -24,6 +24,7 @@ def test_main():
     assert len(stats) == 2
     assert stats[0]['count'] == 75
     assert stats[1]['count'] == 50
+    assert round(stats[0]['mean'], 2) == 14.66
 
 
 def test_zonal_global_extent():
