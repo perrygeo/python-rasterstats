@@ -154,7 +154,13 @@ def check_stats(stats, categorical):
             raise ValueError(
                 "Stat `%s` not valid; "
                 "must be one of \n %r" % (x, VALID_STATS))
-    return stats
+
+    run_count = False
+    if categorical or 'majority' in stats or 'minority' in stats or 'unique' in stats:
+        # run the counter once, only if needed
+        run_count = True
+
+    return stats, run_count
 
 
 def remap_categories(category_map, stats):

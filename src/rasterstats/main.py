@@ -3,8 +3,7 @@ import numpy as np
 import warnings
 import rasterio
 from shapely.geometry import shape, box, MultiPolygon
-# from collections import Counter
-from .io import read_features
+from .io import read_features, raster_info
 from .utils import (bbox_to_pixel_offsets, rasterize_geom, get_percentile, check_stats,
                     pixel_offsets_to_window, raster_extent_as_bounds, remap_categories,
                     key_assoc_val)
@@ -84,52 +83,14 @@ def zonal_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
         Its keys include `__fid__` (the geometry feature id)
         and each of the `stats` requested.
     """
-    stats = check_stats(stats, categorical)
+    stats, run_count = check_stats(stats, categorical)
 
-    run_count = False
-    if categorical or 'majority' in stats or 'minority' in stats or \
-       'unique' in stats:
-        # run the counter once, only if needed
-        run_count = True
-
-    if isinstance(raster, np.ndarray):
-        raster_type = 'ndarray'
-
-        # must have transform info
-        if affine:
-            transform = affine
-        if not transform:
-            raise ValueError("Must provide the 'transform' kwarg "
-                             "when using ndarrays as src raster")
-        try:
-            rgt = transform.to_gdal()  # an Affine object
-        except AttributeError:
-            rgt = transform  # a GDAL geotransform
-
-        rshape = (raster.shape[1], raster.shape[0])
-
-        # global_src_extent is implicitly turned on, array is already in memory
-        global_src_extent = True
-
-    else:
-        raster_type = 'gdal'
-
-        with rasterio.drivers():
-            with rasterio.open(raster, 'r') as src:
-                affine = src.affine
-                rgt = affine.to_gdal()
-                rshape = (src.width, src.height)
-                rnodata = src.nodata
-
-        if nodata_value is not None:
-            # override with specified nodata
-            nodata_value = float(nodata_value)
-        else:
-            nodata_value = rnodata
+    rtype, rgt, rshape, global_src_extent, nodata_value = \
+        raster_info(raster, global_src_extent, nodata_value, affine, transform)
 
     features_iter = read_features(vectors, layer_num)
 
-    if global_src_extent and raster_type == 'gdal':
+    if global_src_extent and rtype == 'gdal':
         # create an in-memory numpy array of the source raster data
         extent = raster_extent_as_bounds(rgt, rshape)
         global_src_offset = bbox_to_pixel_offsets(rgt, extent, rshape)
@@ -138,7 +99,7 @@ def zonal_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
             with rasterio.open(raster, 'r') as src:
                 global_src_array = src.read(
                     band_num, window=window, masked=False)
-    elif global_src_extent and raster_type == 'ndarray':
+    elif global_src_extent and rtype == 'ndarray':
         global_src_offset = (0, 0, raster.shape[0], raster.shape[1])
         global_src_array = raster
 
@@ -149,6 +110,7 @@ def zonal_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
 
         # Point and MultiPoint don't play well with GDALRasterize
         # convert them into box polygons the size of a raster cell
+        # TODO warning, suggest point_query instead
         buff = rgt[1] / 2.0
         if geom.type == "MultiPoint":
             geom = MultiPolygon([box(*(pt.buffer(buff).bounds))
