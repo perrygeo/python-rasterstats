@@ -1,3 +1,7 @@
+# -*- coding: utf-8 -*-
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import unicode_literals
 import click
 from rasterstats import zonal_stats
 from rasterstats.utils import combine_features_results
