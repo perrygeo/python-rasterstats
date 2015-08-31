@@ -40,7 +40,8 @@ def test_fiona_path():
 
 
 def test_layer_index():
-    assert list(read_features(DATA, layer=6)) == target_features
+    layer = fiona.listlayers(DATA).index('polygons')
+    assert list(read_features(DATA, layer=layer)) == target_features
 
 
 def test_layer_name():
