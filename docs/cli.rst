@@ -161,7 +161,7 @@ To implement this as a shell script::
 
 And the result: a geojson-based web map of South & Central American islands containing their elevation stats.
 
-.. image:: bahamas.png
+.. image:: img/bahamas.png
 
 For analysts, if you've ever performed similar work in a Desktop GIS environment, you might imagine the pages of screenshots and elaborate instructions necessary to document a process like this. By contrast, our script is only 10 lines and is nearly as easy to understand as our narrative description (if just a bit more terse). Scripting on the command line also means that your workflows are now sharable in version control systems, repeatable and automated.
 
