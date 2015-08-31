@@ -5,7 +5,6 @@ from shapely.geometry import shape
 from rasterstats.io import read_features, read_featurecollection  # todo parse_feature
 import json
 import pytest
-from collections import Mapping
 
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -38,6 +37,14 @@ def _test_read_features_single(indata):
 
 def test_fiona_path():
     assert list(read_features(polygons)) == target_features
+
+
+def test_layer_index():
+    assert list(read_features(DATA, layer=6)) == target_features
+
+
+def test_layer_name():
+    assert list(read_features(DATA, layer='polygons')) == target_features
 
 
 def test_path_unicode():

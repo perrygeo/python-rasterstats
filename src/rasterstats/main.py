@@ -19,10 +19,10 @@ def raster_stats(*args, **kwargs):
     return zonal_stats(*args, **kwargs)
 
 
-def zonal_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
+def zonal_stats(vectors, raster, layer=0, band_num=1, nodata_value=None,
                 global_src_extent=False, categorical=False, stats=None,
-                copy_properties=False, all_touched=False, transform=None,
-                affine=None, add_stats=None, raster_out=False, category_map=None):
+                copy_properties=False, all_touched=False, transform=None, affine=None,
+                add_stats=None, raster_out=False, category_map=None, **kwargs):
     """Summary statistics of a raster, broken out by vector geometries.
 
     Attributes
@@ -30,10 +30,10 @@ def zonal_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
     vectors : path to an OGR vector source or list of geo_interface or WKT str
     raster : ndarray or path to a GDAL raster source
         If ndarray is passed, the `transform` kwarg is required.
-    layer_num : int, optional
-        If `vectors` is a path to an OGR source, the vector layer to use
-        (counting from 0).
-        defaults to 0.
+    layer : int or string, optional
+        If `vectors` is a path to an fiona source,
+        specify the vector layer to use either by name or number.
+        defaults to 0
     band_num : int, optional
         If `raster` is a GDAL source, the band number to use (counting from 1).
         defaults to 1.
@@ -91,7 +91,7 @@ def zonal_stats(vectors, raster, layer_num=0, band_num=1, nodata_value=None,
     rtype, rgt, rshape, global_src_extent, nodata_value = \
         raster_info(raster, global_src_extent, nodata_value, affine, transform)
 
-    features_iter = read_features(vectors, layer_num)
+    features_iter = read_features(vectors, layer)
 
     if global_src_extent and rtype == 'gdal':
         # create an in-memory numpy array of the source raster data

@@ -73,16 +73,16 @@ def geo_records(vectors):
         yield parse_feature(vector)
 
 
-def read_features(obj, layer_num=0):
+def read_features(obj, layer=0):
     features_iter = None
     if isinstance(obj, string_types):
         try:
             # test it as fiona data source
-            with fiona.open(obj, 'r') as src:
+            with fiona.open(obj, 'r', layer=layer) as src:
                 assert len(src) > 0
 
             def fiona_generator(obj):
-                with fiona.open(obj, 'r') as src:
+                with fiona.open(obj, 'r', layer=layer) as src:
                     for feature in src:
                         yield feature
 
@@ -123,8 +123,8 @@ def read_features(obj, layer_num=0):
     return features_iter
 
 
-def read_featurecollection(obj, lazy=False):
-    features = read_features(obj)
+def read_featurecollection(obj, layer=0, lazy=False):
+    features = read_features(obj, layer=layer)
     fc = {'type': 'FeatureCollection', 'features': []}
     if lazy:
         fc['features'] = (f for f in features)
