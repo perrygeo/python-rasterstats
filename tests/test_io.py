@@ -40,6 +40,15 @@ def test_fiona_path():
     assert list(read_features(polygons)) == target_features
 
 
+def test_path_unicode():
+    try:
+        upolygons = unicode(polygons)
+    except NameError:
+        # python3, it's already unicode
+        upolygons = polygons
+    assert list(read_features(upolygons)) == target_features
+
+
 def test_featurecollection():
     assert read_featurecollection(polygons)['features'] == \
         list(read_features(polygons)) == \

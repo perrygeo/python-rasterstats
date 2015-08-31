@@ -1,3 +1,8 @@
+# -*- coding: utf-8 -*-
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import unicode_literals
+import sys
 import json
 import fiona
 import rasterio
@@ -10,6 +15,11 @@ from collections import Iterable, Mapping
 geom_types = ["Point", "LineString", "Polygon",
               "MultiPoint", "MultiLineString", "MultiPolygon"]
 
+PY3 = sys.version_info[0] >= 3
+if PY3:
+    string_types = str,
+else:
+    string_types = basestring,
 
 def wrap_geom(geom):
     """ Wraps a geometry dict in an GeoJSON Feature
@@ -65,7 +75,7 @@ def geo_records(vectors):
 
 def read_features(obj, layer_num=0):
     features_iter = None
-    if isinstance(obj, str):
+    if isinstance(obj, string_types):
         try:
             # test it as fiona data source
             with fiona.open(obj, 'r') as src:
