@@ -1,3 +1,6 @@
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import unicode_literals
 import rasterio
 from shapely.geometry import shape
 from .io import read_features, raster_info
@@ -25,29 +28,23 @@ def _point_window_frc(x, y, rgt):
 
 
 def _bilinear(arr, frow, fcol):
-    """ Given a 2x2 array, return the value for the fractional row/col
-    using bilinear interpolation between the cells"
+    """ Given a 2x2 array, treat center points as a unit square
+    return the value for the fractional row/col
+    using bilinear interpolation between the cells
     """
     # for now, only 2x2 arrays
     assert arr.shape == (2, 2)
 
-    # convert rows, cols to cartesian coords on unit square
+    # convert fractional rows, cols to cartesian coords on unit square
     x = fcol
     y = 1 - frow
-    # use variables for clarity, todo optimize by replacement
-    x1 = 0
-    x2 = 1
-    y1 = 0
-    y2 = 1
 
     ulv, urv, llv, lrv = arr[0:2, 0:2].flatten().tolist()
 
-    fxy = ((llv * (x2 - x) * (y2 - y)) +
-           (lrv * (x - x1) * (y2 - y)) +
-           (ulv * (x2 - x) * (y - y1)) +
-           (urv * (x - x1) * (y - y1)))
-
-    return fxy
+    return ((llv * (1 - x) * (1 - y)) +
+            (lrv * x * (1 - y)) +
+            (ulv * (1 - x) * y) +
+            (urv * x * y))
 
 
 def point_query(vectors, raster, band_num=1, layer_num=1, interpolate='bilinear',
