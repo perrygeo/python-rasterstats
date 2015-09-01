@@ -10,7 +10,7 @@ from numpy import asscalar
 from .io import read_features, raster_info
 
 
-def _point_window_frc(x, y, rgt):
+def point_window_frc(x, y, rgt):
     """ Given an x, y
     Returns
         - rasterio window representing 2x2 window whose center points encompass point
@@ -31,7 +31,7 @@ def _point_window_frc(x, y, rgt):
     return new_win, frc
 
 
-def _bilinear(arr, frow, fcol):
+def bilinear(arr, frow, fcol):
     """ Given a 2x2 array, treat center points as a unit square
     return the value for the fractional row/col
     using bilinear interpolation between the cells
@@ -106,9 +106,9 @@ def point_query(vectors, raster, band_num=1, layer_num=1, interpolate='bilinear'
                     geom = shape(feat['geometry'])
                     vals = []
                     for x, y in geom_xys(geom):
-                        window, frc = _point_window_frc(x, y, rgt)
+                        window, frc = point_window_frc(x, y, rgt)
                         src_array = src.read(band_num, window=window, masked=True)
-                        vals.append(_bilinear(src_array, *frc))
+                        vals.append(bilinear(src_array, *frc))
                     yield vals
             elif interpolate == 'nearest':
                 for feat in features_iter:
