@@ -45,7 +45,9 @@ def _bilinear(arr, frow, fcol):
 
     ulv, urv, llv, lrv = arr[0:2, 0:2].flatten().tolist()
 
-    if arr.count() != 4:  # at least one nodata, fall back to nearest neighbor
+    if hasattr(arr, 'count') and arr.count() != 4:
+        # a masked array with at least one nodata
+        # fall back to nearest neighbor
         val = arr[math.floor(x), math.floor(y)]
         if val is masked:
             return None
@@ -94,7 +96,7 @@ def point_query(vectors, raster, band_num=1, layer_num=1, interpolate='bilinear'
     """
     features_iter = read_features(vectors, layer_num)
 
-    rtype, rgt, _, global_src_extent, nodata_value = \
+    rtype, rgt, _, _, nodata_value = \
         raster_info(raster, False, nodata_value, affine, transform)
 
     with rasterio.drivers():
@@ -118,8 +120,9 @@ def point_query(vectors, raster, band_num=1, layer_num=1, interpolate='bilinear'
                         src_array = src.read(band_num, window=window, masked=True)
                         val = src_array[0, 0]
                         if val is masked:
-                            val = None
-                        vals.append(asscalar(val))
+                            vals.append(None)
+                        else:
+                            vals.append(asscalar(val))
                     yield vals
             else:
                 raise ValueError("interpolate must be nearest or bilinear")
