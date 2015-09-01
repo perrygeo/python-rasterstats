@@ -1,9 +1,12 @@
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
+import math
 import rasterio
 from shapely.geometry import shape
 from shapely import wkt
+from numpy.ma import masked
+from numpy import asscalar
 from .io import read_features, raster_info
 
 
@@ -41,6 +44,13 @@ def _bilinear(arr, frow, fcol):
     y = 1 - frow
 
     ulv, urv, llv, lrv = arr[0:2, 0:2].flatten().tolist()
+
+    if arr.count() != 4:  # at least one nodata, fall back to nearest neighbor
+        val = arr[math.floor(x), math.floor(y)]
+        if val is masked:
+            return None
+        else:
+            return asscalar(val)
 
     return ((llv * (1 - x) * (1 - y)) +
             (lrv * x * (1 - y)) +
@@ -95,7 +105,7 @@ def point_query(vectors, raster, band_num=1, layer_num=1, interpolate='bilinear'
                     vals = []
                     for x, y in geom_xys(geom):
                         window, frc = _point_window_frc(x, y, rgt)
-                        src_array = src.read(band_num, window=window, masked=False)
+                        src_array = src.read(band_num, window=window, masked=True)
                         vals.append(_bilinear(src_array, *frc))
                     yield vals
             elif interpolate == 'nearest':
@@ -105,8 +115,11 @@ def point_query(vectors, raster, band_num=1, layer_num=1, interpolate='bilinear'
                     for x, y in geom_xys(geom):
                         r, c = src.index(x, y)
                         window = ((r, r+1), (c, c+1))
-                        src_array = src.read(band_num, window=window, masked=False)
-                        vals.append(src_array[0, 0])
+                        src_array = src.read(band_num, window=window, masked=True)
+                        val = src_array[0, 0]
+                        if val is masked:
+                            val = None
+                        vals.append(asscalar(val))
                     yield vals
             else:
                 raise ValueError("interpolate must be nearest or bilinear")
