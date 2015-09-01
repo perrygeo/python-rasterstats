@@ -10,13 +10,14 @@ from numpy import asscalar
 from .io import read_features, raster_info
 
 
-def point_window_frc(x, y, rgt):
-    """ Given an x, y
+def point_window_unitxy(x, y, rgt):
+    """ Given an x, y and a geotransform
     Returns
         - rasterio window representing 2x2 window whose center points encompass point
-        - the fractional row and col (frc) of the point in the new array
+        - the cartesian x, y coordinates of the point on the unit square
+          defined by the array center points.
 
-    ((row1, row2), (col1, col2)), (frow, fcol)
+    ((row1, row2), (col1, col2)), (unitx, unity)
     """
     c, a, b, f, d, e = rgt  # gdal-style translated to Affine nomenclature
 
@@ -25,35 +26,45 @@ def point_window_frc(x, y, rgt):
 
     # The new source window for our 2x2 array
     new_win = ((r - 1, r + 1), (c - 1, c + 1))
-    # the fractional row, col of the point on the unit square
-    frc = (0.5 - (r - frow), 0.5 - (c - fcol))
 
-    return new_win, frc
+    # the new x, y coords on the unit square
+    unitxy = (0.5 - (c - fcol),
+              0.5 + (r - frow))
+
+    return new_win, unitxy
 
 
-def bilinear(arr, frow, fcol):
-    """ Given a 2x2 array, treat center points as a unit square
+def bilinear(arr, x, y):
+    """ Given a 2x2 array, an x, and y, treat center points as a unit square
     return the value for the fractional row/col
     using bilinear interpolation between the cells
+
+        +---+---+
+        | A | B |      +----+
+        +---+---+  =>  |    |
+        | C | D |      +----+
+        +---+---+
+
+        e.g.: Center of A is at (0, 1) on unit square, D is at (1, 0), etc
     """
     # for now, only 2x2 arrays
     assert arr.shape == (2, 2)
-
-    # convert fractional rows, cols to cartesian coords on unit square
-    x = fcol
-    y = 1 - frow
-
     ulv, urv, llv, lrv = arr[0:2, 0:2].flatten().tolist()
+
+    # not valid if not on unit square
+    assert 0.0 <= x <= 1.0
+    assert 0.0 <= y <= 1.0
 
     if hasattr(arr, 'count') and arr.count() != 4:
         # a masked array with at least one nodata
         # fall back to nearest neighbor
-        val = arr[math.floor(x), math.floor(y)]
+        val = arr[round(1 - y), round(x)]
         if val is masked:
             return None
         else:
             return asscalar(val)
 
+    # bilinear interp on unit square
     return ((llv * (1 - x) * (1 - y)) +
             (lrv * x * (1 - y)) +
             (ulv * (1 - x) * y) +
@@ -91,7 +102,6 @@ def point_query(vectors, raster, band_num=1, layer_num=1, interpolate='bilinear'
 
     The first index is the geometry, the second is the vertex within the geometry
 
-    # TODO nodata?
     # TODO do we support global_src_extent and ndarrays? not yet...
     """
     features_iter = read_features(vectors, layer_num)
@@ -106,9 +116,9 @@ def point_query(vectors, raster, band_num=1, layer_num=1, interpolate='bilinear'
                     geom = shape(feat['geometry'])
                     vals = []
                     for x, y in geom_xys(geom):
-                        window, frc = point_window_frc(x, y, rgt)
+                        window, unitxy = point_window_unitxy(x, y, rgt)
                         src_array = src.read(band_num, window=window, masked=True)
-                        vals.append(bilinear(src_array, *frc))
+                        vals.append(bilinear(src_array, *unitxy))
                     yield vals
             elif interpolate == 'nearest':
                 for feat in features_iter:
