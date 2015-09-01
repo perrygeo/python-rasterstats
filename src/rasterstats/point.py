@@ -3,13 +3,14 @@ from __future__ import division
 from __future__ import unicode_literals
 import rasterio
 from shapely.geometry import shape
+from shapely import wkt
 from .io import read_features, raster_info
 
 
 def _point_window_frc(x, y, rgt):
     """ Given an x, y
     Returns
-        - rasterio window representing 2x2 window around a given point with point in UL
+        - rasterio window representing 2x2 window whose center points encompass point
         - the fractional row and col (frc) of the point in the new array
 
     ((row1, row2), (col1, col2)), (frow, fcol)
@@ -47,8 +48,40 @@ def _bilinear(arr, frow, fcol):
             (urv * x * y))
 
 
+def geom_xys(geom):
+    """Given a shapely geometry,
+    generate a flattened series of 2D points as x,y tuples
+    """
+    if geom.has_z:
+        # hack to convert to 2D, https://gist.github.com/ThomasG77/cad711667942826edc70
+        geom = wkt.loads(geom.to_wkt())
+        assert not geom.has_z
+
+    if hasattr(geom, "geoms"):
+        geoms = geom.geoms
+    else:
+        geoms = [geom]
+
+    for g in geoms:
+        arr = g.array_interface_base['data']
+        for pair in zip(arr[::2], arr[1::2]):
+            yield pair
+
+
 def point_query(vectors, raster, band_num=1, layer_num=1, interpolate='bilinear',
                 nodata_value=None, affine=None, transform=None):
+    """Given a set of n vector features and a raster,
+    generates n lists of raster values at each vertex of the geometry
+
+    Effectively creates a 2D list, even for a single point, such that
+
+        value = list(point_query(point, raster))[0][0]
+
+    The first index is the geometry, the second is the vertex within the geometry
+
+    # TODO nodata?
+    # TODO do we support global_src_extent and ndarrays? not yet...
+    """
     features_iter = read_features(vectors, layer_num)
 
     rtype, rgt, _, global_src_extent, nodata_value = \
@@ -56,39 +89,24 @@ def point_query(vectors, raster, band_num=1, layer_num=1, interpolate='bilinear'
 
     with rasterio.drivers():
         with rasterio.open(raster, 'r') as src:
-            for feat in features_iter:
-                geom = shape(feat['geometry'])
-
-                # TODO check if point, otherwise loop through verticies
-                x, y = geom.x, geom.y
-
-                if interpolate == 'bilinear':
-                    window, frc = _point_window_frc(x, y, rgt)
-                    src_array = src.read(band_num, window=window, masked=False)
-                    val = _bilinear(src_array, *frc)
-                    yield val
-                elif interpolate == 'nearest':
-                    r, c = src.index(x, y)
-                    window = ((r, r+1), (c, c+1))
-                    src_array = src.read(band_num, window=window, masked=False)
-                    val = src_array[0, 0]
-                    yield val
-                else:
-                    raise Exception("nearest or bilinear")
-
-    # TODO nodata?
-    # TODO do we support global_src_extent? not yet...
-    # if not global_src_extent:
-    #     # use feature's source extent and read directly from source
-    #     window = pixel_offsets_to_window(src_offset)
-    #     with rasterio.drivers():
-    #         with rasterio.open(raster, 'r') as src:
-    #             src_array = src.read(
-    #                 band_num, window=window, masked=False)
-    # else:
-    #     # subset feature array from global source extent array
-    #     xa = src_offset[0] - global_src_offset[0]
-    #     ya = src_offset[1] - global_src_offset[1]
-    #     xb = xa + src_offset[2]
-    #     yb = ya + src_offset[3]
-    #     src_array = global_src_array[ya:yb, xa:xb]
+            if interpolate == 'bilinear':
+                for feat in features_iter:
+                    geom = shape(feat['geometry'])
+                    vals = []
+                    for x, y in geom_xys(geom):
+                        window, frc = _point_window_frc(x, y, rgt)
+                        src_array = src.read(band_num, window=window, masked=False)
+                        vals.append(_bilinear(src_array, *frc))
+                    yield vals
+            elif interpolate == 'nearest':
+                for feat in features_iter:
+                    geom = shape(feat['geometry'])
+                    vals = []
+                    for x, y in geom_xys(geom):
+                        r, c = src.index(x, y)
+                        window = ((r, r+1), (c, c+1))
+                        src_array = src.read(band_num, window=window, masked=False)
+                        vals.append(src_array[0, 0])
+                    yield vals
+            else:
+                raise ValueError("interpolate must be nearest or bilinear")
