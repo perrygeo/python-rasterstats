@@ -74,13 +74,12 @@ def get_percentile(stat):
     return q
 
 
-def rasterize_geom(geom, src_offset, new_gt, all_touched):
+def rasterize_geom(geom, like, all_touched=False):
     geoms = [(geom, 1)]
-    affinetrans = Affine.from_gdal(*new_gt)
     rv_array = features.rasterize(
         geoms,
-        out_shape=(src_offset[3], src_offset[2]),
-        transform=affinetrans,
+        out_shape=like.shape,
+        transform=like.affine,
         fill=0,
         all_touched=all_touched)
     return rv_array

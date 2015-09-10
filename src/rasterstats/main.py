@@ -3,12 +3,9 @@ from __future__ import absolute_import
 from __future__ import division
 import numpy as np
 import warnings
-import rasterio
 from shapely.geometry import shape, box, MultiPolygon
-from .io import read_features, raster_info
-from .utils import (bbox_to_pixel_offsets, rasterize_geom, get_percentile, check_stats,
-                    pixel_offsets_to_window, raster_extent_as_bounds, remap_categories,
-                    key_assoc_val)
+from .io import read_features, Raster
+from .utils import (rasterize_geom, get_percentile, check_stats, remap_categories, key_assoc_val)
 
 
 def raster_stats(*args, **kwargs):
@@ -20,7 +17,7 @@ def raster_stats(*args, **kwargs):
 
 def zonal_stats(vectors, raster, layer=0, band_num=1, nodata_value=None,
                 global_src_extent=False, categorical=False, stats=None,
-                copy_properties=False, all_touched=False, transform=None, affine=None,
+                copy_properties=False, all_touched=False, affine=None,
                 add_stats=None, raster_out=False, category_map=None, **kwargs):
     """Summary statistics of a raster, broken out by vector geometries.
 
@@ -63,11 +60,8 @@ def zonal_stats(vectors, raster, layer=0, band_num=1, nodata_value=None,
         Whether to include every raster cell touched by a geometry, or only
         those having a center point within the polygon.
         defaults to `False`
-    transform : list or tuple of 6 floats or Affine object, optional
-        Required when `raster` is an ndarray.
-        6-tuple for GDAL-style geotransform coordinates
-        Affine for rasterio-style geotransform coordinates
-        Can use the keyword `affine` which is an alias for `transform`
+    affine : Affine object or 6 tuple in Affine order NOT GDAL order
+        required only for ndarrays, otherwise it is read from src
     add_stats : Dictionary with names and functions of additional statistics to
                 compute, optional
     raster_out : Include the masked numpy array for each feature, optional
@@ -87,87 +81,42 @@ def zonal_stats(vectors, raster, layer=0, band_num=1, nodata_value=None,
     """
     stats, run_count = check_stats(stats, categorical)
 
-    rtype, rgt, rshape, global_src_extent, nodata_value = \
-        raster_info(raster, global_src_extent, nodata_value, affine, transform)
+    with Raster(raster, affine, nodata_value, band_num) as rast:
+        results = []
 
-    features_iter = read_features(vectors, layer)
+        features_iter = read_features(vectors, layer)
+        for i, feat in enumerate(features_iter):
+            geom = shape(feat['geometry'])
 
-    if global_src_extent and rtype == 'gdal':
-        # create an in-memory numpy array of the source raster data
-        extent = raster_extent_as_bounds(rgt, rshape)
-        global_src_offset = bbox_to_pixel_offsets(rgt, extent, rshape)
-        window = pixel_offsets_to_window(global_src_offset)
-        with rasterio.drivers():
-            with rasterio.open(raster, 'r') as src:
-                global_src_array = src.read(
-                    band_num, window=window, masked=False)
-    elif global_src_extent and rtype == 'ndarray':
-        global_src_offset = (0, 0, raster.shape[0], raster.shape[1])
-        global_src_array = raster
+            # Point and MultiPoint don't play well with GDALRasterize
+            # convert them into box polygons the size of a raster cell
+            # TODO warning, suggest point_query instead
+            # TODO buff = rgt[1] / 2.0
+            buff = rast.affine.a / 2.0  # TODO use affine not transform
+            if geom.type == "MultiPoint":
+                geom = MultiPolygon([box(*(pt.buffer(buff).bounds))
+                                    for pt in geom.geoms])
+            elif geom.type == 'Point':
+                geom = box(*(geom.buffer(buff).bounds))
 
-    results = []
+            geom_bounds = tuple(geom.bounds)
 
-    for i, feat in enumerate(features_iter):
-        geom = shape(feat['geometry'])
-
-        # Point and MultiPoint don't play well with GDALRasterize
-        # convert them into box polygons the size of a raster cell
-        # TODO warning, suggest point_query instead
-        buff = rgt[1] / 2.0
-        if geom.type == "MultiPoint":
-            geom = MultiPolygon([box(*(pt.buffer(buff).bounds))
-                                for pt in geom.geoms])
-        elif geom.type == 'Point':
-            geom = box(*(geom.buffer(buff).bounds))
-
-        geom_bounds = list(geom.bounds)
-
-        # calculate new pixel coordinates of the feature subset
-        src_offset = bbox_to_pixel_offsets(rgt, geom_bounds, rshape)
-
-        new_gt = (
-            (rgt[0] + (src_offset[0] * rgt[1])),
-            rgt[1],
-            0.0,
-            (rgt[3] + (src_offset[1] * rgt[5])),
-            0.0,
-            rgt[5]
-        )
-
-        if src_offset[2] <= 0 or src_offset[3] <= 0:
-            # we're off the raster completely, no overlap at all
-            # so there's no need to even bother trying to calculate
-            feature_stats = dict([(s, None) for s in stats])
-        else:
-            if not global_src_extent:
-                # use feature's source extent and read directly from source
-                window = pixel_offsets_to_window(src_offset)
-                with rasterio.drivers():
-                    with rasterio.open(raster, 'r') as src:
-                        src_array = src.read(
-                            band_num, window=window, masked=False)
-            else:
-                # subset feature array from global source extent array
-                xa = src_offset[0] - global_src_offset[0]
-                ya = src_offset[1] - global_src_offset[1]
-                xb = xa + src_offset[2]
-                yb = ya + src_offset[3]
-                src_array = global_src_array[ya:yb, xa:xb]
+            # TODO if off the map, return array with all nodata and let the
+            # masked.compressed.size() check handle it
+            fsrc = rast.read(bounds=geom_bounds)
 
             # create ndarray of rasterized geometry
-            rv_array = rasterize_geom(geom, src_offset, new_gt, all_touched)
-            assert rv_array.shape == src_array.shape
+            rv_array = rasterize_geom(geom, like=fsrc, all_touched=all_touched)
+            assert rv_array.shape == fsrc.shape  # TODO remove
 
             # Mask the source data array with our current feature
             # we take the logical_not to flip 0<->1 for the correct mask effect
             # we also mask out nodata values explicitly
             masked = np.ma.MaskedArray(
-                src_array,
+                fsrc.array,
                 mask=np.logical_or(
-                    src_array == nodata_value,
-                    np.logical_not(rv_array)
-                )
-            )
+                    fsrc.array == nodata_value,
+                    np.logical_not(rv_array)))
 
             if masked.compressed().size == 0:
                 # nothing here, fill with None and move on
@@ -178,7 +127,7 @@ def zonal_stats(vectors, raster, layer=0, band_num=1, nodata_value=None,
                 if run_count:
                     keys, counts = np.unique(masked.compressed(), return_counts=True)
                     pixel_count = dict(zip([np.asscalar(k) for k in keys],
-                                           [np.asscalar(c) for c in counts]))
+                                       [np.asscalar(c) for c in counts]))
 
                 if categorical:
                     feature_stats = dict(pixel_count)
@@ -234,10 +183,10 @@ def zonal_stats(vectors, raster, layer=0, band_num=1, nodata_value=None,
                         feature_stats[pctile] = np.percentile(pctarr, q)
 
             if 'nodata' in stats:
-                featmasked = np.ma.MaskedArray(src_array, mask=np.logical_not(rv_array))
+                featmasked = np.ma.MaskedArray(fsrc.array, mask=np.logical_not(rv_array))
                 keys, counts = np.unique(featmasked.compressed(), return_counts=True)
                 pixel_count = dict(zip([np.asscalar(k) for k in keys],
-                                       [np.asscalar(c) for c in counts]))
+                                   [np.asscalar(c) for c in counts]))
                 feature_stats['nodata'] = pixel_count.get(nodata_value, 0)
 
             if add_stats is not None:
@@ -248,21 +197,21 @@ def zonal_stats(vectors, raster, layer=0, band_num=1, nodata_value=None,
                 masked.fill_value = nodata_value
                 masked.data[masked.mask] = nodata_value
                 feature_stats['mini_raster'] = masked
-                feature_stats['mini_raster_GT'] = new_gt
-                feature_stats['mini_raster_NDV'] = nodata_value
+                feature_stats['mini_raster_GT'] = fsrc.transform  # TODO affine
+                feature_stats['mini_raster_NDV'] = rast.nodata
 
-        if 'fid' in feat:
-            # Use the fid directly,
-            # likely came from OGR data via .utils.feature_to_geojson
-            feature_stats['__fid__'] = feat['fid']
-        else:
-            # Use the enumerated id
-            feature_stats['__fid__'] = i
+            if 'fid' in feat:
+                # Use the fid directly,
+                # likely came from OGR data via .utils.feature_to_geojson
+                feature_stats['__fid__'] = feat['fid']
+            else:
+                # Use the enumerated id
+                feature_stats['__fid__'] = i
 
-        if 'properties' in feat and copy_properties:
-            for key, val in list(feat['properties'].items()):
-                feature_stats[key] = val
+            if 'properties' in feat and copy_properties:
+                for key, val in list(feat['properties'].items()):
+                    feature_stats[key] = val
 
-        results.append(feature_stats)
+            results.append(feature_stats)
 
     return results

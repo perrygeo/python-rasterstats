@@ -3,8 +3,10 @@ from __future__ import absolute_import
 from __future__ import division
 import sys
 import json
+import math
 import fiona
 import rasterio
+from affine import Affine
 import numpy as np
 from shapely.geos import ReadingError
 from shapely import wkt, wkb
@@ -172,3 +174,90 @@ def raster_info(raster, global_src_extent, nodata_value, affine, transform):
             nodata_value = rnodata
 
     return rtype, rgt, rshape, global_src_extent, nodata_value
+
+
+def rc(x, y, affine, op=math.floor):
+    """ Get row/col for a x/y
+    """
+    r = int(op((y - affine.f) / affine.e))
+    c = int(op((x - affine.c) / affine.a))
+    return r, c
+
+
+def get_window(bounds, affine):
+    """Create a full cover rasterio-style window
+    """
+    w, s, e, n = bounds
+    row_start, col_start = rc(w, n, affine)
+    row_stop, col_stop = rc(e, s, affine, op=math.ceil)
+    return (row_start, row_stop), (col_start, col_stop)
+
+
+def get_bounds(window, affine):
+    (row_start, row_stop), (col_start, col_stop) = window
+    w, s = (col_start, row_stop) * affine
+    e, n = (col_stop, row_start) * affine
+    return w, s, e, n
+
+
+class Raster(object):
+
+    @property
+    def transform(*args, **kwargs):
+        raise Exception("Don't you mean 'affine'?")
+
+    def read(self, bounds):
+
+        # Calculate the window
+        win = get_window(bounds, self.affine)
+        (row_start, row_stop), (col_start, col_stop) = win
+
+        c, _, _, f = get_bounds(win, self.affine)  # c ~ west, f ~ north
+        a, b, _, d, e, _, _, _, _ = tuple(self.affine)
+        new_affine = Affine(a, b, c, d, e, f)
+
+        nodata = self.nodata
+
+        if self.array:
+            # It's an ndarray already
+            new_array = self.array[row_start:row_stop, col_start:col_stop]
+        elif self.src:
+            # It's an open rasterio dataset
+            new_array = self.src.read(self.band, window=win, boundless=True)
+        else:
+            raise Exception("Raster has neither a src nor an array, should never happen")
+
+        return Raster(new_array, new_affine, nodata)
+
+    def __init__(self, raster, affine=None, nodata=None, band=1):
+        self.drivers = None
+        self.array = None
+        self.src = None
+
+        if isinstance(raster, np.ndarray):
+            if affine is None:
+                raise Exception("Must specify affine for numpy arrays")
+            # TODO try Affine.from_gdal(affine) and raise warning "Looks like you're using
+            self.array = raster
+            self.affine = affine
+            self.shape = raster.shape
+            self.nodata = nodata
+        else:
+            self.drivers = rasterio.drivers()
+            self.src = rasterio.open(raster, 'r')
+            self.affine = self.src.affine
+            self.shape = (self.src.height, self.src.width)
+            self.band = band
+
+            if nodata is not None:
+                # override with specified nodata
+                self.nodata = float(nodata)
+            else:
+                self.nodata = self.src.nodata
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args):
+        #TODO close drivers and src
+        pass
