@@ -5,7 +5,7 @@ import rasterio
 import json
 import pytest
 from shapely.geometry import shape
-from rasterstats.io import read_features, read_featurecollection  # todo parse_feature
+from rasterstats.io import read_features, read_featurecollection, Raster  # todo parse_feature
 from rasterstats.io import boundless_array, window_bounds, window, rowcol
 
 
@@ -234,6 +234,23 @@ def test_rowcol():
         y -= 1.0
         assert rowcol(x, y, src.affine, op=math.floor) == (0, 0)
         assert rowcol(x, y, src.affine, op=math.ceil) == (1, 1)
+
+
+def test_Raster():
+    import numpy as np
+
+    bounds = (244156, 1000258, 245114, 1000968)
+    r1 = Raster(raster, band=1).read(bounds)
+
+    with rasterio.open(raster) as src:
+        arr = src.read(1)
+        affine = src.affine
+        nodata = src.nodata
+
+    r2 = Raster(arr, affine, nodata, band=1).read(bounds)
+
+    # If the abstraction is correct, the arrays are equal
+    assert np.array_equal(r1.array, r2.array)
 
 
 # Optional tests
