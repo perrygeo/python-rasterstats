@@ -4,9 +4,10 @@ from __future__ import division
 import numpy as np
 import warnings
 from affine import Affine
-from shapely.geometry import shape, box, MultiPolygon
+from shapely.geometry import shape
 from .io import read_features, Raster
-from .utils import (rasterize_geom, get_percentile, check_stats, remap_categories, key_assoc_val)
+from .utils import (rasterize_geom, get_percentile, check_stats,
+                    remap_categories, key_assoc_val, boxify_points)
 
 
 def raster_stats(*args, **kwargs):
@@ -107,20 +108,11 @@ def zonal_stats(vectors,
         for i, feat in enumerate(features_iter):
             geom = shape(feat['geometry'])
 
-            # Point and MultiPoint don't play well with GDALRasterize
-            # convert them into box polygons the size of a raster cell
-            # TODO warning, suggest point_query instead
-            buff = rast.affine.a / 2.0
-            if geom.type == "MultiPoint":
-                geom = MultiPolygon([box(*(pt.buffer(buff).bounds))
-                                    for pt in geom.geoms])
-            elif geom.type == 'Point':
-                geom = box(*(geom.buffer(buff).bounds))
+            if 'Point' in geom.type:
+                geom = boxify_points(geom, rast)
 
             geom_bounds = tuple(geom.bounds)
 
-            # TODO if off the map, return array with all nodata and let the
-            # masked.compressed.size() check handle it
             fsrc = rast.read(bounds=geom_bounds)
 
             # create ndarray of rasterized geometry
