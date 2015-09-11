@@ -252,6 +252,17 @@ def test_Raster():
     # If the abstraction is correct, the arrays are equal
     assert np.array_equal(r1.array, r2.array)
 
+def test_Raster_context():
+    # Assigned a regular name, stays open
+    r1 = Raster(raster, band=1)
+    assert not r1.src.closed
+    r1.src.close()
+
+    # Used as a context manager, closes itself
+    with Raster(raster, band=1) as r2:
+        pass
+    assert r2.src.closed
+
 
 # Optional tests
 def test_geodataframe():

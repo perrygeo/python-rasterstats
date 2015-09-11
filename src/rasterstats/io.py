@@ -6,6 +6,7 @@ import json
 import math
 import fiona
 import rasterio
+import warnings
 from affine import Affine
 import numpy as np
 from shapely.geos import ReadingError
@@ -187,39 +188,29 @@ def boundless_array(arr, window, nodata):
 
 
 class Raster(object):
-    """ Raster abstraction for data access to 2/3D array like things
-    - Path to rasterio-supported raster
-    - Numpy array
+    """ Raster abstraction for data access to 2/3D array-like things
 
-    Use as a context manager to ensure everything stays clean.
-    Provides a simple method `.read(bounds)` where bounds is a w, s, e, n iterable
-    which performas a boundless read against the underlying array
+    Use as a context manager to ensure dataset gets closed properly.
+        with Raster(path) as rast:
+            ...
     """
-    def read(self, bounds):
-
-        # Calculate the window
-        win = window(bounds, self.affine)
-        (row_start, row_stop), (col_start, col_stop) = win
-
-        c, _, _, f = window_bounds(win, self.affine)  # c ~ west, f ~ north
-        a, b, _, d, e, _, _, _, _ = tuple(self.affine)
-        new_affine = Affine(a, b, c, d, e, f)
-
-        nodata = self.nodata
-        if nodata is None:
-            nodata = -999  # TODO make sure this doesn't exist in the array? or require it?  
-
-        if self.array is not None:
-            # It's an ndarray already
-            new_array = boundless_array(self.array, window=win, nodata=nodata)
-            # self.array[row_start:row_stop, col_start:col_stop]
-        elif self.src:
-            # It's an open rasterio dataset
-            new_array = self.src.read(self.band, window=win, boundless=True)
-
-        return Raster(new_array, new_affine, nodata)
 
     def __init__(self, raster, affine=None, nodata=None, band=1):
+        """ Initialize Raster object
+
+        Parameters
+        ----------
+        raster: 2/3D array-like data source, required
+            Currently supports paths to rasterio-supported rasters and
+            numpy arrays with Affine transforms.
+
+        affine: Affine object for going from crs to row/col, required if raster is ndarray
+
+        nodata: nodata value, optional
+            Overrides the datasource's internal nodata if specified
+
+        band: raster band number, optional (default: 1)
+        """
         self.drivers = None
         self.array = None
         self.src = None
@@ -227,7 +218,6 @@ class Raster(object):
         if isinstance(raster, np.ndarray):
             if affine is None:
                 raise ValueError("Must specify affine for numpy arrays")
-            # TODO try Affine.from_gdal(affine) and raise warning "Looks like you're using
             self.array = raster
             self.affine = affine
             self.shape = raster.shape
@@ -245,9 +235,44 @@ class Raster(object):
             else:
                 self.nodata = self.src.nodata
 
+    def read(self, bounds):
+        """ Performs a boundless read against the underlying array source
+
+        Parameters
+        ----------
+        bounds: bounding box in w, s, e, n order, iterable
+
+        Returns
+        -------
+        Raster object with update affine and array info
+        """
+        # Calculate the window
+        win = window(bounds, self.affine)
+        (row_start, row_stop), (col_start, col_stop) = win
+
+        c, _, _, f = window_bounds(win, self.affine)  # c ~ west, f ~ north
+        a, b, _, d, e, _, _, _, _ = tuple(self.affine)
+        new_affine = Affine(a, b, c, d, e, f)
+
+        nodata = self.nodata
+        if nodata is None:
+            nodata = -999
+            warnings.warn("Setting nodata to -999; specify nodata_value explicitly")
+
+        if self.array is not None:
+            # It's an ndarray already
+            new_array = boundless_array(self.array, window=win, nodata=nodata)
+            # self.array[row_start:row_stop, col_start:col_stop]
+        elif self.src:
+            # It's an open rasterio dataset
+            new_array = self.src.read(self.band, window=win, boundless=True)
+
+        return Raster(new_array, new_affine, nodata)
+
     def __enter__(self):
         return self
 
     def __exit__(self, *args):
-        #TODO close drivers and src
-        pass
+        if self.src is not None:
+            # close the rasterio reader
+            self.src.close()
