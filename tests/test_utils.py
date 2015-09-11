@@ -1,8 +1,7 @@
 import sys
 import os
 import pytest
-from rasterstats.utils import (stats_to_csv, bbox_to_pixel_offsets,
-                               get_percentile, remap_categories)
+from rasterstats.utils import stats_to_csv, get_percentile, remap_categories
 from rasterstats import zonal_stats
 from rasterstats.utils import VALID_STATS
 
@@ -27,24 +26,6 @@ def test_categorical_csv():
     assert csv.split()[0] == "1.0,2.0,5.0,__fid__"
 
 
-def test_bbox_offbyone():
-    # Make sure we don't get the off-by-one error in calculating src offset
-    rgt = (-4418000.0, 250.0, 0.0, 4876500.0, 0.0, -250.0)
-    geom_bounds = [4077943.9961, -3873500.0, 4462000.0055, -3505823.7582]
-    rshape = (37000, 35000)
-    so = bbox_to_pixel_offsets(rgt, geom_bounds, rshape)
-    assert so[1] + so[3] == rshape[1]
-
-    # Another great example
-    # based on https://github.com/perrygeo/python-raster-stats/issues/46
-    rgt = (151.2006, 0.025, 0.0, -25.4896, 0.0, -0.025)
-    geom_bounds = [153.39775866026284, -28.903022885889843,
-                   153.51344076545288, -28.80117672778147]
-    rshape = (92, 135)
-    # should only be 5 pixels wide, not 6 due to rounding errors
-    assert bbox_to_pixel_offsets(rgt, geom_bounds, rshape) == (87, 132, 5, 3)
-
-
 def test_get_percentile():
     assert get_percentile('percentile_0') == 0.0
     assert get_percentile('percentile_100') == 100.0
@@ -67,4 +48,3 @@ def test_remap_categories():
     assert 1 not in new_stats.keys()
     assert 'grassland' in new_stats.keys()
     assert 3 in new_stats.keys()
-

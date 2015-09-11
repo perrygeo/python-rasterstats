@@ -55,7 +55,7 @@ def zonalstats(input_geojson, raster, output_geojson, all_touched, band, categor
             feature_collection = {'type': 'FeatureCollection'}
         features = read_features(mapping)
     except (AssertionError, KeyError):
-        raise ValueError("input_geojson must be a GeoJSON Feature Collection")
+        raise ValueError("input_geojson must be valid GeoJSON")
 
     if stats is not None:
         stats = stats.split(" ")
@@ -78,4 +78,3 @@ def zonalstats(input_geojson, raster, output_geojson, all_touched, band, categor
 
     output_geojson.write(json.dumps(feature_collection, indent=indent))
     output_geojson.write("\n")
-
