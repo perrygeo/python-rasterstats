@@ -3,6 +3,7 @@ import os
 import fiona
 from shapely.geometry import shape
 from rasterstats.io import read_features, read_featurecollection  # todo parse_feature
+from rasterstats.io import boundless_array  # todo parse_feature
 import json
 import pytest
 
@@ -91,6 +92,13 @@ def test_mapping_features():
     _test_read_features(indata)
 
 
+def test_mapping_feature():
+    # list of Features
+    with fiona.open(polygons, 'r') as src:
+        indata = [f for f in src]
+    _test_read_features(indata[0])
+
+
 def test_mapping_geoms():
     with fiona.open(polygons, 'r') as src:
         indata = [f for f in src]
@@ -153,6 +161,52 @@ def test_geo_interface_collection():
     indata = MockGeoInterface(indata)
     _test_read_features(indata)
 
+
+def test_notafeature():
+    with pytest.raises(ValueError):
+        list(read_features(['foo', 'POINT(-122 42)']))
+
+    with pytest.raises(ValueError):
+        list(read_features(Exception()))
+
+
+# Raster tests
+def test_boundless():
+    import numpy as np
+    arr = np.array([[1, 1, 1],
+                    [1, 1, 1],
+                    [1, 1, 1]])
+
+    arr3d = np.array([[[1, 1, 1],
+                       [1, 1, 1],
+                       [1, 1, 1]]])
+    # Exact
+    assert boundless_array(arr, window=((0, 3), (0, 3)), nodata=0).sum() == 9
+
+    # Intersects
+    assert boundless_array(arr, window=((-1, 2), (-1, 2)), nodata=0).sum() == 4
+    assert boundless_array(arr, window=((1, 4), (-1, 2)), nodata=0).sum() == 4
+    assert boundless_array(arr, window=((1, 4), (1, 4)), nodata=0).sum() == 4
+    assert boundless_array(arr, window=((-1, 2), (1, 4)), nodata=0).sum() == 4
+
+    # No overlap
+    assert boundless_array(arr, window=((-4, -1), (-4, -1)), nodata=0).sum() == 0
+    assert boundless_array(arr, window=((-4, -1), (4, 7)), nodata=0).sum() == 0
+    assert boundless_array(arr, window=((4, 7), (4, 7)), nodata=0).sum() == 0
+    assert boundless_array(arr, window=((4, 7), (-4, -1)), nodata=0).sum() == 0
+    assert boundless_array(arr, window=((-3, 0), (-3, 0)), nodata=0).sum() == 0
+
+    # Covers
+    assert boundless_array(arr, window=((-1, 4), (-1, 4)), nodata=0).sum() == 9
+
+    # 3D
+    assert boundless_array(arr3d, window=((0, 3), (0, 3)), nodata=0).sum() == 9
+    assert boundless_array(arr3d, window=((-1, 2), (-1, 2)), nodata=0).sum() == 4
+    assert boundless_array(arr3d, window=((-3, 0), (-3, 0)), nodata=0).sum() == 0
+
+    # 1D
+    with pytest.raises(ValueError):
+        boundless_array(np.array([1, 1, 1]), window=((0, 3),), nodata=0)
 
 # Optional tests
 def test_geodataframe():

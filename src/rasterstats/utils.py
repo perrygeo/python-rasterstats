@@ -35,11 +35,7 @@ def rasterize_geom(geom, like, all_touched=False):
     return rv_array
 
 
-def is_nan(x):
-    return isinstance(x, float) and math.isnan(x)
-
-
-def combine_features_results(features, results, prefix, nan_to_None=True):
+def combine_features_results(features, results, prefix):
     """
     Given a list of geojson features and a list of zonal stats results
     Append the zonal stats to the feature's properties and yield a new feature
@@ -50,12 +46,6 @@ def combine_features_results(features, results, prefix, nan_to_None=True):
             if key == "__fid__":
                 continue
             prefixed_key = "{}{}".format(prefix, key)
-
-            # normalize for the sake of json-serializability
-            # TODO write test and is it even neccesary anymore?
-            if nan_to_None and is_nan(val):
-                val = None
-
             feat['properties'][prefixed_key] = val
         yield feat
 

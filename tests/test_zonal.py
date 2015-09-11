@@ -226,15 +226,6 @@ def test_all_touched():
     assert stats[1]['count'] == 73  # 50 if ALL_TOUCHED=False
 
 
-def _get_raster_array_gt(raster):
-    with rasterio.drivers():
-        with rasterio.open(raster, 'r') as src:
-            affine = src.affine
-            gt = affine.to_gdal()
-            arr = src.read(1)
-    return arr, gt
-
-
 def test_ndarray_without_affine():
     with rasterio.open(raster) as src:
         polygons = os.path.join(DATA, 'polygons.shp')
@@ -263,6 +254,8 @@ def test_ndarray():
     stats2 = zonal_stats(polygons, raster)
     for s1, s2 in zip(stats, stats2):
         _assert_dict_eq(s1, s2)
+    with pytest.raises(AssertionError):
+        _assert_dict_eq(stats[0], stats[1])
     assert stats[0]['count'] == 75
     assert stats[1]['count'] == 50
 
@@ -390,3 +383,15 @@ def test_some_nodata_ndarray():
     assert stats[0]['min'] >= 0.0
     assert stats[0]['nodata'] == 36
     assert stats[0]['count'] == 39
+
+
+def test_transform():
+    with rasterio.open(raster) as src:
+        arr = src.read(1)
+        affine = src.affine
+    polygons = os.path.join(DATA, 'polygons.shp')
+
+    stats = zonal_stats(polygons, arr, affine=affine)
+    stats2 = zonal_stats(polygons, arr, transform=affine.to_gdal())
+    assert stats == stats2
+    pytest.deprecated_call(zonal_stats, polygons, raster, transform=affine.to_gdal())

@@ -69,11 +69,6 @@ def parse_feature(obj):
     raise ValueError("Can't parse %s as a geojson Feature object" % obj)
 
 
-def geo_records(vectors):
-    for vector in vectors:
-        yield parse_feature(vector)
-
-
 def read_features(obj, layer=0):
     features_iter = None
     if isinstance(obj, string_types):
@@ -115,22 +110,16 @@ def read_features(obj, layer=0):
             features_iter = mapping['features']
         else:
             features_iter = [parse_feature(mapping)]
-    else:
-        # Single feature-like object
-        features_iter = [parse_feature(obj)]
 
     if not features_iter:
         raise ValueError("Object is not a recognized source of Features")
     return features_iter
 
 
-def read_featurecollection(obj, layer=0, lazy=False):
+def read_featurecollection(obj, layer=0):
     features = read_features(obj, layer=layer)
     fc = {'type': 'FeatureCollection', 'features': []}
-    if lazy:
-        fc['features'] = (f for f in features)
-    else:
-        fc['features'] = [f for f in features]
+    fc['features'] = [f for f in features]
     return fc
 
 
@@ -163,7 +152,7 @@ def boundless_array(arr, window, nodata):
     if len(arr.shape) == 3:
         dim3 = True
     elif len(arr.shape) != 2:
-        raise Exception
+        raise ValueError("Must be a 2D or 3D array")
 
     # unpack for readability
     (wr_start, wr_stop), (wc_start, wc_stop) = window
@@ -227,8 +216,6 @@ class Raster(object):
         elif self.src:
             # It's an open rasterio dataset
             new_array = self.src.read(self.band, window=win, boundless=True)
-        else:
-            raise Exception("Raster has neither a src nor an array, should never happen")
 
         return Raster(new_array, new_affine, nodata)
 

@@ -3,6 +3,7 @@ from __future__ import absolute_import
 from __future__ import division
 import numpy as np
 import warnings
+from affine import Affine
 from shapely.geometry import shape, box, MultiPolygon
 from .io import read_features, Raster
 from .utils import (rasterize_geom, get_percentile, check_stats, remap_categories, key_assoc_val)
@@ -159,15 +160,9 @@ def zonal_stats(vectors, raster, layer=0, band_num=1, nodata_value=None,
                 if 'median' in stats:
                     feature_stats['median'] = float(np.median(masked.compressed()))
                 if 'majority' in stats:
-                    try:
-                        feature_stats['majority'] = float(key_assoc_val(pixel_count, max))
-                    except IndexError:
-                        feature_stats['majority'] = None
+                    feature_stats['majority'] = float(key_assoc_val(pixel_count, max))
                 if 'minority' in stats:
-                    try:
-                        feature_stats['minority'] = float(key_assoc_val(pixel_count, min))
-                    except IndexError:
-                        feature_stats['minority'] = None
+                    feature_stats['minority'] = float(key_assoc_val(pixel_count, min))
                 if 'unique' in stats:
                     feature_stats['unique'] = len(list(pixel_count.keys()))
                 if 'range' in stats:
@@ -184,10 +179,7 @@ def zonal_stats(vectors, raster, layer=0, band_num=1, nodata_value=None,
                 for pctile in [s for s in stats if s.startswith('percentile_')]:
                     q = get_percentile(pctile)
                     pctarr = masked.compressed()
-                    if pctarr.size == 0:
-                        feature_stats[pctile] = None
-                    else:
-                        feature_stats[pctile] = np.percentile(pctarr, q)
+                    feature_stats[pctile] = np.percentile(pctarr, q)
 
             if 'nodata' in stats:
                 featmasked = np.ma.MaskedArray(fsrc.array, mask=np.logical_not(rv_array))
@@ -205,10 +197,9 @@ def zonal_stats(vectors, raster, layer=0, band_num=1, nodata_value=None,
                 feature_stats['mini_raster_affine'] = fsrc.affine
                 feature_stats['mini_raster_nodata'] = fsrc.nodata
 
-            if 'fid' in feat:
-                # Use the fid directly,
-                # likely came from OGR data via .utils.feature_to_geojson
-                feature_stats['__fid__'] = feat['fid']
+            if 'id' in feat:
+                # Use the feature id directly
+                feature_stats['__fid__'] = feat['id']
             else:
                 # Use the enumerated id
                 feature_stats['__fid__'] = i
