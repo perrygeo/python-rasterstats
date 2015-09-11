@@ -16,69 +16,79 @@ def raster_stats(*args, **kwargs):
     return zonal_stats(*args, **kwargs)
 
 
-def zonal_stats(vectors, raster, layer=0, band_num=1, nodata_value=None,
-                global_src_extent=False, categorical=False, stats=None,
-                copy_properties=False, all_touched=False, affine=None,
-                add_stats=None, raster_out=False, category_map=None, **kwargs):
-    """Summary statistics of a raster, broken out by vector geometries.
+def zonal_stats(vectors,
+                raster,
+                layer=0,
+                band_num=1,
+                nodata_value=None,
+                affine=None,
+                stats=None,
+                all_touched=False,
+                categorical=False,
+                category_map=None,
+                copy_properties=False,
+                add_stats=None,
+                raster_out=False,
+                **kwargs):
+    """Zonal statistics of raster values aggregated to vector geometries.
 
-    Attributes
+    Parameters
     ----------
-    vectors : path to an OGR vector source or list of geo_interface or WKT str
-    raster : ndarray or path to a GDAL raster source
+    vectors: path to an vector source or geo-like python objects
+
+    raster: ndarray or path to a GDAL raster source
         If ndarray is passed, the `transform` kwarg is required.
-    layer : int or string, optional
+
+    layer: int or string, optional
         If `vectors` is a path to an fiona source,
         specify the vector layer to use either by name or number.
         defaults to 0
-    band_num : int, optional
+
+    band_num: int, optional
         If `raster` is a GDAL source, the band number to use (counting from 1).
         defaults to 1.
-    nodata_value : float, optional
+
+    nodata_value: float, optional
         If `raster` is a GDAL source, this value overrides any NODATA value
         specified in the file's metadata.
         If `None`, the file's metadata's NODATA value (if any) will be used.
-        `ndarray`s don't support `nodata_value`.
         defaults to `None`.
-    global_src_extent : bool, optional
-        Pre-allocate entire raster before iterating over vector features.
-        Use `True` if limited by disk IO or indexing into raster;
-            requires sufficient RAM to store array in memory
-        Use `False` with fast disks and a well-indexed raster, or when
-        memory-constrained.
-        Ignored when `raster` is an ndarray,
-            because it is already completely in memory.
-        defaults to `False`.
-    categorical : bool, optional
-    stats : list of str, or space-delimited str, optional
+
+    affine: Affine object or 6 tuple in Affine order NOT GDAL order
+        required only for ndarrays, otherwise it is read from src
+
+    stats:  list of str, or space-delimited str, optional
         Which statistics to calculate for each zone.
         All possible choices are listed in `utils.VALID_STATS`.
         defaults to `DEFAULT_STATS`, a subset of these.
-    copy_properties : bool, optional
-        Include feature properties alongside the returned stats.
-        defaults to `False`
-    all_touched : bool, optional
+
+    all_touched: bool, optional
         Whether to include every raster cell touched by a geometry, or only
         those having a center point within the polygon.
         defaults to `False`
-    affine : Affine object or 6 tuple in Affine order NOT GDAL order
-        required only for ndarrays, otherwise it is read from src
-    add_stats : Dictionary with names and functions of additional statistics to
-                compute, optional
-    raster_out : Include the masked numpy array for each feature, optional
-        Each feature dictionary will have the following additional keys:
-            clipped raster (`mini_raster`)
-            Geo-transform (`mini_raster_GT`)
-            No Data Value (`mini_raster_NDV`)
-    category_map : A dictionary mapping raster values to human-readable categorical names
+
+    categorical: bool, optional
+
+    category_map: A dictionary mapping raster values to human-readable categorical names
         Only applies when categorical is True
+
+    copy_properties: bool, optional
+        Include feature properties alongside the returned stats.
+        defaults to `False`
+
+    add_stats: dict with names and functions of additional stats to compute, optional
+
+    raster_out: Include the masked numpy array for each feature, optional
+        Each feature dictionary will have the following additional keys:
+        mini_raster: The clipped and masked numpy array
+        mini_raster_affine: Affine transformation
+        mini_raster_nodata: NoData Value
 
     Returns
     -------
     list of dicts
-        Each dict represents one vector geometry.
-        Its keys include `__fid__` (the geometry feature id)
-        and each of the `stats` requested.
+        Each item corresponds to a single vector feature and
+        contains keys for each of the specified stats.
     """
     stats, run_count = check_stats(stats, categorical)
 
