@@ -184,7 +184,8 @@ def boundless_array(arr, window, nodata, masked=False):
     else:
         out[nr_start:nr_stop, nc_start:nc_stop] = arr[olr_start:olr_stop, olc_start:olc_stop]
 
-    # TODO handle masked
+    if masked:
+        out = np.ma.MaskedArray(out, mask=(out == nodata))
 
     return out
 

@@ -14,6 +14,14 @@ DATA = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
 polygons = os.path.join(DATA, 'polygons.shp')
 raster = os.path.join(DATA, 'slope.tif')
 
+import numpy as np
+arr = np.array([[1, 1, 1],
+                [1, 1, 1],
+                [1, 1, 1]])
+
+arr3d = np.array([[[1, 1, 1],
+                   [1, 1, 1],
+                   [1, 1, 1]]])
 
 with fiona.open(polygons, 'r') as src:
     target_features = [f for f in src]
@@ -175,14 +183,6 @@ def test_notafeature():
 
 # Raster tests
 def test_boundless():
-    import numpy as np
-    arr = np.array([[1, 1, 1],
-                    [1, 1, 1],
-                    [1, 1, 1]])
-
-    arr3d = np.array([[[1, 1, 1],
-                       [1, 1, 1],
-                       [1, 1, 1]]])
     # Exact
     assert boundless_array(arr, window=((0, 3), (0, 3)), nodata=0).sum() == 9
 
@@ -210,6 +210,15 @@ def test_boundless():
     # 1D
     with pytest.raises(ValueError):
         boundless_array(np.array([1, 1, 1]), window=((0, 3),), nodata=0)
+
+
+def test_boundless_masked():
+    a = boundless_array(arr, window=((-4, -1), (-4, -1)), nodata=0, masked=True)
+    assert a.mask.all()
+    b = boundless_array(arr, window=((0, 3), (0, 3)), nodata=0, masked=True)
+    assert not b.mask.any()
+    c = boundless_array(arr, window=((-1, 2), (-1, 2)), nodata=0, masked=True)
+    assert c.mask.any() and not c.mask.all()
 
 
 def test_window_bounds():
