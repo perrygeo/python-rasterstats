@@ -68,7 +68,6 @@ def test_xy_array_bilinear_window():
     x, y = (245309, 1000064)
 
     with rasterio.open(raster) as src:
-        affine = src.affine.to_gdal()
         win, unitxy = point_window_unitxy(x, y, affine)
         arr = src.read(1, window=win)
 
