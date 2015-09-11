@@ -1,16 +1,19 @@
 import sys
 import os
 import fiona
-from shapely.geometry import shape
-from rasterstats.io import read_features, read_featurecollection  # todo parse_feature
-from rasterstats.io import boundless_array  # todo parse_feature
+import rasterio
 import json
 import pytest
+from shapely.geometry import shape
+from rasterstats.io import read_features, read_featurecollection  # todo parse_feature
+from rasterstats.io import boundless_array, window_bounds, window, rowcol
 
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 DATA = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
 polygons = os.path.join(DATA, 'polygons.shp')
+raster = os.path.join(DATA, 'slope.tif')
+
 
 with fiona.open(polygons, 'r') as src:
     target_features = [f for f in src]
@@ -207,6 +210,31 @@ def test_boundless():
     # 1D
     with pytest.raises(ValueError):
         boundless_array(np.array([1, 1, 1]), window=((0, 3),), nodata=0)
+
+
+def test_window_bounds():
+    with rasterio.open(raster) as src:
+        win = ((0, src.shape[0]), (0, src.shape[1]))
+        assert src.bounds == window_bounds(win, src.affine)
+
+        win = ((5, 10), (5, 10))
+        assert src.window_bounds(win) == window_bounds(win, src.affine)
+
+
+def test_window():
+    with rasterio.open(raster) as src:
+        assert window(src.bounds, src.affine) == ((0, src.shape[0]), (0, src.shape[1]))
+
+
+def test_rowcol():
+    import math
+    with rasterio.open(raster) as src:
+        x, _, _, y = src.bounds
+        x += 1.0
+        y -= 1.0
+        assert rowcol(x, y, src.affine, op=math.floor) == (0, 0)
+        assert rowcol(x, y, src.affine, op=math.ceil) == (1, 1)
+
 
 # Optional tests
 def test_geodataframe():
