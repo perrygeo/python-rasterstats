@@ -7,10 +7,10 @@ raster = os.path.join(os.path.dirname(__file__), 'data/slope.tif')
 raster_nodata = os.path.join(os.path.dirname(__file__), 'data/slope_nodata.tif')
 
 with rasterio.open(raster) as src:
-    rgt = src.affine.to_gdal()
+    affine = src.affine
 
 def test_unitxy_ul():
-    win, unitxy = point_window_unitxy(245300, 1000073, rgt)
+    win, unitxy = point_window_unitxy(245300, 1000073, affine)
     assert win == ((30, 32), (38, 40))
     x, y = unitxy
     # should be in LR of new unit square
@@ -18,14 +18,14 @@ def test_unitxy_ul():
     assert y < 0.5
 
 def test_unitxy_ur():
-    win, unitxy = point_window_unitxy(245318, 1000073, rgt)
+    win, unitxy = point_window_unitxy(245318, 1000073, affine)
     assert win == ((30, 32), (39, 41))
     x, y = unitxy
     # should be in LL of new unit square
     assert x < 0.5
     assert y < 0.5
 
-    win, unitxy = point_window_unitxy(245296, 1000073, rgt)
+    win, unitxy = point_window_unitxy(245296, 1000073, affine)
     assert win == ((30, 32), (38, 40))
     x, y = unitxy
     # should be in LL of new unit square
@@ -33,7 +33,7 @@ def test_unitxy_ur():
     assert y < 0.5
 
 def test_unitxy_lr():
-    win, unitxy = point_window_unitxy(245318, 1000056, rgt)
+    win, unitxy = point_window_unitxy(245318, 1000056, affine)
     assert win == ((31, 33), (39, 41))
     x, y = unitxy
     # should be in UL of new unit square
@@ -41,7 +41,7 @@ def test_unitxy_lr():
     assert y > 0.5
 
 def test_unitxy_ll():
-    win, unitxy = point_window_unitxy(245300, 1000056, rgt)
+    win, unitxy = point_window_unitxy(245300, 1000056, affine)
     assert win == ((31, 33), (38, 40))
     x, y = unitxy
     # should be in UR of new unit square
@@ -68,8 +68,8 @@ def test_xy_array_bilinear_window():
     x, y = (245309, 1000064)
 
     with rasterio.open(raster) as src:
-        rgt = src.affine.to_gdal()
-        win, unitxy = point_window_unitxy(x, y, rgt)
+        affine = src.affine.to_gdal()
+        win, unitxy = point_window_unitxy(x, y, affine)
         arr = src.read(1, window=win)
 
     val = bilinear(arr, *unitxy)

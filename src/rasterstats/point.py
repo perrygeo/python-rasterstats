@@ -1,16 +1,13 @@
 from __future__ import absolute_import
 from __future__ import division
-from __future__ import unicode_literals
-import math
-import rasterio
 from shapely.geometry import shape
 from shapely import wkt
 from numpy.ma import masked
 from numpy import asscalar
-from .io import read_features, raster_info
+from .io import read_features, Raster, window_bounds
 
 
-def point_window_unitxy(x, y, rgt):
+def point_window_unitxy(x, y, affine):
     """ Given an x, y and a geotransform
     Returns
         - rasterio window representing 2x2 window whose center points encompass point
@@ -19,9 +16,7 @@ def point_window_unitxy(x, y, rgt):
 
     ((row1, row2), (col1, col2)), (unitx, unity)
     """
-    c, a, b, f, d, e = rgt  # gdal-style translated to Affine nomenclature
-
-    frow, fcol = (y-f)/e, (x-c)/a
+    frow, fcol = ~affine * (x, y)
     r, c = int(round(frow)), int(round(fcol))
 
     # The new source window for our 2x2 array
@@ -91,8 +86,13 @@ def geom_xys(geom):
             yield pair
 
 
-def point_query(vectors, raster, band_num=1, layer_num=1, interpolate='bilinear',
-                nodata_value=None, affine=None, transform=None):
+def point_query(vectors,
+                raster,
+                band=1,
+                layer=1,
+                nodata=None,
+                affine=None,
+                interpolate='bilinear'):
     """Given a set of n vector features and a raster,
     generates n lists of raster values at each vertex of the geometry
 
@@ -101,38 +101,32 @@ def point_query(vectors, raster, band_num=1, layer_num=1, interpolate='bilinear'
         value = list(point_query(point, raster))[0][0]
 
     The first index is the geometry, the second is the vertex within the geometry
-
-    # TODO do we support global_src_extent and ndarrays? not yet...
     """
-    features_iter = read_features(vectors, layer_num)
+    features_iter = read_features(vectors, layer)
 
-    rtype, rgt, _, _, nodata_value = \
-        raster_info(raster, False, nodata_value, affine, transform)
-
-    with rasterio.drivers():
-        with rasterio.open(raster, 'r') as src:
-            if interpolate == 'bilinear':
-                for feat in features_iter:
-                    geom = shape(feat['geometry'])
-                    vals = []
-                    for x, y in geom_xys(geom):
-                        window, unitxy = point_window_unitxy(x, y, rgt)
-                        src_array = src.read(band_num, window=window, masked=True)
-                        vals.append(bilinear(src_array, *unitxy))
-                    yield vals
-            elif interpolate == 'nearest':
-                for feat in features_iter:
-                    geom = shape(feat['geometry'])
-                    vals = []
-                    for x, y in geom_xys(geom):
-                        r, c = src.index(x, y)
-                        window = ((r, r+1), (c, c+1))
-                        src_array = src.read(band_num, window=window, masked=True)
-                        val = src_array[0, 0]
-                        if val is masked:
-                            vals.append(None)
-                        else:
-                            vals.append(asscalar(val))
-                    yield vals
-            else:
-                raise ValueError("interpolate must be nearest or bilinear")
+    with Raster(raster, nodata=nodata, affine=affine, band=band) as rast:
+        if interpolate == 'bilinear':
+            for feat in features_iter:
+                geom = shape(feat['geometry'])
+                vals = []
+                for x, y in geom_xys(geom):
+                    window, unitxy = point_window_unitxy(x, y, rast.affine)
+                    src_array = rast.read(window=window, masked=True).array
+                    vals.append(bilinear(src_array, *unitxy))
+                yield vals
+        elif interpolate == 'nearest':
+            for feat in features_iter:
+                geom = shape(feat['geometry'])
+                vals = []
+                for x, y in geom_xys(geom):
+                    r, c = rast.index(x, y)
+                    window = ((r, r+1), (c, c+1))
+                    src_array = rast.read(window=window, masked=True).array
+                    val = src_array[0, 0]
+                    if val is masked:
+                        vals.append(None)
+                    else:
+                        vals.append(asscalar(val))
+                yield vals
+        else:
+            raise ValueError("interpolate must be nearest or bilinear")
