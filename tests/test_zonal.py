@@ -240,8 +240,11 @@ def _assert_dict_eq(a, b):
     for k in set(a.keys()).union(set(b.keys())):
         if a[k] == b[k]:
             continue
-        if abs(a[k]-b[k]) > err:
-            raise AssertionError("{}: {} != {}".format(k, a[k], b[k]))
+        try:
+            if abs(a[k]-b[k]) > err:
+                raise AssertionError("{}: {} != {}".format(k, a[k], b[k]))
+        except TypeError:  # can't take abs, nan
+            raise AssertionError("{} != {}".format(a[k], b[k]))
 
 
 def test_ndarray():
