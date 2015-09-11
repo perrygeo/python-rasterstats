@@ -134,48 +134,6 @@ def read_featurecollection(obj, layer=0, lazy=False):
     return fc
 
 
-def raster_info(raster, global_src_extent, nodata_value, affine, transform):
-    """ Accepts a rasterio-supported raster source or ndarray
-    Handles intricacies of affine vs transform, nodata, raster vs array
-    """
-    if isinstance(raster, np.ndarray):
-        rtype = 'ndarray'
-
-        # must have transform info
-        if affine:
-            transform = affine
-        if not transform:
-            raise ValueError("Must provide the 'transform' kwarg "
-                             "when using ndarrays as src raster")
-        try:
-            rgt = transform.to_gdal()  # an Affine object
-        except AttributeError:
-            rgt = transform  # a GDAL geotransform
-
-        rshape = (raster.shape[1], raster.shape[0])
-
-        # global_src_extent is implicitly turned on, array is already in memory
-        global_src_extent = True
-
-    else:
-        rtype = 'gdal'
-
-        with rasterio.drivers():
-            with rasterio.open(raster, 'r') as src:
-                affine = src.affine
-                rgt = affine.to_gdal()
-                rshape = (src.width, src.height)
-                rnodata = src.nodata
-
-        if nodata_value is not None:
-            # override with specified nodata
-            nodata_value = float(nodata_value)
-        else:
-            nodata_value = rnodata
-
-    return rtype, rgt, rshape, global_src_extent, nodata_value
-
-
 def rowcol(x, y, affine, op=math.floor):
     """ Get row/col for a x/y
     """
@@ -240,11 +198,14 @@ def boundless_array(arr, window, nodata):
 
 
 class Raster(object):
+    """ Raster abstraction for data access to 2/3D array like things
+    - Path to rasterio-supported raster
+    - Numpy array
 
-    @property
-    def transform(*args, **kwargs):
-        raise Exception("Don't you mean 'affine'?")
-
+    Use as a context manager to ensure everything stays clean.
+    Provides a simple method `.read(bounds)` where bounds is a w, s, e, n iterable
+    which performas a boundless read against the underlying array
+    """
     def read(self, bounds):
 
         # Calculate the window
