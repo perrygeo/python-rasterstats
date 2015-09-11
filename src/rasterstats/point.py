@@ -16,7 +16,7 @@ def point_window_unitxy(x, y, affine):
 
     ((row1, row2), (col1, col2)), (unitx, unity)
     """
-    frow, fcol = ~affine * (x, y)
+    fcol, frow = ~affine * (x, y)
     r, c = int(round(frow)), int(round(fcol))
 
     # The new source window for our 2x2 array
