@@ -262,7 +262,6 @@ class Raster(object):
         if self.array is not None:
             # It's an ndarray already
             new_array = boundless_array(self.array, window=win, nodata=nodata)
-            # self.array[row_start:row_stop, col_start:col_stop]
         elif self.src:
             # It's an open rasterio dataset
             new_array = self.src.read(self.band, window=win, boundless=True)
