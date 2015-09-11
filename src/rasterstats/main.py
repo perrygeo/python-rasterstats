@@ -81,6 +81,14 @@ def zonal_stats(vectors, raster, layer=0, band_num=1, nodata_value=None,
     """
     stats, run_count = check_stats(stats, categorical)
 
+    transform = kwargs.get('transform')
+    if transform:
+        warnings.warn("GDAL-style transforms will disappear in 1.0. "
+                      "Use affine=Affine.from_gdal(*transform) instead",
+                      DeprecationWarning)
+        if not affine:
+            affine = Affine.from_gdal(*transform)
+
     with Raster(raster, affine, nodata_value, band_num) as rast:
         results = []
 
@@ -91,8 +99,7 @@ def zonal_stats(vectors, raster, layer=0, band_num=1, nodata_value=None,
             # Point and MultiPoint don't play well with GDALRasterize
             # convert them into box polygons the size of a raster cell
             # TODO warning, suggest point_query instead
-            # TODO buff = rgt[1] / 2.0
-            buff = rast.affine.a / 2.0  # TODO use affine not transform
+            buff = rast.affine.a / 2.0
             if geom.type == "MultiPoint":
                 geom = MultiPolygon([box(*(pt.buffer(buff).bounds))
                                     for pt in geom.geoms])
@@ -115,7 +122,7 @@ def zonal_stats(vectors, raster, layer=0, band_num=1, nodata_value=None,
             masked = np.ma.MaskedArray(
                 fsrc.array,
                 mask=np.logical_or(
-                    fsrc.array == nodata_value,
+                    fsrc.array == fsrc.nodata,
                     np.logical_not(rv_array)))
 
             if masked.compressed().size == 0:
@@ -186,19 +193,17 @@ def zonal_stats(vectors, raster, layer=0, band_num=1, nodata_value=None,
                 featmasked = np.ma.MaskedArray(fsrc.array, mask=np.logical_not(rv_array))
                 keys, counts = np.unique(featmasked.compressed(), return_counts=True)
                 pixel_count = dict(zip([np.asscalar(k) for k in keys],
-                                   [np.asscalar(c) for c in counts]))
-                feature_stats['nodata'] = pixel_count.get(nodata_value, 0)
+                                       [np.asscalar(c) for c in counts]))
+                feature_stats['nodata'] = pixel_count.get(fsrc.nodata, 0)
 
             if add_stats is not None:
                 for stat_name, stat_func in add_stats.items():
                         feature_stats[stat_name] = stat_func(masked)
 
             if raster_out:
-                masked.fill_value = nodata_value
-                masked.data[masked.mask] = nodata_value
                 feature_stats['mini_raster'] = masked
-                feature_stats['mini_raster_GT'] = fsrc.transform  # TODO affine
-                feature_stats['mini_raster_NDV'] = rast.nodata
+                feature_stats['mini_raster_affine'] = fsrc.affine
+                feature_stats['mini_raster_nodata'] = fsrc.nodata
 
             if 'fid' in feat:
                 # Use the fid directly,

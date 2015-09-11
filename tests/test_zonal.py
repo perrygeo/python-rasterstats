@@ -217,7 +217,7 @@ def test_no_overlap():
     stats = zonal_stats(polygons, raster, stats="count")
     for res in stats:
         # no polygon should have any overlap
-        assert res['count'] is None
+        assert res['count'] is 0
 
 def test_all_touched():
     polygons = os.path.join(DATA, 'polygons.shp')
@@ -235,37 +235,39 @@ def _get_raster_array_gt(raster):
     return arr, gt
 
 
-def test_ndarray_without_transform():
-    arr, gt = _get_raster_array_gt(raster)
-    polygons = os.path.join(DATA, 'polygons.shp')
-    with pytest.raises(ValueError):
-        zonal_stats(polygons, arr)  # needs transform kwarg
+def test_ndarray_without_affine():
+    with rasterio.open(raster) as src:
+        polygons = os.path.join(DATA, 'polygons.shp')
+        with pytest.raises(ValueError):
+            zonal_stats(polygons, src.read(1))  # needs affine kwarg
 
 
-def test_ndarray_affine():
-    polygons = os.path.join(DATA, 'polygons.shp')
-    arr, gt = _get_raster_array_gt(raster)
-    stats1 = zonal_stats(polygons, arr, transform=gt)
-
-    from affine import Affine
-    atrans = Affine.from_gdal(*gt)
-    stats2 = zonal_stats(polygons, arr, transform=atrans)
-    assert stats1[0]['count'] == stats2[0]['count']
-
-    stats3 = zonal_stats(polygons, arr, affine=gt)
-    assert stats1[0]['count'] == stats3[0]['count']
+def _assert_dict_eq(a, b):
+    """Assert that dicts a and b similar within floating point precision
+    """
+    err = 1e-5
+    for k in set(a.keys()).union(set(b.keys())):
+        if a[k] == b[k]:
+            continue
+        if abs(a[k]-b[k]) > err:
+            raise AssertionError("{}: {} != {}".format(k, a[k], b[k]))
 
 
 def test_ndarray():
-    arr, gt = _get_raster_array_gt(raster)
+    with rasterio.open(raster) as src:
+        arr = src.read(1)
+        affine = src.affine
+
     polygons = os.path.join(DATA, 'polygons.shp')
-    stats = zonal_stats(polygons, arr, transform=gt)
-    assert stats == zonal_stats(polygons, raster)
+    stats = zonal_stats(polygons, arr, affine=affine)
+    stats2 = zonal_stats(polygons, raster)
+    for s1, s2 in zip(stats, stats2):
+        _assert_dict_eq(s1, s2)
     assert stats[0]['count'] == 75
     assert stats[1]['count'] == 50
 
     points = os.path.join(DATA, 'points.shp')
-    stats = zonal_stats(points, arr, transform=gt)
+    stats = zonal_stats(points, arr, affine=affine)
     assert stats == zonal_stats(points, raster)
     assert sum([x['count'] for x in stats]) == 3
     assert round(stats[0]['mean'], 3) == 11.386
@@ -295,7 +297,7 @@ def test_mini_raster():
     polygons = os.path.join(DATA, 'polygons.shp')
     stats = zonal_stats(polygons, raster, raster_out=True)
     stats2 = zonal_stats(polygons, stats[0]['mini_raster'],
-                         raster_out=True, transform=stats[0]['mini_raster_GT'])
+                         raster_out=True, affine=stats[0]['mini_raster_affine'])
     assert (stats[0]['mini_raster'] == stats2[0]['mini_raster']).sum() == \
         stats[0]['count']
 

@@ -176,7 +176,7 @@ def raster_info(raster, global_src_extent, nodata_value, affine, transform):
     return rtype, rgt, rshape, global_src_extent, nodata_value
 
 
-def rc(x, y, affine, op=math.floor):
+def rowcol(x, y, affine, op=math.floor):
     """ Get row/col for a x/y
     """
     r = int(op((y - affine.f) / affine.e))
@@ -184,20 +184,59 @@ def rc(x, y, affine, op=math.floor):
     return r, c
 
 
-def get_window(bounds, affine):
+def window(bounds, affine):
     """Create a full cover rasterio-style window
     """
     w, s, e, n = bounds
-    row_start, col_start = rc(w, n, affine)
-    row_stop, col_stop = rc(e, s, affine, op=math.ceil)
+    row_start, col_start = rowcol(w, n, affine)
+    row_stop, col_stop = rowcol(e, s, affine, op=math.ceil)
     return (row_start, row_stop), (col_start, col_stop)
 
 
-def get_bounds(window, affine):
+def window_bounds(window, affine):
     (row_start, row_stop), (col_start, col_stop) = window
     w, s = (col_start, row_stop) * affine
     e, n = (col_stop, row_start) * affine
     return w, s, e, n
+
+
+def boundless_array(arr, window, nodata):
+    dim3 = False
+    if len(arr.shape) == 3:
+        dim3 = True
+    elif len(arr.shape) != 2:
+        raise Exception
+
+    # unpack for readability
+    (wr_start, wr_stop), (wc_start, wc_stop) = window
+
+    # Calculate overlap
+    olr_start = max(min(window[0][0], arr.shape[-2:][0]), 0)
+    olr_stop = max(min(window[0][1], arr.shape[-2:][0]), 0)
+    olc_start = max(min(window[1][0], arr.shape[-2:][1]), 0)
+    olc_stop = max(min(window[1][1], arr.shape[-2:][1]), 0)
+
+    # Calc dimensions
+    overlap_shape = (olr_stop - olr_start, olc_stop - olc_start)
+    if dim3:
+        window_shape = (arr.shape[0], wr_stop - wr_start, wc_stop - wc_start)
+    else:
+        window_shape = (wr_stop - wr_start, wc_stop - wc_start)
+
+    # create an array of nodata values
+    out = np.ones(shape=window_shape) * nodata
+
+    # Fill with data where overlapping
+    nr_start = olr_start - wr_start
+    nr_stop = nr_start + overlap_shape[0]
+    nc_start = olc_start - wc_start
+    nc_stop = nc_start + overlap_shape[1]
+    if dim3:
+        out[:, nr_start:nr_stop, nc_start:nc_stop] = arr[:, olr_start:olr_stop, olc_start:olc_stop]
+    else:
+        out[nr_start:nr_stop, nc_start:nc_stop] = arr[olr_start:olr_stop, olc_start:olc_stop]
+
+    return out
 
 
 class Raster(object):
@@ -209,18 +248,21 @@ class Raster(object):
     def read(self, bounds):
 
         # Calculate the window
-        win = get_window(bounds, self.affine)
+        win = window(bounds, self.affine)
         (row_start, row_stop), (col_start, col_stop) = win
 
-        c, _, _, f = get_bounds(win, self.affine)  # c ~ west, f ~ north
+        c, _, _, f = window_bounds(win, self.affine)  # c ~ west, f ~ north
         a, b, _, d, e, _, _, _, _ = tuple(self.affine)
         new_affine = Affine(a, b, c, d, e, f)
 
         nodata = self.nodata
+        if nodata is None:
+            nodata = -999  # TODO make sure this doesn't exist in the array? or require it?  
 
-        if self.array:
+        if self.array is not None:
             # It's an ndarray already
-            new_array = self.array[row_start:row_stop, col_start:col_stop]
+            new_array = boundless_array(self.array, window=win, nodata=nodata)
+            # self.array[row_start:row_stop, col_start:col_stop]
         elif self.src:
             # It's an open rasterio dataset
             new_array = self.src.read(self.band, window=win, boundless=True)
@@ -236,7 +278,7 @@ class Raster(object):
 
         if isinstance(raster, np.ndarray):
             if affine is None:
-                raise Exception("Must specify affine for numpy arrays")
+                raise ValueError("Must specify affine for numpy arrays")
             # TODO try Affine.from_gdal(affine) and raise warning "Looks like you're using
             self.array = raster
             self.affine = affine
