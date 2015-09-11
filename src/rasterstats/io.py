@@ -132,7 +132,7 @@ def rowcol(x, y, affine, op=math.floor):
     return r, c
 
 
-def window(bounds, affine):
+def bounds_window(bounds, affine):
     """Create a full cover rasterio-style window
     """
     w, s, e, n = bounds
@@ -148,7 +148,7 @@ def window_bounds(window, affine):
     return w, s, e, n
 
 
-def boundless_array(arr, window, nodata):
+def boundless_array(arr, window, nodata, masked=False):
     dim3 = False
     if len(arr.shape) == 3:
         dim3 = True
@@ -183,6 +183,8 @@ def boundless_array(arr, window, nodata):
         out[:, nr_start:nr_stop, nc_start:nc_stop] = arr[:, olr_start:olr_stop, olc_start:olc_stop]
     else:
         out[nr_start:nr_stop, nc_start:nc_stop] = arr[olr_start:olr_stop, olc_start:olc_stop]
+
+    # TODO handle masked
 
     return out
 
@@ -235,20 +237,38 @@ class Raster(object):
             else:
                 self.nodata = self.src.nodata
 
-    def read(self, bounds):
+    def index(self, x, y):
+        """Given x,y in crs, return the (column, row) on the raster
+        """
+        col, row = [math.floor(a) for a in (~self.affine * (x, y))]
+        return row, col
+
+
+    def read(self, bounds=None, window=None, masked=False):
         """ Performs a boundless read against the underlying array source
 
         Parameters
         ----------
-        bounds: bounding box in w, s, e, n order, iterable
+        bounds: bounding box in w, s, e, n order, iterable, optional
+        window: rasterio-style window, optional
+            bounds OR window are required, specifying both or neither will raise exception
+
+        masked: return a masked numpy array, default: False
 
         Returns
         -------
         Raster object with update affine and array info
         """
         # Calculate the window
-        win = window(bounds, self.affine)
-        (row_start, row_stop), (col_start, col_stop) = win
+        if bounds and window:
+            raise ValueError("Specify either bounds or window")
+
+        if bounds:
+            win = bounds_window(bounds, self.affine)
+        elif window:
+            win = window
+        else:
+            raise ValueError("Specify either bounds or window")
 
         c, _, _, f = window_bounds(win, self.affine)  # c ~ west, f ~ north
         a, b, _, d, e, _, _, _, _ = tuple(self.affine)
@@ -261,10 +281,10 @@ class Raster(object):
 
         if self.array is not None:
             # It's an ndarray already
-            new_array = boundless_array(self.array, window=win, nodata=nodata)
+            new_array = boundless_array(self.array, window=win, nodata=nodata, masked=masked)
         elif self.src:
             # It's an open rasterio dataset
-            new_array = self.src.read(self.band, window=win, boundless=True)
+            new_array = self.src.read(self.band, window=win, boundless=True, masked=masked)
 
         return Raster(new_array, new_affine, nodata)
 

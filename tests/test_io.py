@@ -6,7 +6,7 @@ import json
 import pytest
 from shapely.geometry import shape
 from rasterstats.io import read_features, read_featurecollection, Raster  # todo parse_feature
-from rasterstats.io import boundless_array, window_bounds, window, rowcol
+from rasterstats.io import boundless_array, window_bounds, bounds_window, rowcol
 
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -221,9 +221,10 @@ def test_window_bounds():
         assert src.window_bounds(win) == window_bounds(win, src.affine)
 
 
-def test_window():
+def test_bounds_window():
     with rasterio.open(raster) as src:
-        assert window(src.bounds, src.affine) == ((0, src.shape[0]), (0, src.shape[1]))
+        assert bounds_window(src.bounds, src.affine) == \
+            ((0, src.shape[0]), (0, src.shape[1]))
 
 
 def test_rowcol():
@@ -234,6 +235,15 @@ def test_rowcol():
         y -= 1.0
         assert rowcol(x, y, src.affine, op=math.floor) == (0, 0)
         assert rowcol(x, y, src.affine, op=math.ceil) == (1, 1)
+
+def test_Raster_index():
+    x, y = 245114, 1000968
+    with rasterio.open(raster) as src:
+        c1, r1 = src.index(x, y)
+    with Raster(raster) as rast:
+        c2, r2 = rast.index(x, y)
+    assert c1 == c2
+    assert r1 == r2
 
 
 def test_Raster():
