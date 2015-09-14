@@ -36,7 +36,7 @@ def test_zonal_global_extent():
 
 def test_zonal_nodata():
     polygons = os.path.join(DATA, 'polygons.shp')
-    stats = zonal_stats(polygons, raster, nodata_value=0)
+    stats = zonal_stats(polygons, raster, nodata=0)
     assert len(stats) == 2
     assert stats[0]['count'] == 75
     assert stats[1]['count'] == 50
@@ -180,11 +180,11 @@ def test_range():
     assert ranges == [x['range'] for x in stats]
 
 
-def test_nodata_value():
+def test_nodata():
     polygons = os.path.join(DATA, 'polygons.shp')
     categorical_raster = os.path.join(DATA, 'slope_classes.tif')
     stats = zonal_stats(polygons, categorical_raster, stats="*",
-                        categorical=True, nodata_value=1.0)
+                        categorical=True, nodata=1.0)
     assert stats[0]['majority'] is None
     assert stats[0]['count'] == 0  # no pixels; they're all null
     assert stats[1]['minority'] == 2.0
@@ -280,9 +280,9 @@ def test_add_stats():
 def test_mini_raster():
     polygons = os.path.join(DATA, 'polygons.shp')
     stats = zonal_stats(polygons, raster, raster_out=True)
-    stats2 = zonal_stats(polygons, stats[0]['mini_raster'],
+    stats2 = zonal_stats(polygons, stats[0]['mini_raster_array'],
                          raster_out=True, affine=stats[0]['mini_raster_affine'])
-    assert (stats[0]['mini_raster'] == stats2[0]['mini_raster']).sum() == \
+    assert (stats[0]['mini_raster_array'] == stats2[0]['mini_raster_array']).sum() == \
         stats[0]['count']
 
 
@@ -302,7 +302,7 @@ def test_percentile_nodata():
     # By setting nodata to 1, one of our polygons is within the raster extent
     # but has an empty masked array
     stats = zonal_stats(polygons, categorical_raster,
-                        stats=["percentile_90"], nodata_value=1)
+                        stats=["percentile_90"], nodata=1)
     assert 'percentile_90' in stats[0].keys()
     assert [None, 5.0] == [x['percentile_90'] for x in stats]
 
@@ -368,9 +368,9 @@ def test_some_nodata_ndarray():
     assert stats[0]['nodata'] == 0
     assert stats[0]['count'] == 75
 
-    # with nodata_value
+    # with nodata
     stats = zonal_stats(polygons, arr, affine=affine,
-                        nodata_value=-9999.0, stats=['nodata', 'count', 'min'])
+                        nodata=-9999.0, stats=['nodata', 'count', 'min'])
     assert stats[0]['min'] >= 0.0
     assert stats[0]['nodata'] == 36
     assert stats[0]['count'] == 39

@@ -67,8 +67,7 @@ def zonalstats(input_geojson, raster, output_geojson, all_touched, band, categor
         all_touched=all_touched,
         band_num=band,
         categorical=categorical,
-        global_src_extent=global_src_extent,
-        nodata_value=nodata,
+        nodata=nodata,
         stats=stats,
         prefix=prefix,
         geojson_out=True)

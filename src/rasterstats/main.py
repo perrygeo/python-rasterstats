@@ -20,7 +20,7 @@ def raster_stats(*args, **kwargs):
 def zonal_stats(vectors,
                 raster,
                 layer=0,
-                bands=1,
+                band_num=1,
                 nodata=None,
                 affine=None,
                 stats=None,
@@ -50,7 +50,7 @@ def zonal_stats(vectors,
         If `raster` is a GDAL source, the band number to use (counting from 1).
         defaults to 1.
 
-    nodata_value: float, optional
+    nodata: float, optional
         If `raster` is a GDAL source, this value overrides any NODATA value
         specified in the file's metadata.
         If `None`, the file's metadata's NODATA value (if any) will be used.
@@ -100,6 +100,7 @@ def zonal_stats(vectors,
     """
     stats, run_count = check_stats(stats, categorical)
 
+    # Handle 1.0 deprecations
     transform = kwargs.get('transform')
     if transform:
         warnings.warn("GDAL-style transforms will disappear in 1.0. "
@@ -108,7 +109,18 @@ def zonal_stats(vectors,
         if not affine:
             affine = Affine.from_gdal(*transform)
 
-    with Raster(raster, affine, nodata_value, band_num) as rast:
+    ndv = kwargs.get('nodata_value')
+    if ndv:
+        warnings.warn("Use `nodata` instead of `nodata_value`", DeprecationWarning)
+        if not nodata:
+            nodata = ndv
+
+    cp = kwargs.get('copy_properties')
+    if cp:
+        warnings.warn("Use `geojson_out` to preserve feature properties",
+                      DeprecationWarning)
+
+    with Raster(raster, affine, nodata, band_num) as rast:
         results = []
 
         features_iter = read_features(vectors, layer)

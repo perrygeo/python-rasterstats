@@ -278,7 +278,7 @@ class Raster(object):
         nodata = self.nodata
         if nodata is None:
             nodata = -999
-            warnings.warn("Setting nodata to -999; specify nodata_value explicitly")
+            warnings.warn("Setting nodata to -999; specify nodata explicitly")
 
         if self.array is not None:
             # It's an ndarray already
