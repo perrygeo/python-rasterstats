@@ -1,14 +1,15 @@
 0.9.0
 - Completely removed osgeo.ogr in favor of fiona
 - Completely removed osgeo.osr, spatial referencing is external to this module
-- Loosened coupling with GeoRaster lib
+- Removed optional dependency on GeoRaster lib
 - Extensive cleanup of tests
-- Code refactoring and cleanup
-- Support for category maps to get human readable keys for categorical rasters 
+- Extensive refactoring to encapsulate coordinate transforms and data access
+- Use of affine lib instead of GDAL-style geotransform tuples
+- Support for category maps to get human readable keys for categorical rasters
 - Greatly improve speed of categorical and any stat requiring pixel counts
 - Simplified and sped up travis builds for faster feedback
-- Nones returned when polygon doesn't intersect raster pixels
-- Removed deprecated rasterstats script
+- Nones instead on nans returned when polygon doesn't intersect raster pixels
+- Removed deprecated rasterstats script and unused util functions
 - Added support for `nodata` count
 - GeoJSON features and geometries accepted as CLI inputs
 

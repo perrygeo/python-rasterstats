@@ -1,15 +1,27 @@
 import sys
 import os
 import fiona
-from shapely.geometry import shape
-from rasterstats.io import read_features, read_featurecollection  # todo parse_feature
+import rasterio
 import json
 import pytest
+from shapely.geometry import shape
+from rasterstats.io import read_features, read_featurecollection, Raster  # todo parse_feature
+from rasterstats.io import boundless_array, window_bounds, bounds_window, rowcol
 
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 DATA = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
 polygons = os.path.join(DATA, 'polygons.shp')
+raster = os.path.join(DATA, 'slope.tif')
+
+import numpy as np
+arr = np.array([[1, 1, 1],
+                [1, 1, 1],
+                [1, 1, 1]])
+
+arr3d = np.array([[[1, 1, 1],
+                   [1, 1, 1],
+                   [1, 1, 1]]])
 
 with fiona.open(polygons, 'r') as src:
     target_features = [f for f in src]
@@ -91,6 +103,13 @@ def test_mapping_features():
     _test_read_features(indata)
 
 
+def test_mapping_feature():
+    # list of Features
+    with fiona.open(polygons, 'r') as src:
+        indata = [f for f in src]
+    _test_read_features(indata[0])
+
+
 def test_mapping_geoms():
     with fiona.open(polygons, 'r') as src:
         indata = [f for f in src]
@@ -152,6 +171,116 @@ def test_geo_interface_collection():
         indata['features'] = [f for f in src]
     indata = MockGeoInterface(indata)
     _test_read_features(indata)
+
+
+def test_notafeature():
+    with pytest.raises(ValueError):
+        list(read_features(['foo', 'POINT(-122 42)']))
+
+    with pytest.raises(ValueError):
+        list(read_features(Exception()))
+
+
+# Raster tests
+def test_boundless():
+    # Exact
+    assert boundless_array(arr, window=((0, 3), (0, 3)), nodata=0).sum() == 9
+
+    # Intersects
+    assert boundless_array(arr, window=((-1, 2), (-1, 2)), nodata=0).sum() == 4
+    assert boundless_array(arr, window=((1, 4), (-1, 2)), nodata=0).sum() == 4
+    assert boundless_array(arr, window=((1, 4), (1, 4)), nodata=0).sum() == 4
+    assert boundless_array(arr, window=((-1, 2), (1, 4)), nodata=0).sum() == 4
+
+    # No overlap
+    assert boundless_array(arr, window=((-4, -1), (-4, -1)), nodata=0).sum() == 0
+    assert boundless_array(arr, window=((-4, -1), (4, 7)), nodata=0).sum() == 0
+    assert boundless_array(arr, window=((4, 7), (4, 7)), nodata=0).sum() == 0
+    assert boundless_array(arr, window=((4, 7), (-4, -1)), nodata=0).sum() == 0
+    assert boundless_array(arr, window=((-3, 0), (-3, 0)), nodata=0).sum() == 0
+
+    # Covers
+    assert boundless_array(arr, window=((-1, 4), (-1, 4)), nodata=0).sum() == 9
+
+    # 3D
+    assert boundless_array(arr3d, window=((0, 3), (0, 3)), nodata=0).sum() == 9
+    assert boundless_array(arr3d, window=((-1, 2), (-1, 2)), nodata=0).sum() == 4
+    assert boundless_array(arr3d, window=((-3, 0), (-3, 0)), nodata=0).sum() == 0
+
+    # 1D
+    with pytest.raises(ValueError):
+        boundless_array(np.array([1, 1, 1]), window=((0, 3),), nodata=0)
+
+
+def test_boundless_masked():
+    a = boundless_array(arr, window=((-4, -1), (-4, -1)), nodata=0, masked=True)
+    assert a.mask.all()
+    b = boundless_array(arr, window=((0, 3), (0, 3)), nodata=0, masked=True)
+    assert not b.mask.any()
+    c = boundless_array(arr, window=((-1, 2), (-1, 2)), nodata=0, masked=True)
+    assert c.mask.any() and not c.mask.all()
+
+
+def test_window_bounds():
+    with rasterio.open(raster) as src:
+        win = ((0, src.shape[0]), (0, src.shape[1]))
+        assert src.bounds == window_bounds(win, src.affine)
+
+        win = ((5, 10), (5, 10))
+        assert src.window_bounds(win) == window_bounds(win, src.affine)
+
+
+def test_bounds_window():
+    with rasterio.open(raster) as src:
+        assert bounds_window(src.bounds, src.affine) == \
+            ((0, src.shape[0]), (0, src.shape[1]))
+
+
+def test_rowcol():
+    import math
+    with rasterio.open(raster) as src:
+        x, _, _, y = src.bounds
+        x += 1.0
+        y -= 1.0
+        assert rowcol(x, y, src.affine, op=math.floor) == (0, 0)
+        assert rowcol(x, y, src.affine, op=math.ceil) == (1, 1)
+
+def test_Raster_index():
+    x, y = 245114, 1000968
+    with rasterio.open(raster) as src:
+        c1, r1 = src.index(x, y)
+    with Raster(raster) as rast:
+        c2, r2 = rast.index(x, y)
+    assert c1 == c2
+    assert r1 == r2
+
+
+def test_Raster():
+    import numpy as np
+
+    bounds = (244156, 1000258, 245114, 1000968)
+    r1 = Raster(raster, band=1).read(bounds)
+
+    with rasterio.open(raster) as src:
+        arr = src.read(1)
+        affine = src.affine
+        nodata = src.nodata
+
+    r2 = Raster(arr, affine, nodata, band=1).read(bounds)
+
+    # If the abstraction is correct, the arrays are equal
+    assert np.array_equal(r1.array, r2.array)
+
+def test_Raster_context():
+    # Assigned a regular name, stays open
+    r1 = Raster(raster, band=1)
+    assert not r1.src.closed
+    r1.src.close()
+
+    # Used as a context manager, closes itself
+    with Raster(raster, band=1) as r2:
+        pass
+    assert r2.src.closed
 
 
 # Optional tests
