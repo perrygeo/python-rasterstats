@@ -3,7 +3,6 @@ from __future__ import absolute_import
 from __future__ import division
 import click
 from rasterstats import zonal_stats
-from rasterstats.utils import combine_features_results
 from rasterstats.io import read_features
 import logging
 try:
@@ -71,10 +70,10 @@ def zonalstats(input_geojson, raster, output_geojson, all_touched, band, categor
         global_src_extent=global_src_extent,
         nodata_value=nodata,
         stats=stats,
-        copy_properties=False)
+        prefix=prefix,
+        geojson_out=True)
 
-    feature_collection['features'] = list(
-        combine_features_results(features, zonal_results, prefix))
+    feature_collection['features'] = zonal_results
 
     output_geojson.write(json.dumps(feature_collection, indent=indent))
     output_geojson.write("\n")
