@@ -35,21 +35,6 @@ def rasterize_geom(geom, like, all_touched=False):
     return rv_array
 
 
-def combine_features_results(features, results, prefix):
-    """
-    Given a list of geojson features and a list of zonal stats results
-    Append the zonal stats to the feature's properties and yield a new feature
-    """
-    assert len(features) == len(results)
-    for feat, res in zip(features, results):
-        for key, val in res.items():
-            if key == "__fid__":
-                continue
-            prefixed_key = "{}{}".format(prefix, key)
-            feat['properties'][prefixed_key] = val
-        yield feat
-
-
 def stats_to_csv(stats):
     if sys.version_info[0] >= 3:
         from io import StringIO as IO

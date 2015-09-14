@@ -4,7 +4,7 @@ from shapely.geometry import shape
 from shapely import wkt
 from numpy.ma import masked
 from numpy import asscalar
-from .io import read_features, Raster, window_bounds
+from .io import read_features, Raster
 
 
 def point_window_unitxy(x, y, affine):
@@ -92,33 +92,31 @@ def point_query(vectors,
                 layer=1,
                 nodata=None,
                 affine=None,
-                interpolate='bilinear'):
+                interpolate='bilinear',
+                property_name='value',
+                geojson_out=False):
     """Given a set of n vector features and a raster,
     generates n lists of raster values at each vertex of the geometry
 
     Effectively creates a 2D list, even for a single point, such that
 
-        value = list(point_query(point, raster))[0][0]
+        value = point_query(point, raster)[0][0]
 
     The first index is the geometry, the second is the vertex within the geometry
     """
+    if interpolate not in ['nearest', 'bilinear']:
+        raise ValueError("interpolate must be nearest or bilinear")
+
     features_iter = read_features(vectors, layer)
 
     with Raster(raster, nodata=nodata, affine=affine, band=band) as rast:
-        if interpolate == 'bilinear':
-            for feat in features_iter:
-                geom = shape(feat['geometry'])
-                vals = []
-                for x, y in geom_xys(geom):
-                    window, unitxy = point_window_unitxy(x, y, rast.affine)
-                    src_array = rast.read(window=window, masked=True).array
-                    vals.append(bilinear(src_array, *unitxy))
-                yield vals
-        elif interpolate == 'nearest':
-            for feat in features_iter:
-                geom = shape(feat['geometry'])
-                vals = []
-                for x, y in geom_xys(geom):
+
+        results = []
+        for feat in features_iter:
+            geom = shape(feat['geometry'])
+            vals = []
+            for x, y in geom_xys(geom):
+                if interpolate == 'nearest':
                     r, c = rast.index(x, y)
                     window = ((r, r+1), (c, c+1))
                     src_array = rast.read(window=window, masked=True).array
@@ -127,6 +125,18 @@ def point_query(vectors,
                         vals.append(None)
                     else:
                         vals.append(asscalar(val))
-                yield vals
-        else:
-            raise ValueError("interpolate must be nearest or bilinear")
+
+                elif interpolate == 'bilinear':
+                    window, unitxy = point_window_unitxy(x, y, rast.affine)
+                    src_array = rast.read(window=window, masked=True).array
+                    vals.append(bilinear(src_array, *unitxy))
+
+            if geojson_out:
+                if 'properties' not in feat:
+                    feat['properties'] = {}
+                feat['properties'][property_name] = vals
+                results.append(feat)
+            else:
+                results.append(vals)
+
+        return results

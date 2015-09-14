@@ -15,7 +15,7 @@ def test_csv():
     polygons = os.path.join(DATA, 'polygons.shp')
     stats = zonal_stats(polygons, raster, stats="*")
     csv = stats_to_csv(stats)
-    assert csv.split()[0] == ','.join(sorted(VALID_STATS + ['__fid__']))
+    assert csv.split()[0] == ','.join(sorted(VALID_STATS))
 
 
 def test_categorical_csv():
@@ -23,7 +23,7 @@ def test_categorical_csv():
     categorical_raster = os.path.join(DATA, 'slope_classes.tif')
     stats = zonal_stats(polygons, categorical_raster, categorical=True)
     csv = stats_to_csv(stats)
-    assert csv.split()[0] == "1.0,2.0,5.0,__fid__"
+    assert csv.split()[0] == "1.0,2.0,5.0"
 
 
 def test_get_percentile():
