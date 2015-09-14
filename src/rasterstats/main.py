@@ -20,14 +20,13 @@ def raster_stats(*args, **kwargs):
 def zonal_stats(vectors,
                 raster,
                 layer=0,
-                band_num=1,
-                nodata_value=None,
+                bands=1,
+                nodata=None,
                 affine=None,
                 stats=None,
                 all_touched=False,
                 categorical=False,
                 category_map=None,
-                copy_properties=False,
                 add_stats=None,
                 raster_out=False,
                 prefix=None,
@@ -75,15 +74,11 @@ def zonal_stats(vectors,
     category_map: A dictionary mapping raster values to human-readable categorical names
         Only applies when categorical is True
 
-    copy_properties: bool, optional
-        Include feature properties alongside the returned stats.
-        defaults to `False`
-
     add_stats: dict with names and functions of additional stats to compute, optional
 
     raster_out: Include the masked numpy array for each feature, optional
         Each feature dictionary will have the following additional keys:
-        mini_raster: The clipped and masked numpy array
+        mini_raster_array: The clipped and masked numpy array
         mini_raster_affine: Affine transformation
         mini_raster_nodata: NoData Value
 
@@ -207,7 +202,7 @@ def zonal_stats(vectors,
                         feature_stats[stat_name] = stat_func(masked)
 
             if raster_out:
-                feature_stats['mini_raster'] = masked
+                feature_stats['mini_raster_array'] = masked
                 feature_stats['mini_raster_affine'] = fsrc.affine
                 feature_stats['mini_raster_nodata'] = fsrc.nodata
 
