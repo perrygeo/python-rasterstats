@@ -19,7 +19,7 @@ raster = os.path.join(DATA, 'slope.tif')
 def test_main():
     polygons = os.path.join(DATA, 'polygons.shp')
     stats = zonal_stats(polygons, raster)
-    for key in ['__fid__', 'count', 'min', 'max', 'mean']:
+    for key in ['count', 'min', 'max', 'mean']:
         assert key in stats[0]
     assert len(stats) == 2
     assert stats[0]['count'] == 75
@@ -136,22 +136,22 @@ def test_categorical_map():
 def test_specify_stats_list():
     polygons = os.path.join(DATA, 'polygons.shp')
     stats = zonal_stats(polygons, raster, stats=['min', 'max'])
-    assert sorted(stats[0].keys()) == sorted(['__fid__', 'min', 'max'])
+    assert sorted(stats[0].keys()) == sorted(['min', 'max'])
     assert 'count' not in list(stats[0].keys())
 
 
 def test_specify_all_stats():
     polygons = os.path.join(DATA, 'polygons.shp')
     stats = zonal_stats(polygons, raster, stats='ALL')
-    assert sorted(stats[0].keys()) == sorted(VALID_STATS + ["__fid__"])
+    assert sorted(stats[0].keys()) == sorted(VALID_STATS)
     stats = zonal_stats(polygons, raster, stats='*')
-    assert sorted(stats[0].keys()) == sorted(VALID_STATS + ["__fid__"])
+    assert sorted(stats[0].keys()) == sorted(VALID_STATS)
 
 
 def test_specify_stats_string():
     polygons = os.path.join(DATA, 'polygons.shp')
     stats = zonal_stats(polygons, raster, stats='min max')
-    assert sorted(stats[0].keys()) == sorted(['__fid__', 'min', 'max'])
+    assert sorted(stats[0].keys()) == sorted(['min', 'max'])
     assert 'count' not in list(stats[0].keys())
 
 
@@ -166,18 +166,6 @@ def test_optional_stats():
     stats = zonal_stats(polygons, raster,
                         stats='min max sum majority median std')
     assert stats[0]['min'] <= stats[0]['median'] <= stats[0]['max']
-
-
-def test_no_copy_properties():
-    polygons = os.path.join(DATA, 'polygons.shp')
-    stats = zonal_stats(polygons, raster, copy_properties=False)  # default
-    assert 'id' not in stats[0]  # attr from original shp
-
-
-def test_copy_properties():
-    polygons = os.path.join(DATA, 'polygons.shp')
-    stats = zonal_stats(polygons, raster, copy_properties=True)
-    assert 'id' in stats[0]  # attr from original shp
 
 
 def test_range():
@@ -398,3 +386,21 @@ def test_transform():
     stats2 = zonal_stats(polygons, arr, transform=affine.to_gdal())
     assert stats == stats2
     pytest.deprecated_call(zonal_stats, polygons, raster, transform=affine.to_gdal())
+
+
+def test_prefix():
+    polygons = os.path.join(DATA, 'polygons.shp')
+    stats = zonal_stats(polygons, raster, prefix="TEST")
+    for key in ['count', 'min', 'max', 'mean']:
+        assert key not in stats[0]
+    for key in ['TESTcount', 'TESTmin', 'TESTmax', 'TESTmean']:
+        assert key in stats[0]
+
+
+def test_geojson_out():
+    polygons = os.path.join(DATA, 'polygons.shp')
+    features = zonal_stats(polygons, raster, geojson_out=True)
+    for feature in features:
+        assert feature['type'] == 'Feature'
+        assert 'id' in feature['properties']  # from orig
+        assert 'count' in feature['properties']  # from zonal stats

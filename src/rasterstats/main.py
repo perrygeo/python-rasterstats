@@ -30,6 +30,8 @@ def zonal_stats(vectors,
                 copy_properties=False,
                 add_stats=None,
                 raster_out=False,
+                prefix=None,
+                geojson_out=False,
                 **kwargs):
     """Zonal statistics of raster values aggregated to vector geometries.
 
@@ -85,11 +87,21 @@ def zonal_stats(vectors,
         mini_raster_affine: Affine transformation
         mini_raster_nodata: NoData Value
 
+    prefix: add a prefix to the keys (default: None )
+
+    geojson_out: Return list of geojson-like features (default: False)
+        original feautur geometry and properties will be retained
+        with zonal stats appended as additional properties.
+        Use with `prefix` to ensure unique and meaningful property names.
+
     Returns
     -------
-    list of dicts
+    list of dicts (if geojson_out is False)
         Each item corresponds to a single vector feature and
         contains keys for each of the specified stats.
+
+    list of geojson features (if geojson_out is True)
+        GeoJSON-like Feature as python dict
     """
     stats, run_count = check_stats(stats, categorical)
 
@@ -199,17 +211,20 @@ def zonal_stats(vectors,
                 feature_stats['mini_raster_affine'] = fsrc.affine
                 feature_stats['mini_raster_nodata'] = fsrc.nodata
 
-            if 'id' in feat:
-                # Use the feature id directly
-                feature_stats['__fid__'] = feat['id']
+            if prefix is not None:
+                prefixed_feature_stats = {}
+                for key, val in feature_stats.items():
+                    newkey = "{}{}".format(prefix, key)
+                    prefixed_feature_stats[newkey] = val
+                feature_stats = prefixed_feature_stats
+
+            if geojson_out:
+                for key, val in feature_stats.items():
+                    if 'properties' not in feat:
+                        feat['properties'] = {}
+                    feat['properties'][key] = val
+                results.append(feat)
             else:
-                # Use the enumerated id
-                feature_stats['__fid__'] = i
-
-            if 'properties' in feat and copy_properties:
-                for key, val in list(feat['properties'].items()):
-                    feature_stats[key] = val
-
-            results.append(feature_stats)
+                results.append(feature_stats)
 
     return results
