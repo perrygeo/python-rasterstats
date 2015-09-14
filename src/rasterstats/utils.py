@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
 from __future__ import division
-import math
 import sys
 from rasterio import features
-from affine import Affine
+from shapely.geometry import box, MultiPolygon
+from .io import window_bounds
 
 
 DEFAULT_STATS = ['count', 'min', 'max', 'mean']
@@ -123,3 +123,26 @@ def key_assoc_val(d, func, exclude=None):
     ks = list(d.keys())
     key = ks[vs.index(func(vs))]
     return key
+
+
+def boxify_points(geom, rast):
+    """
+    Point and MultiPoint don't play well with GDALRasterize
+    convert them into box polygons 99% cellsize, centered on the raster cell
+    """
+    if 'Point' not in geom.type:
+        raise ValueError("Points or multipoints only")
+
+    buff = -0.01 * min(rast.affine.a, rast.affine.e)
+
+    if geom.type == 'Point':
+        pts = [geom]
+    elif geom.type == "MultiPoint":
+        pts = geom.geoms
+    geoms = []
+    for pt in pts:
+        row, col = rast.index(pt.x, pt.y)
+        win = ((row, row + 1), (col, col + 1))
+        geoms.append(box(*window_bounds(win, rast.affine)).buffer(buff))
+
+    return MultiPolygon(geoms)

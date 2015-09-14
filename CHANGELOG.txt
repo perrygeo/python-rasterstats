@@ -12,6 +12,8 @@
 - Removed deprecated rasterstats script and unused util functions
 - Added support for `nodata` count
 - GeoJSON features and geometries accepted as CLI inputs
+- point_query function and CLI
+- fixed bug in zonal_stats points with all_touched
 
 0.8.0
 - Rasterio CLI plugin; rio zonalstats
