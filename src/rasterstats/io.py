@@ -136,8 +136,12 @@ def bounds_window(bounds, affine):
     """Create a full cover rasterio-style window
     """
     w, s, e, n = bounds
-    row_start, col_start = rowcol(w, n, affine)
-    row_stop, col_stop = rowcol(e, s, affine, op=math.ceil)
+    if affine.e < 0:  # north up
+        row_start, col_start = rowcol(w, n, affine)
+        row_stop, col_stop = rowcol(e, s, affine, op=math.ceil)
+    else:  # south up, swap 
+        row_start, col_start = rowcol(w, s, affine)
+        row_stop, col_stop = rowcol(e, n, affine, op=math.ceil)
     return (row_start, row_stop), (col_start, col_stop)
 
 
@@ -145,6 +149,8 @@ def window_bounds(window, affine):
     (row_start, row_stop), (col_start, col_stop) = window
     w, s = (col_start, row_stop) * affine
     e, n = (col_stop, row_start) * affine
+    if affine.e > 0:  # south up, swap
+        s, n = n, s
     return w, s, e, n
 
 
@@ -244,6 +250,12 @@ class Raster(object):
         col, row = [math.floor(a) for a in (~self.affine * (x, y))]
         return row, col
 
+    @property
+    def northup(self):
+        if self.affine.e < 0:
+            return True  # origin is in top left going down
+        else:
+            return False  # origin is in bottom left going up
 
     def read(self, bounds=None, window=None, masked=False):
         """ Performs a boundless read against the underlying array source
@@ -273,6 +285,8 @@ class Raster(object):
 
         c, _, _, f = window_bounds(win, self.affine)  # c ~ west, f ~ north
         a, b, _, d, e, _, _, _, _ = tuple(self.affine)
+        if not self.northup:  # south up, swap since we've now converted to north up
+            e *= -1
         new_affine = Affine(a, b, c, d, e, f)
 
         nodata = self.nodata
@@ -286,6 +300,10 @@ class Raster(object):
         elif self.src:
             # It's an open rasterio dataset
             new_array = self.src.read(self.band, window=win, boundless=True, masked=masked)
+
+            if not self.northup:
+                # new array needs to be flipped north up
+                new_array = np.flipud(new_array)
 
         return Raster(new_array, new_affine, nodata)
 
