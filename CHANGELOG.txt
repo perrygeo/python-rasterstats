@@ -14,6 +14,7 @@
 - GeoJSON features and geometries accepted as CLI inputs
 - point_query function and CLI
 - fixed bug in zonal_stats points with all_touched
+- GeoJSON Feature output supported directly, geojson_out=True
 
 0.8.0
 - Rasterio CLI plugin; rio zonalstats
