@@ -277,7 +277,7 @@ class Raster(object):
             raise ValueError("Specify either bounds or window")
 
         if bounds:
-            win = bounds_window(bounds, self.affine)
+            win = bounds_window(bounds, self.affine)  # automatically North-up
         elif window:
             win = window
         else:
@@ -301,9 +301,9 @@ class Raster(object):
             # It's an open rasterio dataset
             new_array = self.src.read(self.band, window=win, boundless=True, masked=masked)
 
-            if not self.northup:
-                # new array needs to be flipped north up
-                new_array = np.flipud(new_array)
+        if not self.northup:
+            # new array needs to be flipped north up
+            new_array = np.flipud(new_array)
 
         return Raster(new_array, new_affine, nodata)
 

@@ -404,3 +404,25 @@ def test_geojson_out():
         assert feature['type'] == 'Feature'
         assert 'id' in feature['properties']  # from orig
         assert 'count' in feature['properties']  # from zonal stats
+
+
+def test_bottom_up():
+    polygons = os.path.join(DATA, 'polygons.shp')
+    # has positive affine.e, origin in lower left
+    inverted_raster = os.path.join(DATA, 'slope_inverted.tif')
+
+    s1 = zonal_stats(polygons, raster)
+    s2 = zonal_stats(polygons, inverted_raster)
+    assert s1 == s2
+
+    from affine import Affine
+    with rasterio.open(raster) as src:
+        arr = src.read(1)
+        aff = src.affine
+        # Flip it and reset origin to lower left, positive affine.e
+        newarr = np.flipud(arr)
+        newaff = Affine(aff.a, aff.b, aff.c,
+                        aff.d, -1 * aff.e, aff.f + (aff.e * arr.shape[0]))
+        s3 = zonal_stats(polygons, arr, affine=aff)
+        s4 = zonal_stats(polygons, newarr, affine=newaff)
+        assert s3 == s4
