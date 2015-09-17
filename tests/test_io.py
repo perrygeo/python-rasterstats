@@ -236,6 +236,21 @@ def test_bounds_window():
             ((0, src.shape[0]), (0, src.shape[1]))
 
 
+def test_bottomup_bounds_window():
+    from affine import Affine
+    with rasterio.open(raster) as src:
+        topup = src.affine
+        bottomup = Affine(topup.a, topup.b, topup.c,
+                          topup.d, -1 * topup.e, topup.f + (topup.e * src.height))
+
+        win = ((5, 10), (5, 10))
+        bounds = src.window_bounds(win)
+        assert bounds_window(bounds, topup)[1] == bounds_window(bounds, bottomup)[1]
+        assert bounds_window(bounds, topup)[0] != bounds_window(bounds, bottomup)[0]
+        assert (bounds_window(bounds, bottomup)[0][0] <
+                bounds_window(bounds, bottomup)[0][1])
+
+
 def test_rowcol():
     import math
     with rasterio.open(raster) as src:
@@ -270,6 +285,7 @@ def test_Raster():
 
     # If the abstraction is correct, the arrays are equal
     assert np.array_equal(r1.array, r2.array)
+
 
 def test_Raster_context():
     # Assigned a regular name, stays open
