@@ -244,7 +244,6 @@ class Raster(object):
         col, row = [math.floor(a) for a in (~self.affine * (x, y))]
         return row, col
 
-
     def read(self, bounds=None, window=None, masked=False):
         """ Performs a boundless read against the underlying array source
 
@@ -289,7 +288,11 @@ class Raster(object):
 
         nan_as_nodata = True  # todo make optional kwarg
         if nan_as_nodata:
-            new_array[np.isnan(new_array)] = nodata
+            if masked:
+                # TODO would need to remask
+                raise NotImplementedError("specify nan_as_nodata OR masked")
+            else:
+                new_array[np.isnan(new_array)] = nodata
 
         return Raster(new_array, new_affine, nodata)
 
