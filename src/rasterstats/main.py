@@ -136,7 +136,7 @@ def zonal_stats(vectors,
 
             # create ndarray of rasterized geometry
             rv_array = rasterize_geom(geom, like=fsrc, all_touched=all_touched)
-            assert rv_array.shape == fsrc.shape  # TODO remove
+            assert rv_array.shape == fsrc.shape
 
             # Mask the source data array with our current feature
             # we take the logical_not to flip 0<->1 for the correct mask effect
@@ -145,6 +145,7 @@ def zonal_stats(vectors,
                 fsrc.array,
                 mask=np.logical_or(
                     fsrc.array == fsrc.nodata,
+                    np.isnan(fsrc.array),
                     np.logical_not(rv_array)))
 
             if masked.compressed().size == 0:
@@ -204,10 +205,8 @@ def zonal_stats(vectors,
 
             if 'nodata' in stats:
                 featmasked = np.ma.MaskedArray(fsrc.array, mask=np.logical_not(rv_array))
-                keys, counts = np.unique(featmasked.compressed(), return_counts=True)
-                pixel_count = dict(zip([np.asscalar(k) for k in keys],
-                                       [np.asscalar(c) for c in counts]))
-                feature_stats['nodata'] = pixel_count.get(fsrc.nodata, 0)
+                feature_stats['nodata'] = \
+                    np.logical_or(np.isnan(featmasked), featmasked == fsrc.nodata).sum()
 
             if add_stats is not None:
                 for stat_name, stat_func in add_stats.items():
@@ -233,5 +232,7 @@ def zonal_stats(vectors,
                 results.append(feat)
             else:
                 results.append(feature_stats)
+
+            # import ipdb; ipdb.set_trace()
 
     return results
