@@ -136,7 +136,6 @@ def zonal_stats(vectors,
 
             # create ndarray of rasterized geometry
             rv_array = rasterize_geom(geom, like=fsrc, all_touched=all_touched)
-            assert rv_array.shape == fsrc.shape  # TODO remove
 
             # Mask the source data array with our current feature
             # we take the logical_not to flip 0<->1 for the correct mask effect
@@ -206,8 +205,6 @@ def zonal_stats(vectors,
                 featmasked = np.ma.MaskedArray(fsrc.array, mask=np.logical_not(rv_array))
                 nodata_count = float((featmasked == fsrc.nodata).sum())
                 feature_stats['nodata'] = nodata_count
-
-                # feature_stats['nodata'] = pixel_count.get(fsrc.nodata, 0)
 
             if add_stats is not None:
                 for stat_name, stat_func in add_stats.items():
