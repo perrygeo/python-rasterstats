@@ -145,7 +145,6 @@ def zonal_stats(vectors,
                 fsrc.array,
                 mask=np.logical_or(
                     fsrc.array == fsrc.nodata,
-                    np.isnan(fsrc.array),
                     np.logical_not(rv_array)))
 
             if masked.compressed().size == 0:
@@ -205,8 +204,7 @@ def zonal_stats(vectors,
 
             if 'nodata' in stats:
                 featmasked = np.ma.MaskedArray(fsrc.array, mask=np.logical_not(rv_array))
-                feature_stats['nodata'] = \
-                    np.logical_or(np.isnan(featmasked), featmasked == fsrc.nodata).sum()
+                feature_stats['nodata'] = float((featmasked == fsrc.nodata).sum())
 
             if add_stats is not None:
                 for stat_name, stat_func in add_stats.items():

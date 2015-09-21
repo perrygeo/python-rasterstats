@@ -287,6 +287,10 @@ class Raster(object):
             # It's an open rasterio dataset
             new_array = self.src.read(self.band, window=win, boundless=True, masked=masked)
 
+        nan_as_nodata = True  # todo make optional kwarg
+        if nan_as_nodata:
+            new_array[np.isnan(new_array)] = nodata
+
         return Raster(new_array, new_affine, nodata)
 
     def __enter__(self):
