@@ -204,10 +204,10 @@ def zonal_stats(vectors,
 
             if 'nodata' in stats:
                 featmasked = np.ma.MaskedArray(fsrc.array, mask=np.logical_not(rv_array))
-                keys, counts = np.unique(featmasked.compressed(), return_counts=True)
-                pixel_count = dict(zip([np.asscalar(k) for k in keys],
-                                       [np.asscalar(c) for c in counts]))
-                feature_stats['nodata'] = pixel_count.get(fsrc.nodata, 0)
+                nodata_count = float((featmasked == fsrc.nodata).sum())
+                feature_stats['nodata'] = nodata_count
+
+                # feature_stats['nodata'] = pixel_count.get(fsrc.nodata, 0)
 
             if add_stats is not None:
                 for stat_name, stat_func in add_stats.items():
