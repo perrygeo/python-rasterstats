@@ -256,6 +256,6 @@ Find a bug? Report it via github issues by providing
 .. |BuildStatus| image:: https://api.travis-ci.org/perrygeo/python-rasterstats.png
 .. _BuildStatus: https://travis-ci.org/perrygeo/python-rasterstats
 
-.. |CoverageStatus| image:: https://coveralls.io/repos/perrygeo/python-raster-stats/badge.png
+.. |CoverageStatus| image:: https://coveralls.io/repos/perrygeo/python-rasterstats/badge.png
 .. _CoverageStatus: https://coveralls.io/r/perrygeo/python-raster-stats
 
