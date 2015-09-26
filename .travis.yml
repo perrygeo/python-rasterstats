@@ -23,6 +23,7 @@ install:
   - pip install numpy>=1.8 Cython
   - pip install -r requirements.txt
   - pip install -r requirements_dev.txt
+  - pip install coveralls
   - pip install -e .
 script: "coverage run --include *rasterstats* setup.py test"
 after_success:
