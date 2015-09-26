@@ -237,9 +237,9 @@ of ``zonal_stats`` using the ``raster_out`` argument::
 
 Which gives us three additional keys for each feature::
 
-   mini_raster     | Numpy ndarray                                       
-   mini_raster_GT  | Six-tuple defining the geotransform (GDAL ordering) 
-   mini_raster_NDV | Nodata value in the returned array                  
+    mini_raster_array: The clipped and masked numpy array
+    mini_raster_affine: Affine transform (not a GDAL-style geotransform)
+    mini_raster_nodata: nodata Value
 
 Keep in mind that having ndarrays in your stats dictionary means it is more
 difficult to serialize to json and other text formats.
