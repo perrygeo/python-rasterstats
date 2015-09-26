@@ -54,4 +54,5 @@ setup(
     entry_points="""
       [rasterio.rio_commands]
       zonalstats=rasterstats.cli:zonalstats
+      pointquery=rasterstats.cli:pointquery
     """)

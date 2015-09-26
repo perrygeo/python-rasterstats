@@ -77,7 +77,7 @@ def test_xy_array_bilinear_window():
 
 def test_point_query():
     point = "POINT(245309 1000064)"
-    val = point_query(point, raster)[0][0]
+    val = point_query(point, raster)[0]
     assert round(val) == 74
 
 
@@ -86,28 +86,28 @@ def test_point_query_geojson():
     features = point_query(point, raster, property_name="TEST", geojson_out=True)
     for feature in features:
         assert 'TEST' in feature['properties']
-        assert round(feature['properties']['TEST'][0]) == 74
+        assert round(feature['properties']['TEST']) == 74
 
 
 def test_point_query_nodata():
     # all nodata, on the grid
     point = "POINT(245309 1000308)"
-    val = point_query(point, raster_nodata)[0][0]
+    val = point_query(point, raster_nodata)[0]
     assert val is None
 
     # all nodata, off the grid
     point = "POINT(244000 1000308)"
-    val = point_query(point, raster_nodata)[0][0]
+    val = point_query(point, raster_nodata)[0]
     assert val is None
     point = "POINT(244000 1000308)"
-    val = point_query(point, raster_nodata, interpolate="nearest")[0][0]
+    val = point_query(point, raster_nodata, interpolate="nearest")[0]
     assert val is None
 
     # some nodata, should fall back to nearest
     point = "POINT(245905 1000361)"
-    val = point_query(point, raster_nodata, interpolate="nearest")[0][0]
+    val = point_query(point, raster_nodata, interpolate="nearest")[0]
     assert round(val) == 43
-    val = point_query(point, raster_nodata)[0][0]
+    val = point_query(point, raster_nodata)[0]
     assert round(val) == 43
 
 

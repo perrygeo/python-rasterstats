@@ -98,11 +98,12 @@ def point_query(vectors,
     """Given a set of n vector features and a raster,
     generates n lists of raster values at each vertex of the geometry
 
-    Effectively creates a 2D list, even for a single point, such that
+    For features with point geometry,
+    the value will be 1D with the index refering to the feature
 
-        value = point_query(point, raster)[0][0]
-
-    The first index is the geometry, the second is the vertex within the geometry
+    For features with other geometry types,
+    it effectively creates a 2D list, such that
+    the first index is the feature, the second is the vertex within the geometry
     """
     if interpolate not in ['nearest', 'bilinear']:
         raise ValueError("interpolate must be nearest or bilinear")
@@ -130,6 +131,9 @@ def point_query(vectors,
                     window, unitxy = point_window_unitxy(x, y, rast.affine)
                     src_array = rast.read(window=window, masked=True).array
                     vals.append(bilinear(src_array, *unitxy))
+
+            if len(vals) == 1:
+                vals = vals[0]  # flatten single-element lists
 
             if geojson_out:
                 if 'properties' not in feat:
