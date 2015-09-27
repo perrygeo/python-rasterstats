@@ -1,14 +1,29 @@
 language: python
+sudo: false
+cache:
+  directories:
+    - ~/.cache/pip
+env:
+  global:
+    - PIP_WHEEL_DIR=$HOME/.cache/pip/wheels
+    - PIP_FIND_LINKS=file://$HOME/.cache/pip/wheels
+addons:
+  apt:
+    packages:
+    - libgdal1h
+    - gdal-bin
+    - libgdal-dev
 python:
   - "2.7"
   - "3.4"
 before_install:
-  - sudo add-apt-repository -y ppa:ubuntugis/ppa
-  - sudo apt-get update -qq
-  - sudo apt-get install -y libgdal1h gdal-bin libgdal-dev
+  - pip install -U pip
+  - pip install wheel
 install:
+  - pip install numpy>=1.8 Cython
   - pip install -r requirements.txt
   - pip install -r requirements_dev.txt
+  - pip install coveralls
   - pip install -e .
 script: "coverage run --include *rasterstats* setup.py test"
 after_success:

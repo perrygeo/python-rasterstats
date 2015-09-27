@@ -1,4 +1,4 @@
 shapely
 numpy>=1.8
-rasterio
+rasterio>=0.27
 fiona

@@ -1,7 +1,7 @@
 import os.path
 import json
 from click.testing import CliRunner
-from rasterstats.cli import zonalstats
+from rasterstats.cli import zonalstats, pointquery
 
 
 def test_cli_geometry():
@@ -51,3 +51,17 @@ def test_cli_featurecollection():
     assert 'test_mean' in feature['properties']
     assert round(feature['properties']['test_mean'], 2) == 14.66
     assert 'test_count' not in feature['properties']
+
+
+def test_cli_pointquery():
+    raster = os.path.join(os.path.dirname(__file__), 'data/slope.tif')
+    vector = os.path.join(os.path.dirname(__file__), 'data/featurecollection.geojson')
+    runner = CliRunner()
+    result = runner.invoke(pointquery, [vector, '-',
+                                        '--raster', raster,
+                                        '--property-name', 'slope'])
+    assert result.exit_code == 0
+    outdata = json.loads(result.output)
+    assert len(outdata['features']) == 2
+    feature = outdata['features'][0]
+    assert 'slope' in feature['properties']

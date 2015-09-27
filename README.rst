@@ -58,10 +58,10 @@ raster, calculate the mean elevation of each polygon:
     >>> stats = zonal_stats("tests/data/polygons.shp", "tests/data/elevation.tif")
 
     >>> stats[1].keys()
-        ['__fid__', 'count', 'min', 'max', 'mean']
+        ['count', 'min', 'max', 'mean']
 
-    >>> [(f['__fid__'], f['mean']) for f in stats]
-        [(1, 756.6057470703125), (2, 114.660084635416666)]
+    >>> [f['mean'] for f in stats]
+        [756.6057470703125, 114.660084635416666]
 
 
 Example Usage - Command Line
@@ -169,19 +169,19 @@ Or by using with geometries in "Well-Known" formats::
     >>> zonal_stats('POINT(-124 42)', '/path/to/elevation.tif')
     ...
 
-Feature Properties
-^^^^^^^^^^^^^^^^^^
+Retaining Feature info with GeoJSON output
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-By default, an \_\_fid\_\_ property is added to each feature's results. None of
-the other feature attributes/proprties are copied over unless ``copy_properties``
-is set to True::
+By default, `zonal_stats` returns a list of dictionaries containing the statistics.
+If you want to retain all of the feature (geometry, id, properties, etc) and 
+just append the stats as additional properties, you can set `geojson_out` to `True`::
 
     >>> stats = zonal_stats("tests/data/polygons.shp",
                              "tests/data/elevation.tif"
-                             copy_properties=True)
+                             geojson_out=True, prefix="elevation", stats="mean")
 
-    >>> stats[0].has_key('name')  # name field from original shapefile is retained
-    True
+    >>> stats[0]['properties']['elevation_mean'] 
+    756.6057470703125
 
 
 Rasterization Strategy
@@ -215,7 +215,7 @@ The polygon below is comprised of 12 pixels of oak (raster value
 32) and 78 pixels of grassland (raster value 33)::
 
     >>> zonal_stats(lyr.next(), '/path/to/vegetation.tif', categorical=True)
-    [{'__fid__': 1, 32: 12, 33: 78}]
+    [{32: 12, 33: 78}]
 
 rasterstats will report using the pixel values as keys. 
 To associate the pixel values with their appropriate meaning 
@@ -224,7 +224,7 @@ To associate the pixel values with their appropriate meaning
     >>> cmap = {32: 'oak', 33: 'grassland'}
     >>> zonal_stats(lyr.next(), '/path/to/vegetation.tif',
                     categorical=True, category_map=cmap)
-    [{'__fid__': 1, 'oak': 12, 'grassland': 78}]
+    [{'oak': 12, 'grassland': 78}]
 
 "Mini-Rasters"
 ^^^^^^^^^^^^^^^
@@ -237,9 +237,9 @@ of ``zonal_stats`` using the ``raster_out`` argument::
 
 Which gives us three additional keys for each feature::
 
-   mini_raster     | Numpy ndarray                                       
-   mini_raster_GT  | Six-tuple defining the geotransform (GDAL ordering) 
-   mini_raster_NDV | Nodata value in the returned array                  
+    mini_raster_array: The clipped and masked numpy array
+    mini_raster_affine: Affine transform (not a GDAL-style geotransform)
+    mini_raster_nodata: nodata Value
 
 Keep in mind that having ndarrays in your stats dictionary means it is more
 difficult to serialize to json and other text formats.
@@ -256,6 +256,6 @@ Find a bug? Report it via github issues by providing
 .. |BuildStatus| image:: https://api.travis-ci.org/perrygeo/python-rasterstats.png
 .. _BuildStatus: https://travis-ci.org/perrygeo/python-rasterstats
 
-.. |CoverageStatus| image:: https://coveralls.io/repos/perrygeo/python-raster-stats/badge.png
+.. |CoverageStatus| image:: https://coveralls.io/repos/perrygeo/python-rasterstats/badge.png
 .. _CoverageStatus: https://coveralls.io/r/perrygeo/python-raster-stats
 

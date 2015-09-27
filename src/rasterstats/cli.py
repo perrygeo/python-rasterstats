@@ -1,10 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
 from __future__ import division
-from __future__ import unicode_literals
 import click
-from rasterstats import zonal_stats
-from rasterstats.utils import combine_features_results
+from rasterstats import zonal_stats, point_query
 from rasterstats.io import read_features
 import logging
 try:
@@ -13,25 +11,24 @@ except:
     import json
 
 SETTINGS = dict(help_option_names=['-h', '--help'])
-version = 0.1
+version = 0.9
 
 
 @click.command(context_settings=SETTINGS)
-@click.argument('input-geojson', type=click.File('rb'), default='-')
+@click.argument('input-geojson', type=click.File('r'), default='-')
 @click.argument('output-geojson', type=click.File('w'), default='-')
 @click.version_option(version=version, message='%(version)s')
 @click.option('--raster', '-r', required=True, type=click.Path(exists=True))
 @click.option('--all-touched/--no-all-touched', default=False)
 @click.option('--band', type=int, default=1)
 @click.option('--categorical/--no-categorical', default=False)
-@click.option('--global-src-extent/--no-global-src-extent', default=False)
 @click.option('--indent', type=int, default=None)
 @click.option('--info/--no-info', default=False)
 @click.option('--nodata', type=int, default=None)
 @click.option('--prefix', type=str, default='_')
 @click.option('--stats', type=str, default=None)
 def zonalstats(input_geojson, raster, output_geojson, all_touched, band, categorical,
-               global_src_extent, indent, info, nodata, prefix, stats):
+               indent, info, nodata, prefix, stats):
     '''zonalstats generates summary statistics of geospatial raster datasets
     based on vector features.
 
@@ -56,7 +53,7 @@ def zonalstats(input_geojson, raster, output_geojson, all_touched, band, categor
             feature_collection = {'type': 'FeatureCollection'}
         features = read_features(mapping)
     except (AssertionError, KeyError):
-        raise ValueError("input_geojson must be a GeoJSON Feature Collection")
+        raise ValueError("input_geojson must be valid GeoJSON")
 
     if stats is not None:
         stats = stats.split(" ")
@@ -69,14 +66,62 @@ def zonalstats(input_geojson, raster, output_geojson, all_touched, band, categor
         all_touched=all_touched,
         band_num=band,
         categorical=categorical,
-        global_src_extent=global_src_extent,
-        nodata_value=nodata,
+        nodata=nodata,
         stats=stats,
-        copy_properties=False)
+        prefix=prefix,
+        geojson_out=True)
 
-    feature_collection['features'] = list(
-        combine_features_results(features, zonal_results, prefix))
+    feature_collection['features'] = zonal_results
 
     output_geojson.write(json.dumps(feature_collection, indent=indent))
     output_geojson.write("\n")
 
+
+@click.command(context_settings=SETTINGS)
+@click.argument('input-geojson', type=click.File('r'), default='-')
+@click.argument('output-geojson', type=click.File('w'), default='-')
+@click.version_option(version=version, message='%(version)s')
+@click.option('--raster', '-r', required=True, type=click.Path(exists=True))
+@click.option('--band', type=int, default=1)
+@click.option('--nodata', type=int, default=None)
+@click.option('--indent', type=int, default=None)
+@click.option('--interpolate', type=str, default='bilinear')
+@click.option('--property-name', type=str, default='value')
+def pointquery(input_geojson, raster, output_geojson, band, indent, nodata,
+               interpolate, property_name):
+    """
+    Queries the raster values at the points of the input GeoJSON Features.
+    The raster values are added to the features properties and output as GeoJSON
+    Feature Collection.
+
+    If the Features are Points, the point geometery is used.
+    For other Feauture types, all of the verticies of the geometry will be queried.
+    For example, you can provide a linestring and get the profile along the line
+    if the verticies are spaced properly.
+
+    You can use either bilinear (default) or nearest neighbor interpolation.
+    """
+    mapping = json.loads(input_geojson.read())
+    input_geojson.close()
+    try:
+        if mapping['type'] == "FeatureCollection":
+            feature_collection = mapping
+        else:
+            feature_collection = {'type': 'FeatureCollection'}
+        features = read_features(mapping)
+    except (AssertionError, KeyError):
+        raise ValueError("input_geojson must be valid GeoJSON")
+
+    results = point_query(
+        features,
+        raster,
+        band=band,
+        nodata=nodata,
+        interpolate=interpolate,
+        property_name=property_name,
+        geojson_out=True)
+
+    feature_collection['features'] = results
+
+    output_geojson.write(json.dumps(feature_collection, indent=indent))
+    output_geojson.write("\n")
