@@ -5,7 +5,6 @@ Depends on libgdal, rasterio, fiona, shapely and numpy
 
 Using Ubuntu 14.04::
 
-   # TODO PPA
    sudo apt-get install python-numpy libgdal1h gdal-bin libgdal-dev
    pip install rasterstats
 

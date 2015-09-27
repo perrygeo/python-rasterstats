@@ -45,8 +45,7 @@ calculate summary statistics of elevation for each polygon using::
 returns a ``list`` of ``dicts``, one for each Feature in ``polygons.shp``::
 
     [...,
-     {'__fid__': 1,
-      'count': 89,
+     {'count': 89,
       'max': 69.52958679199219,
       'mean': 20.08093536034059,
       'median': 19.33736801147461,

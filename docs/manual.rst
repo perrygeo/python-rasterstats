@@ -20,13 +20,20 @@ basics::
     stats = zonal_stats('polygons.shp', 'raster.tif')
     pts = point_query('points.shp', 'raster.tif')
    
-`stats` gives us::
+`stats` gives us a list of two dictionaries, one for each polygon::
 
-    [{}]
+    [{'count': 75,
+      'max': 22.273418426513672,
+      'mean': 14.660084635416666,
+      'min': 6.575114727020264},
+     {'count': 50,
+      'max': 82.69043731689453,
+      'mean': 56.60576171875,
+      'min': 16.940950393676758}]
 
-while `pts` is::
+while `pts` gives us a list of raster values, one for each point::
 
-    []
+    [14.037668283186257, 33.1370268256543]
 
 Vector Data Sources
 -------------------
@@ -89,7 +96,7 @@ By default, the ``zonal_stats`` function will return the following statistics
 - mean
 - count
 
-Optionally, these statistics are also available
+Optionally, these statistics are also available. TODO describe in more detail
 
 - sum
 - std
@@ -183,7 +190,7 @@ The polygon below is comprised of 12 pixels of oak (raster value
 32) and 78 pixels of grassland (raster value 33)::
 
     >>> zonal_stats(lyr.next(), '/path/to/vegetation.tif', categorical=True)
-    [{'__fid__': 1, 32: 12, 33: 78}]
+    [{32: 12, 33: 78}]
 
 rasterstats will report using the pixel values as keys. 
 To associate the pixel values with their appropriate meaning 
@@ -192,7 +199,7 @@ To associate the pixel values with their appropriate meaning
     >>> cmap = {32: 'oak', 33: 'grassland'}
     >>> zonal_stats(lyr.next(), '/path/to/vegetation.tif',
                     categorical=True, category_map=cmap)
-    [{'__fid__': 1, 'oak': 12, 'grassland': 78}]
+    [{'oak': 12, 'grassland': 78}]
 
 "Mini-Rasters"
 ^^^^^^^^^^^^^^^
@@ -205,9 +212,9 @@ of ``zonal_stats`` using the ``raster_out`` argument::
 
 Which gives us three additional keys for each feature::
 
-   mini_raster     | Numpy ndarray                                       
-   mini_raster_GT  | Six-tuple defining the geotransform (GDAL ordering) 
-   mini_raster_NDV | Nodata value in the returned array                  
+    mini_raster_array: The clipped and masked numpy array
+    mini_raster_affine: Affine transform (not a GDAL-style geotransform)
+    mini_raster_nodata: nodata Value
 
 Keep in mind that having ndarrays in your stats dictionary means it is more
 difficult to serialize to json and other text formats.
