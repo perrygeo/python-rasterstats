@@ -89,7 +89,7 @@ def geom_xys(geom):
 def point_query(vectors,
                 raster,
                 band=1,
-                layer=1,
+                layer=0,
                 nodata=None,
                 affine=None,
                 interpolate='bilinear',
