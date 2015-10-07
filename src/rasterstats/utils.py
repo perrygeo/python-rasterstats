@@ -26,9 +26,10 @@ def get_percentile(stat):
 
 def rasterize_geom(geom, like, all_touched=False):
     geoms = [(geom, 1)]
+    shape = (like.shape[-2], like.shape[-1])
     rv_array = features.rasterize(
         geoms,
-        out_shape=like.shape,
+        out_shape=shape,
         transform=like.affine,
         fill=0,
         all_touched=all_touched)

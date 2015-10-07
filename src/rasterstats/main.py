@@ -20,7 +20,7 @@ def raster_stats(*args, **kwargs):
 def zonal_stats(vectors,
                 raster,
                 layer=0,
-                band_num=1,
+                band=1,
                 nodata=None,
                 affine=None,
                 stats=None,
@@ -46,7 +46,7 @@ def zonal_stats(vectors,
         specify the vector layer to use either by name or number.
         defaults to 0
 
-    band_num: int, optional
+    band: int, optional
         If `raster` is a GDAL source, the band number to use (counting from 1).
         defaults to 1.
 
@@ -120,7 +120,17 @@ def zonal_stats(vectors,
         warnings.warn("Use `geojson_out` to preserve feature properties",
                       DeprecationWarning)
 
-    with Raster(raster, affine, nodata, band_num) as rast:
+    if band in ("all", "ALL", "*"):
+        # TODO 
+        band = [1, 2, 3]
+
+    # arrays are zero offset
+    if isinstance(band, int):
+        band_iter = [band - 1]
+    else:
+        band_iter = [b - 1 for b in band]
+
+    with Raster(raster, affine, nodata, band) as rast:
         results = []
 
         features_iter = read_features(vectors, layer)
@@ -148,58 +158,65 @@ def zonal_stats(vectors,
 
             if masked.compressed().size == 0:
                 # nothing here, fill with None and move on
-                feature_stats = dict([(stat, None) for stat in stats])
+                feature_stats = dict((stat, None) for stat in stats)
                 if 'count' in stats:  # special case, zero makes sense here
                     feature_stats['count'] = 0
             else:
-                if run_count:
-                    keys, counts = np.unique(masked.compressed(), return_counts=True)
-                    pixel_count = dict(zip([np.asscalar(k) for k in keys],
-                                       [np.asscalar(c) for c in counts]))
+                feature_stats = dict((stat, []) for stat in stats)
 
-                if categorical:
-                    feature_stats = dict(pixel_count)
-                    if category_map:
-                        feature_stats = remap_categories(category_map, feature_stats)
-                else:
-                    feature_stats = {}
+                for band in band_iter:
+                    if len(masked.shape) == 3:
+                        maskband = masked[band]
+                    elif len(masked.shape) == 2:
+                        maskband = masked
 
-                if 'min' in stats:
-                    feature_stats['min'] = float(masked.min())
-                if 'max' in stats:
-                    feature_stats['max'] = float(masked.max())
-                if 'mean' in stats:
-                    feature_stats['mean'] = float(masked.mean())
-                if 'count' in stats:
-                    feature_stats['count'] = int(masked.count())
-                # optional
-                if 'sum' in stats:
-                    feature_stats['sum'] = float(masked.sum())
-                if 'std' in stats:
-                    feature_stats['std'] = float(masked.std())
-                if 'median' in stats:
-                    feature_stats['median'] = float(np.median(masked.compressed()))
-                if 'majority' in stats:
-                    feature_stats['majority'] = float(key_assoc_val(pixel_count, max))
-                if 'minority' in stats:
-                    feature_stats['minority'] = float(key_assoc_val(pixel_count, min))
-                if 'unique' in stats:
-                    feature_stats['unique'] = len(list(pixel_count.keys()))
-                if 'range' in stats:
-                    try:
-                        rmin = feature_stats['min']
-                    except KeyError:
-                        rmin = float(masked.min())
-                    try:
-                        rmax = feature_stats['max']
-                    except KeyError:
-                        rmax = float(masked.max())
-                    feature_stats['range'] = rmax - rmin
+                    if run_count:
+                        keys, counts = np.unique(maskband.compressed(), return_counts=True)
+                        pixel_count = dict(zip([np.asscalar(k) for k in keys],
+                                           [np.asscalar(c) for c in counts]))
 
-                for pctile in [s for s in stats if s.startswith('percentile_')]:
-                    q = get_percentile(pctile)
-                    pctarr = masked.compressed()
-                    feature_stats[pctile] = np.percentile(pctarr, q)
+                    if categorical:
+                        if category_map:
+                            category_stats = remap_categories(category_map, pixel_count)
+                        else:
+                            category_stats = pixel_count
+                        feature_stats.update(category_stats)  # TODO this wipes prev bands
+
+                    if 'min' in stats:
+                        feature_stats['min'].append(float(maskband.min()))
+                    if 'max' in stats:
+                        feature_stats['max'].append(float(maskband.max()))
+                    if 'mean' in stats:
+                        feature_stats['mean'].append(float(maskband.mean()))
+                    if 'count' in stats:
+                        feature_stats['count'].append(int(maskband.count()))
+                    # optional
+                    if 'sum' in stats:
+                        feature_stats['sum'].append(float(maskband.sum()))
+                    if 'std' in stats:
+                        feature_stats['std'].append(float(maskband.std()))
+                    if 'median' in stats:
+                        feature_stats['median'].append(float(np.median(maskband.compressed())))
+                    if 'majority' in stats:
+                        feature_stats['majority'].append(float(key_assoc_val(pixel_count, max)))
+                    if 'minority' in stats:
+                        feature_stats['minority'].append(float(key_assoc_val(pixel_count, min)))
+                    if 'unique' in stats:
+                        feature_stats['unique'].append(len(list(pixel_count.keys())))
+                    if 'range' in stats:
+                        rmin = float(maskband.min())
+                        rmax = float(maskband.max())
+                        feature_stats['range'].append(rmax - rmin)
+
+                    for pctile in [s for s in stats if s.startswith('percentile_')]:
+                        q = get_percentile(pctile)
+                        pctarr = maskband.compressed()
+                        feature_stats[pctile].append(np.percentile(pctarr, q))
+
+                # Flatten if single band
+                for k, v in feature_stats.items():
+                    if isinstance(v, list) and len(v) == 1:
+                        feature_stats[k] = v[0]
 
             if 'nodata' in stats:
                 featmasked = np.ma.MaskedArray(fsrc.array, mask=np.logical_not(rv_array))
@@ -209,6 +226,8 @@ def zonal_stats(vectors,
             if add_stats is not None:
                 for stat_name, stat_func in add_stats.items():
                         feature_stats[stat_name] = stat_func(masked)
+
+
 
             if raster_out:
                 feature_stats['mini_raster_array'] = masked

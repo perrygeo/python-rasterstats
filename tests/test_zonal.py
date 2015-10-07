@@ -404,3 +404,24 @@ def test_geojson_out():
         assert feature['type'] == 'Feature'
         assert 'id' in feature['properties']  # from orig
         assert 'count' in feature['properties']  # from zonal stats
+
+
+def test_multiband():
+    raster = os.path.join(DATA, 'rgb.tif')
+    polygons = os.path.join(DATA, 'poly2.shp')
+
+    stats1 = zonal_stats(polygons, raster, stats=['mean'])
+    assert isinstance(stats1[2]['mean'], float)  # default band=1
+
+    stats2 = zonal_stats(polygons, raster, band=2, stats=['mean'])
+    assert stats2[2]['mean'] != stats1[2]['mean']
+
+    stats123 = zonal_stats(polygons, raster, band=[1, 2, 3], stats=['mean'])
+    assert isinstance(stats123[2]['mean'], list)
+
+    statsall = zonal_stats(polygons, raster, band="all", stats=['mean'])
+    statsstar = zonal_stats(polygons, raster, band="*", stats=['mean'])
+    assert statsall == statsstar == stats123
+
+    # TODO NODATA
+    # TODO Actual value assertions

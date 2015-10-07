@@ -61,6 +61,7 @@ Next steps
 
   installation
   manual
+  dev_guide
   cli
   rasterstats
 
