@@ -227,8 +227,6 @@ def zonal_stats(vectors,
                 for stat_name, stat_func in add_stats.items():
                         feature_stats[stat_name] = stat_func(masked)
 
-
-
             if raster_out:
                 feature_stats['mini_raster_array'] = masked
                 feature_stats['mini_raster_affine'] = fsrc.affine
