@@ -1,5 +1,6 @@
 import os
 import sys
+import re
 from setuptools import setup
 from setuptools.command.test import test as TestCommand
 
@@ -7,6 +8,18 @@ from setuptools.command.test import test as TestCommand
 def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
+
+def get_version():
+    vfile = os.path.join(
+        os.path.dirname(__file__), "src", "rasterstats", "_version.py")
+    with open(vfile, "r") as vfh:
+        vline = vfh.read()
+    vregex = r"^__version__ = ['\"]([^'\"]*)['\"]"
+    match = re.search(vregex, vline, re.M)
+    if match:
+        return match.group(1)
+    else:
+        raise RuntimeError("Unable to find version string in {}.".format(vfile))
 
 class PyTest(TestCommand):
     def finalize_options(self):
@@ -22,7 +35,7 @@ class PyTest(TestCommand):
 
 setup(
     name="rasterstats",
-    version='0.9.1',
+    version=get_version(),
     author="Matthew Perry",
     author_email="perrygeo@gmail.com",
     description=("Summarize geospatial raster datasets based on vector geometries"),
