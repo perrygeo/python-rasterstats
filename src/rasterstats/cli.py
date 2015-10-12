@@ -4,6 +4,7 @@ from __future__ import division
 import click
 from rasterstats import zonal_stats, point_query
 from rasterstats.io import read_features
+from rasterstats._version import __version__ as version
 import logging
 try:
     import simplejson as json
@@ -11,7 +12,6 @@ except:
     import json
 
 SETTINGS = dict(help_option_names=['-h', '--help'])
-version = 0.9
 
 
 @click.command(context_settings=SETTINGS)
