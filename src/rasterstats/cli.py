@@ -11,8 +11,7 @@ except:
 import click
 import cligj
 
-from rasterstats import gen_zonal_stats, point_query
-from rasterstats.io import read_features
+from rasterstats import gen_zonal_stats, gen_point_query
 from rasterstats._version import __version__ as version
 
 SETTINGS = dict(help_option_names=['-h', '--help'])
@@ -105,7 +104,7 @@ def pointquery(features, raster, band, indent, nodata,
     You can use either bilinear (default) or nearest neighbor interpolation.
     """
 
-    results = point_query(
+    results = gen_point_query(
         features,
         raster,
         band=band,
