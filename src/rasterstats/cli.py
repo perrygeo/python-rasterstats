@@ -1,22 +1,24 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
 from __future__ import division
-import click
-from rasterstats import zonal_stats, point_query
-from rasterstats.io import read_features
-from rasterstats._version import __version__ as version
 import logging
+
 try:
     import simplejson as json
 except:
     import json
 
+import click
+import cligj
+
+from rasterstats import gen_zonal_stats, point_query
+from rasterstats.io import read_features
+from rasterstats._version import __version__ as version
+
 SETTINGS = dict(help_option_names=['-h', '--help'])
 
-
 @click.command(context_settings=SETTINGS)
-@click.argument('input-geojson', type=click.File('r'), default='-')
-@click.argument('output-geojson', type=click.File('w'), default='-')
+@cligj.features_in_arg
 @click.version_option(version=version, message='%(version)s')
 @click.option('--raster', '-r', required=True, type=click.Path(exists=True))
 @click.option('--all-touched/--no-all-touched', default=False)
@@ -27,12 +29,17 @@ SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--nodata', type=int, default=None)
 @click.option('--prefix', type=str, default='_')
 @click.option('--stats', type=str, default=None)
-def zonalstats(input_geojson, raster, output_geojson, all_touched, band, categorical,
-               indent, info, nodata, prefix, stats):
+@cligj.sequence_opt
+@cligj.use_rs_opt
+def zonalstats(features, raster, all_touched, band, categorical,
+               indent, info, nodata, prefix, stats, sequence, use_rs):
     '''zonalstats generates summary statistics of geospatial raster datasets
     based on vector features.
 
-    The input and output arguments of zonalstats should be valid GeoJSON FeatureCollections. The output GeoJSON will be mostly unchanged but have additional properties per feature describing the summary statistics (min, max, mean, etc.) of the underlying raster dataset. The input and output arguments default to stdin and stdout but can also be file paths.
+    The input arguments to zonalstats should be valid GeoJSON Features. (see cligj)
+
+    The output GeoJSON will be mostly unchanged but have additional properties per feature
+    describing the summary statistics (min, max, mean, etc.) of the underlying raster dataset.
 
     The raster is specified by the required -r/--raster argument.
 
@@ -44,23 +51,13 @@ def zonalstats(input_geojson, raster, output_geojson, all_touched, band, categor
 
     if info:
         logging.basicConfig(level=logging.INFO)
-    mapping = json.loads(input_geojson.read())
-    input_geojson.close()
-    try:
-        if mapping['type'] == "FeatureCollection":
-            feature_collection = mapping
-        else:
-            feature_collection = {'type': 'FeatureCollection'}
-        features = read_features(mapping)
-    except (AssertionError, KeyError):
-        raise ValueError("input_geojson must be valid GeoJSON")
 
     if stats is not None:
         stats = stats.split(" ")
         if 'all' in [x.lower() for x in stats]:
             stats = "ALL"
 
-    zonal_results = zonal_stats(
+    zonal_results = gen_zonal_stats(
         features,
         raster,
         all_touched=all_touched,
@@ -71,10 +68,15 @@ def zonalstats(input_geojson, raster, output_geojson, all_touched, band, categor
         prefix=prefix,
         geojson_out=True)
 
-    feature_collection['features'] = zonal_results
-
-    output_geojson.write(json.dumps(feature_collection, indent=indent))
-    output_geojson.write("\n")
+    if sequence:
+        for feature in zonal_results:
+            if use_rs:
+                click.echo(b'\x1e', nl=False)
+            click.echo(json.dumps(feature))
+    else:
+        click.echo(json.dumps(
+            {'type': 'FeatureCollection',
+             'features': list(zonal_results)}))
 
 
 @click.command(context_settings=SETTINGS)

@@ -8,7 +8,7 @@ def test_cli_geometry():
     raster = os.path.join(os.path.dirname(__file__), 'data/slope.tif')
     vector = os.path.join(os.path.dirname(__file__), 'data/geometry.geojson')
     runner = CliRunner()
-    result = runner.invoke(zonalstats, [vector, '-',
+    result = runner.invoke(zonalstats, [vector,
                                         '--raster', raster,
                                         '--stats', 'mean',
                                         '--prefix', 'test_'])
@@ -24,7 +24,7 @@ def test_cli_feature():
     raster = os.path.join(os.path.dirname(__file__), 'data/slope.tif')
     vector = os.path.join(os.path.dirname(__file__), 'data/feature.geojson')
     runner = CliRunner()
-    result = runner.invoke(zonalstats, [vector, '-',
+    result = runner.invoke(zonalstats, [vector,
                                         '--raster', raster,
                                         '--stats', 'mean',
                                         '--prefix', 'test_'])
@@ -40,7 +40,7 @@ def test_cli_featurecollection():
     raster = os.path.join(os.path.dirname(__file__), 'data/slope.tif')
     vector = os.path.join(os.path.dirname(__file__), 'data/featurecollection.geojson')
     runner = CliRunner()
-    result = runner.invoke(zonalstats, [vector, '-',
+    result = runner.invoke(zonalstats, [vector,
                                         '--raster', raster,
                                         '--stats', 'mean',
                                         '--prefix', 'test_'])
@@ -57,7 +57,7 @@ def test_cli_pointquery():
     raster = os.path.join(os.path.dirname(__file__), 'data/slope.tif')
     vector = os.path.join(os.path.dirname(__file__), 'data/featurecollection.geojson')
     runner = CliRunner()
-    result = runner.invoke(pointquery, [vector, '-',
+    result = runner.invoke(pointquery, [vector,
                                         '--raster', raster,
                                         '--property-name', 'slope'])
     assert result.exit_code == 0
