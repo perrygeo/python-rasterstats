@@ -8,7 +8,9 @@ rasterstats
 It includes functions for **zonal statistics** and interpolated **point queries**. The command-line interface allows for
 easy interoperability with other GeoJSON tools. 
 
-For more info, check out the documentation at `http://pythonhosted.org/rasterstats <http://pythonhosted.org/rasterstats/>`_.
+Documentation
+-------------
+For details on installation and usage, visit the documentation at `http://pythonhosted.org/rasterstats <http://pythonhosted.org/rasterstats/>`_.
 
 Quick Start
 -----------
