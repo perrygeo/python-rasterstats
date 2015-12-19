@@ -80,8 +80,7 @@ def zonalstats(features, raster, all_touched, band, categorical,
 
 
 @click.command(context_settings=SETTINGS)
-@click.argument('input-geojson', type=click.File('r'), default='-')
-@click.argument('output-geojson', type=click.File('w'), default='-')
+@cligj.features_in_arg
 @click.version_option(version=version, message='%(version)s')
 @click.option('--raster', '-r', required=True, type=click.Path(exists=True))
 @click.option('--band', type=int, default=1)
@@ -89,8 +88,10 @@ def zonalstats(features, raster, all_touched, band, categorical,
 @click.option('--indent', type=int, default=None)
 @click.option('--interpolate', type=str, default='bilinear')
 @click.option('--property-name', type=str, default='value')
-def pointquery(input_geojson, raster, output_geojson, band, indent, nodata,
-               interpolate, property_name):
+@cligj.sequence_opt
+@cligj.use_rs_opt
+def pointquery(features, raster, band, indent, nodata,
+               interpolate, property_name, sequence, use_rs):
     """
     Queries the raster values at the points of the input GeoJSON Features.
     The raster values are added to the features properties and output as GeoJSON
@@ -103,16 +104,6 @@ def pointquery(input_geojson, raster, output_geojson, band, indent, nodata,
 
     You can use either bilinear (default) or nearest neighbor interpolation.
     """
-    mapping = json.loads(input_geojson.read())
-    input_geojson.close()
-    try:
-        if mapping['type'] == "FeatureCollection":
-            feature_collection = mapping
-        else:
-            feature_collection = {'type': 'FeatureCollection'}
-        features = read_features(mapping)
-    except (AssertionError, KeyError):
-        raise ValueError("input_geojson must be valid GeoJSON")
 
     results = point_query(
         features,
@@ -123,7 +114,12 @@ def pointquery(input_geojson, raster, output_geojson, band, indent, nodata,
         property_name=property_name,
         geojson_out=True)
 
-    feature_collection['features'] = results
-
-    output_geojson.write(json.dumps(feature_collection, indent=indent))
-    output_geojson.write("\n")
+    if sequence:
+        for feature in results:
+            if use_rs:
+                click.echo(b'\x1e', nl=False)
+            click.echo(json.dumps(feature))
+    else:
+        click.echo(json.dumps(
+            {'type': 'FeatureCollection',
+             'features': list(results)}))

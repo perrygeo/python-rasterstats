@@ -18,7 +18,7 @@ def raster_stats(*args, **kwargs):
 
 
 def zonal_stats(*args, **kwargs):
-    return [r for r in gen_zonal_stats(*args, **kwargs)]
+    return list(gen_zonal_stats(*args, **kwargs))
 
 
 def gen_zonal_stats(

@@ -86,15 +86,20 @@ def geom_xys(geom):
             yield pair
 
 
-def point_query(vectors,
-                raster,
-                band=1,
-                layer=0,
-                nodata=None,
-                affine=None,
-                interpolate='bilinear',
-                property_name='value',
-                geojson_out=False):
+def point_query(*args, **kwargs):
+    return list(gen_point_query(*args, **kwargs))
+
+
+def gen_point_query(
+    vectors,
+    raster,
+    band=1,
+    layer=0,
+    nodata=None,
+    affine=None,
+    interpolate='bilinear',
+    property_name='value',
+    geojson_out=False):
     """Given a set of n vector features and a raster,
     generates n lists of raster values at each vertex of the geometry
 
@@ -112,7 +117,6 @@ def point_query(vectors,
 
     with Raster(raster, nodata=nodata, affine=affine, band=band) as rast:
 
-        results = []
         for feat in features_iter:
             geom = shape(feat['geometry'])
             vals = []
@@ -139,8 +143,6 @@ def point_query(vectors,
                 if 'properties' not in feat:
                     feat['properties'] = {}
                 feat['properties'][property_name] = vals
-                results.append(feat)
+                yield feat
             else:
-                results.append(vals)
-
-        return results
+                yield vals
