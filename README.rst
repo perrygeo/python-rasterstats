@@ -22,16 +22,16 @@ raster, calculate the mean elevation of each polygon:
    :align: center
    :alt: zones elevation
 
-::
+.. code-block:: python
 
-    from rasterstats import zonal_stats
-    stats = zonal_stats("tests/data/polygons.shp", "tests/data/elevation.tif")
+    >>> from rasterstats import zonal_stats
+    >>> stats = zonal_stats("tests/data/polygons.shp", "tests/data/elevation.tif")
 
-    stats[1].keys()
-    # ['count', 'min', 'max', 'mean']
+    >>> stats[1].keys()
+    ['count', 'min', 'max', 'mean']
 
-    [f['mean'] for f in stats]
-    # [756.6057470703125, 114.660084635416666]
+    >>> [f['mean'] for f in stats]
+    [756.6057470703125, 114.660084635416666]
 
 Issues
 ------
