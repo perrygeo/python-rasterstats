@@ -17,21 +17,24 @@ def raster_stats(*args, **kwargs):
     return zonal_stats(*args, **kwargs)
 
 
-def zonal_stats(vectors,
-                raster,
-                layer=0,
-                band_num=1,
-                nodata=None,
-                affine=None,
-                stats=None,
-                all_touched=False,
-                categorical=False,
-                category_map=None,
-                add_stats=None,
-                raster_out=False,
-                prefix=None,
-                geojson_out=False,
-                **kwargs):
+def zonal_stats(*args, **kwargs):
+    return [r for r in gen_zonal_stats(*args, **kwargs)]
+
+
+def gen_zonal_stats(
+    vectors, raster,
+    layer=0,
+    band_num=1,
+    nodata=None,
+    affine=None,
+    stats=None,
+    all_touched=False,
+    categorical=False,
+    category_map=None,
+    add_stats=None,
+    raster_out=False,
+    prefix=None,
+    geojson_out=False, **kwargs):
     """Zonal statistics of raster values aggregated to vector geometries.
 
     Parameters
@@ -121,8 +124,6 @@ def zonal_stats(vectors,
                       DeprecationWarning)
 
     with Raster(raster, affine, nodata, band_num) as rast:
-        results = []
-
         features_iter = read_features(vectors, layer)
         for i, feat in enumerate(features_iter):
             geom = shape(feat['geometry'])
@@ -227,8 +228,6 @@ def zonal_stats(vectors,
                     if 'properties' not in feat:
                         feat['properties'] = {}
                     feat['properties'][key] = val
-                results.append(feat)
+                yield feat
             else:
-                results.append(feature_stats)
-
-    return results
+                yield feature_stats
