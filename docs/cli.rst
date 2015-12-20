@@ -23,7 +23,7 @@ for performing zonal statistics and point_queries at the command line.
 
     Example, calculate rainfall stats for each state and output to file:
 
-    zonalstats states.geojson -r rainfall.tif > mean_rainfall_by_state.geojson
+      rio zonalstats states.geojson -r rainfall.tif > mean_rainfall_by_state.geojson
 
     Options:
     --version                       Show the version and exit.

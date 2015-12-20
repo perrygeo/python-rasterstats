@@ -45,7 +45,7 @@ def zonalstats(features, raster, all_touched, band, categorical,
     Example, calculate rainfall stats for each state and output to file:
 
     \b
-    zonalstats states.geojson -r rainfall.tif > mean_rainfall_by_state.geojson
+       rio zonalstats states.geojson -r rainfall.tif > mean_rainfall_by_state.geojson
     '''
 
     if info:
