@@ -21,6 +21,23 @@ from rasterstats.cli import zonalstats, pointquery
 #     assert 'test_count' not in feature['properties']
 
 
+def test_cli_feature():
+    raster = os.path.join(os.path.dirname(__file__), 'data/slope.tif')
+    vector = os.path.join(os.path.dirname(__file__), 'data/feature.geojson')
+    runner = CliRunner()
+    result = runner.invoke(zonalstats, [vector,
+                                        '--raster', raster,
+                                        '--stats', 'mean',
+                                        '--prefix', 'test_'])
+    assert result.exit_code == 0
+    outdata = json.loads(result.output)
+    assert len(outdata['features']) == 1
+    feature = outdata['features'][0]
+    assert 'test_mean' in feature['properties']
+    assert round(feature['properties']['test_mean'], 2) == 14.66
+    assert 'test_count' not in feature['properties']
+
+
 def test_cli_feature_stdin():
     raster = os.path.join(os.path.dirname(__file__), 'data/slope.tif')
     vector = os.path.join(os.path.dirname(__file__), 'data/feature.geojson')
@@ -38,21 +55,34 @@ def test_cli_feature_stdin():
     assert 'test_mean' in feature['properties']
 
 
-def test_cli_feature():
+def test_cli_features_sequence():
     raster = os.path.join(os.path.dirname(__file__), 'data/slope.tif')
-    vector = os.path.join(os.path.dirname(__file__), 'data/feature.geojson')
+    vector = os.path.join(os.path.dirname(__file__), 'data/featurecollection.geojson')
     runner = CliRunner()
     result = runner.invoke(zonalstats, [vector,
                                         '--raster', raster,
                                         '--stats', 'mean',
-                                        '--prefix', 'test_'])
+                                        '--prefix', 'test_',
+                                        '--sequence'])
     assert result.exit_code == 0
-    outdata = json.loads(result.output)
-    assert len(outdata['features']) == 1
-    feature = outdata['features'][0]
-    assert 'test_mean' in feature['properties']
-    assert round(feature['properties']['test_mean'], 2) == 14.66
-    assert 'test_count' not in feature['properties']
+    results = result.output.splitlines()
+    for r in results:
+        outdata = json.loads(r)
+        assert outdata['type'] == 'Feature'
+
+
+def test_cli_features_sequence_rs():
+    raster = os.path.join(os.path.dirname(__file__), 'data/slope.tif')
+    vector = os.path.join(os.path.dirname(__file__), 'data/featurecollection.geojson')
+    runner = CliRunner()
+    result = runner.invoke(zonalstats, [vector,
+                                        '--raster', raster,
+                                        '--stats', 'mean',
+                                        '--prefix', 'test_',
+                                        '--sequence', '--rs'])
+    assert result.exit_code == 0
+    # assert result.output.startswith(b'\x1e')
+    assert result.output[0] == '\x1e'
 
 
 def test_cli_featurecollection():
@@ -84,3 +114,29 @@ def test_cli_pointquery():
     assert len(outdata['features']) == 2
     feature = outdata['features'][0]
     assert 'slope' in feature['properties']
+
+def test_cli_point_sequence():
+    raster = os.path.join(os.path.dirname(__file__), 'data/slope.tif')
+    vector = os.path.join(os.path.dirname(__file__), 'data/featurecollection.geojson')
+    runner = CliRunner()
+    result = runner.invoke(pointquery, [vector,
+                                        '--raster', raster,
+                                        '--property-name', 'slope',
+                                        '--sequence'])
+    assert result.exit_code == 0
+    results = result.output.splitlines()
+    for r in results:
+        outdata = json.loads(r)
+        assert outdata['type'] == 'Feature'
+
+
+def test_cli_point_sequence_rs():
+    raster = os.path.join(os.path.dirname(__file__), 'data/slope.tif')
+    vector = os.path.join(os.path.dirname(__file__), 'data/featurecollection.geojson')
+    runner = CliRunner()
+    result = runner.invoke(pointquery, [vector,
+                                        '--raster', raster,
+                                        '--property-name', 'slope',
+                                        '--sequence', '--rs'])
+    assert result.exit_code == 0
+    assert result.output[0] == '\x1e'
