@@ -31,9 +31,9 @@ are `rio` subcommands which read and write geojson features
 
     $ fio cat polygon.shp | rio zonalstats -r elevation.tif 
 
-    $ fio cat points.shp | roi pointquery -r elevation.tif
+    $ fio cat points.shp | rio pointquery -r elevation.tif
 
-See the CLI docs for more detail.
+See the `CLI Docs <http://pythonhosted.org/rasterstats/cli.html>`_. for more detail.
 
 Python Quick Start
 -----------
