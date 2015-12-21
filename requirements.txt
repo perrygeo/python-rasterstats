@@ -1,4 +1,5 @@
 shapely
 numpy>=1.8
 rasterio>=0.27
+cligj>=0.4
 fiona

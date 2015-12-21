@@ -50,6 +50,7 @@ setup(
         'fiona',
         'numpy',
         'rasterio',
+        'cligj'
     ],
     tests_require=['pytest', 'pyshp>=1.1.4', 'coverage'],
     cmdclass = {'test': PyTest},
