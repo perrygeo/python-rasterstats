@@ -14,8 +14,9 @@ For details on installation and usage, visit the documentation at `http://python
 
 What does it do? 
 ----------------
-Given a polygon vector layer and a digitial elevation model (DEM)
-raster, calculate the mean elevation of each polygon:
+Given a vector layer and a raster band, calculate the summary statistics of each vector geometry.
+For example, with a polygon vector layer and a digital elevation model (DEM) raster, compute the
+mean elevation of each polygon.
 
 .. figure:: https://github.com/perrygeo/python-raster-stats/raw/master/docs/img/zones_elevation.png
    :align: center
