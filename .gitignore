@@ -13,4 +13,6 @@ Vagrantfile
 .coverage
 *.aux.xml
 *.ipynb_checkpoints*
-
+.idea
+venv
+.eggs

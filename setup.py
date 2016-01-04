@@ -38,22 +38,16 @@ setup(
     version=get_version(),
     author="Matthew Perry",
     author_email="perrygeo@gmail.com",
-    description=("Summarize geospatial raster datasets based on vector geometries"),
+    description="Summarize geospatial raster datasets based on vector geometries",
     license="BSD",
     keywords="gis geospatial geographic raster vector zonal statistics",
     url="https://github.com/perrygeo/python-raster-stats",
     package_dir={'': 'src'},
     packages=['rasterstats'],
     long_description=read('README.rst'),
-    install_requires=[
-        'shapely',
-        'fiona',
-        'numpy',
-        'rasterio',
-        'cligj'
-    ],
+    install_requires=read('requirements.txt').splitlines(),
     tests_require=['pytest', 'pyshp>=1.1.4', 'coverage'],
-    cmdclass = {'test': PyTest},
+    cmdclass={'test': PyTest},
     classifiers=[
         "Development Status :: 4 - Beta",
         'Intended Audience :: Developers',
@@ -66,7 +60,7 @@ setup(
         'Topic :: Scientific/Engineering :: GIS',
     ],
     entry_points="""
-      [rasterio.rio_commands]
+      [rasterio.rio_plugins]
       zonalstats=rasterstats.cli:zonalstats
       pointquery=rasterstats.cli:pointquery
     """)
