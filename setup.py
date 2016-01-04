@@ -60,7 +60,7 @@ setup(
         'Topic :: Scientific/Engineering :: GIS',
     ],
     entry_points="""
-      [rasterio.rio_commands]
+      [rasterio.rio_plugins]
       zonalstats=rasterstats.cli:zonalstats
       pointquery=rasterstats.cli:pointquery
     """)
