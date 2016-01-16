@@ -1,3 +1,6 @@
+0.10.1
+- Bug fix for geopandas dataframes
+
 0.10.0
 - Added a generator variant of zonal_stats (gen_zonal_stats) and point_query
 (gen_point_query) which yield results instead of returning a list
