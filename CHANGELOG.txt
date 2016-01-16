@@ -1,3 +1,6 @@
+0.10.2
+- Setup.py bugfix: Include requirements in manifest
+
 0.10.1
 - Bug fix for geopandas dataframes
 

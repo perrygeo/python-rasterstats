@@ -1,3 +1,5 @@
-include LICENSE.txt README.rst
+include LICENSE.txt
+include README.rst
+include requirements.txt
 exclude MANIFEST.in
 exclude Vagrantfile
