@@ -102,15 +102,15 @@ def read_features(obj, layer=0):
     elif isinstance(obj, bytes):
         # Single binary object, probably a wkb
         features_iter = [parse_feature(obj)]
-    elif isinstance(obj, Iterable):
-        # Iterable of feature-like objects
-        features_iter = (parse_feature(x) for x in obj)
     elif hasattr(obj, '__geo_interface__'):
         mapping = obj.__geo_interface__
         if mapping['type'] == 'FeatureCollection':
             features_iter = mapping['features']
         else:
             features_iter = [parse_feature(mapping)]
+    elif isinstance(obj, Iterable):
+        # Iterable of feature-like objects
+        features_iter = (parse_feature(x) for x in obj)
 
     if not features_iter:
         raise ValueError("Object is not a recognized source of Features")

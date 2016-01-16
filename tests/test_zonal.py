@@ -404,3 +404,18 @@ def test_geojson_out():
         assert feature['type'] == 'Feature'
         assert 'id' in feature['properties']  # from orig
         assert 'count' in feature['properties']  # from zonal stats
+
+# Optional tests
+def test_geodataframe_zonal():
+    polygons = os.path.join(DATA, 'polygons.shp')
+
+    try:
+        import geopandas as gpd
+        df = gpd.read_file(polygons)
+        if not hasattr(df, '__geo_interface__'):
+            pytest.skip("This version of geopandas doesn't support df.__geo_interface__")
+    except ImportError:
+        pytest.skip("Can't import geopands")
+
+    expected = zonal_stats(polygons, raster)
+    assert zonal_stats(df, raster) == expected
