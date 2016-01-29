@@ -19,7 +19,7 @@ SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.command(context_settings=SETTINGS)
 @cligj.features_in_arg
 @click.version_option(version=version, message='%(version)s')
-@click.option('--raster', '-r', required=True, type=click.Path(exists=True))
+@click.option('--raster', '-r', required=True)
 @click.option('--all-touched/--no-all-touched', default=False)
 @click.option('--band', type=int, default=1)
 @click.option('--categorical/--no-categorical', default=False)
@@ -81,7 +81,7 @@ def zonalstats(features, raster, all_touched, band, categorical,
 @click.command(context_settings=SETTINGS)
 @cligj.features_in_arg
 @click.version_option(version=version, message='%(version)s')
-@click.option('--raster', '-r', required=True, type=click.Path(exists=True))
+@click.option('--raster', '-r', required=True)
 @click.option('--band', type=int, default=1)
 @click.option('--nodata', type=int, default=None)
 @click.option('--indent', type=int, default=None)
