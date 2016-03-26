@@ -14,14 +14,16 @@ Primarily, this involves *zonal statistics*: a method of summarizing and aggrega
 Basic Example
 -------------
 
-basics::
+The typical usage of rasterstats functions involves two arguments, a vector and a raster dataset::
 
-    from rasterstats import zonal_stats, point_query
-    stats = zonal_stats('polygons.shp', 'raster.tif')
-    pts = point_query('points.shp', 'raster.tif')
+    >>> from rasterstats import zonal_stats, point_query
+    >>> stats = zonal_stats('tests/data/polygons.shp', 'tests/data/slope.tif')
+    >>> pts = point_query('tests/data/points.shp', 'tests/data/slope.tif')
    
-`stats` gives us a list of two dictionaries, one for each polygon::
+``zonal_stats`` gives us a list of two dictionaries corresponding to each input polygon::
 
+    >>> from pprint import pprint
+    >>> pprint(stats)
     [{'count': 75,
       'max': 22.273418426513672,
       'mean': 14.660084635416666,
@@ -31,57 +33,82 @@ basics::
       'mean': 56.60576171875,
       'min': 16.940950393676758}]
 
-while `pts` gives us a list of raster values, one for each point::
+while ``point_query`` gives us a list of raster values corresponding to each input point::
 
-    [14.037668283186257, 33.1370268256543]
+    >>> pts
+    [14.037668283186257, 33.1370268256543, 36.46848854950241]
 
 Vector Data Sources
 -------------------
 The most common use case is having vector data sources in a file such as an ESRI Shapefile or any
 other format supported by ``fiona``. The path to the file can be passed in directly as the first argument::
     
-    zonal_stats('/path/to/shapefile.shp', ..)
+    >>> zs = zonal_stats('tests/data/polygons.shp', 'tests/data/slope.tif')
 
-or if you'd prefer to use fiona explicity::
-    
-    import fiona
-    with fiona.open('/path/to/shapefile.shp') as src:
-        zonal_stats(src, ...)
+If you have multi-layer sources, you can specify the ``layer`` by either name or index::
+
+    >>> zs = zonal_stats('tests/data', 'tests/data/slope.tif', layer="polygons")
 
 In addition to the basic usage above, rasterstats supports other
-mechanisms of specifying vector geometries.
+mechanisms of specifying vector geometries. 
 
-It integrates with other python objects that support the geo\_interface
-(e.g. Shapely, ArcPy, PyShp, GeoDjango)::
+The vector argument can be an iterable of GeoJSON-like features such as a fiona source::
+    
+    >>> import fiona
+    >>> with fiona.open('tests/data/polygons.shp') as src:
+    ...    zs = zonal_stats(src, 'tests/data/slope.tif')
 
-    # TODO 
 
-Or strings in well known text (WKT) format ::
+You can also pass in an iterable of python objects that support
+the ``__geo_interface__`` (e.g. Shapely, ArcPy, PyShp, GeoDjango)::
 
-    zonal_stats('POINT(-124 42)', '/path/to/elevation.tif')
+    >>> from shapely.geometry import Point
+    >>> pt = Point(245000, 1000000)
+    >>> pt.__geo_interface__
+    {'type': 'Point', 'coordinates': (245000.0, 1000000.0)}
+    >>> point_query([pt], 'tests/data/slope.tif')
+    [21.32739672330894]
 
-TODO 
-^^^^
-layer numbers
-GeoJSON-like features
-Geojson strings
-WKB
-Other sources (postgis, spatialite, etc)
+
+Strings in well known text (WKT) and binary (WKB) format ::
+
+    >>> pt.wkt
+    'POINT (245000 1000000)'
+    >>> point_query([pt], 'tests/data/slope.tif')
+    [21.32739672330894]
+    
+    >>> pt.wkb
+    '\x01\x01\x00\x00\x00\x00\x00\x00\x00@\xe8\rA\x00\x00\x00\x00\x80\x84.A'
+    >>> point_query([pt], 'tests/data/slope.tif')
+    [21.32739672330894]
+
 
 Raster Data Sources
 -------------------
 
-Any format that can be read by ``rasterio`` is supported by ``rasterstats``. This generally means any of the GDAL-supported data source as that library is used rasterio for data access.
-To test if a data source is supported, use the rio command line tool::
+Any format that can be read by ``rasterio`` is supported by ``rasterstats``.
+To test if a data source is supported by your installation (this might differ depending on the
+format support of the underlying GDAL library), use the rio command line tool::
 
     $ rio info raster.tif
 
-If that succeeds, the raster is supported.  
+You can specify the path to the raster directly::
 
-TODO
-^^^^
-Band numbers
-Multiband
+    >>> zs = zonal_stats('tests/data/polygons.shp', 'tests/data/slope.tif')
+
+If the raster contains multiple bands, you must specify the band (1-indexed)::
+
+    >>> zs = zonal_stats('tests/data/polygons.shp', 'tests/data/slope.tif', band=1)
+
+Or you can pass a numpy ``ndarray`` with an affine transform mapping the array dimensions 
+to a coordinate reference system::
+
+    >>> import rasterio
+    >>> with rasterio.open('tests/data/slope.tif') as src:
+    ...     affine = src.affine
+    ...     array = src.read(1)
+    >>> zs = zonal_stats('tests/data/polygons.shp', array, affine=affine)
+
 
 Zonal Statistics
 ----------------
@@ -96,7 +123,7 @@ By default, the ``zonal_stats`` function will return the following statistics
 - mean
 - count
 
-Optionally, these statistics are also available. TODO describe in more detail
+Optionally, these statistics are also available.
 
 - sum
 - std
@@ -111,13 +138,14 @@ Optionally, these statistics are also available. TODO describe in more detail
 You can specify the statistics to calculate using the ``stats`` argument::
 
     >>> stats = zonal_stats("tests/data/polygons.shp",
-                             "tests/data/elevation.tif",
-                             stats=['min', 'max', 'median', 'majority', 'sum'])
+    ...                     "tests/data/slope.tif",
+    ...                     stats=['min', 'max', 'median', 'majority', 'sum'])
 
-    >>> # also takes space-delimited string
+You can also specify as a space-delimited string::
+
     >>> stats = zonal_stats("tests/data/polygons.shp",
-                             "tests/data/elevation.tif",
-                             stats="min max median majority sum")
+    ...                     "tests/data/slope.tif",
+    ...                     stats="min max median majority sum")
 
 
 Note that certain statistics (majority, minority, and unique) require significantly more processing
@@ -132,31 +160,36 @@ You can define your own aggregate functions using the ``add_stats`` argument.
 This is a dictionary with the name(s) of your statistic as keys and the function(s)
 as values. For example, to reimplement the `mean` statistic::
 
-    from __future__ import division
-    import numpy as np
+    >>> from __future__ import division
+    >>> import numpy as np
 
-    def mymean(x):
-        return np.ma.mean(x)
+    >>> def mymean(x):
+    ...     return np.ma.mean(x)
 
 then use it in your ``zonal_stats`` call like so::
 
-    stats = zonal_stats(vector, raster, add_stats={'mymean':mymean})
+    >>> zonal_stats("tests/data/polygons.shp",
+    ...             "tests/data/slope.tif",
+    ...             stats="count",
+    ...             add_stats={'mymean':mymean})
+    [{'count': 75, 'mymean': 14.660084635416666}, {'count': 50, 'mymean': 56.605761718750003}]
 
 
+GeoJSON output
+^^^^^^^^^^^^^^
 
-Feature Properties
-^^^^^^^^^^^^^^^^^^
-
-By default, an \_\_fid\_\_ property is added to each feature's results. None of
-the other feature attributes/proprties are copied over unless ``copy_properties``
-is set to True::
+If you want to retain the geometries and properties of the input features,
+you can output a list of geojson features using ``geojson_out``. The features
+contain the zonal statistics as additional properties::
 
     >>> stats = zonal_stats("tests/data/polygons.shp",
-                             "tests/data/elevation.tif"
-                             copy_properties=True)
+    ...                     "tests/data/slope.tif",
+    ...                     geojson_out=True)
 
-    >>> stats[0].has_key('name')  # name field from original shapefile is retained
-    True
+    >>> stats[0]['type']
+    'Feature'
+    >>> stats[0]['properties'].keys()
+    [u'id', 'count', 'max', 'mean', 'min']
 
 
 Rasterization Strategy
@@ -164,7 +197,9 @@ Rasterization Strategy
 
 There is no right or wrong way to rasterize a vector. The default strategy is to include all pixels along the line render path (for lines), or cells where the *center point* is within the polygon (for polygons).  Alternatively, you can opt for the ``all_touched`` strategy which rasterizes the geometry by including all pixels that it touches. You can enable this specifying::
 
-    >>> zonal_stats(..., all_touched=True)
+    >>> zs = zonal_stats("tests/data/polygons.shp",
+    ...                  "tests/data/slope.tif",
+    ...                  all_touched=True)
 
 .. figure:: https://github.com/perrygeo/python-raster-stats/raw/master/docs/img/rasterization.png
    :align: center
@@ -186,20 +221,23 @@ For example, you may have a raster vegetation dataset and want to summarize
 vegetation by polygon. Statistics such as mean, median, sum, etc. don't make much sense in this context
 (What's the sum of ``oak + grassland``?).
 
-The polygon below is comprised of 12 pixels of oak (raster value
-32) and 78 pixels of grassland (raster value 33)::
+Using ``categorical``, the output is dictionary with the unique raster values as keys
+and pixel counts as values::
 
-    >>> zonal_stats(lyr.next(), '/path/to/vegetation.tif', categorical=True)
-    [{32: 12, 33: 78}]
+    >>> zonal_stats('tests/data/polygons.shp',
+    ...             'tests/data/slope_classes.tif',
+    ...             categorical=True)[1]
+    {1.0: 1, 2.0: 9, 5.0: 40}
 
 rasterstats will report using the pixel values as keys. 
-To associate the pixel values with their appropriate meaning 
-(for example ``oak`` instead of ``32``), you can use a ``category_map``::
+To associate the pixel values with their appropriate meaning,
+you can use a ``category_map``::
 
-    >>> cmap = {32: 'oak', 33: 'grassland'}
-    >>> zonal_stats(lyr.next(), '/path/to/vegetation.tif',
-                    categorical=True, category_map=cmap)
-    [{'oak': 12, 'grassland': 78}]
+    >>> cmap = {1.0: 'low', 2.0: 'med', 5.0: 'high'}
+    >>> zonal_stats('tests/data/polygons.shp',
+    ...             'tests/data/slope_classes.tif',
+    ...             categorical=True, category_map=cmap)[1]
+    {'high': 40, 'med': 9, 'low': 1}
 
 "Mini-Rasters"
 ^^^^^^^^^^^^^^^
@@ -208,20 +246,21 @@ Internally, we create a masked raster dataset for each feature in order to
 calculate statistics. Optionally, we can include these data in the output
 of ``zonal_stats`` using the ``raster_out`` argument::
 
-    stats = zonal_stats(vector, raster, raster_out=True)
+    >>> zonal_stats('tests/data/polygons.shp',
+    ...             'tests/data/slope_classes.tif',
+    ...             stats="count",
+    ...             raster_out=True)[0].keys()
+    ['count', 'mini_raster_affine', 'mini_raster_array', 'mini_raster_nodata']
+    
+Notice we have three additional keys::
 
-Which gives us three additional keys for each feature::
-
-    mini_raster_array: The clipped and masked numpy array
-    mini_raster_affine: Affine transform (not a GDAL-style geotransform)
-    mini_raster_nodata: nodata Value
+* ``mini_raster_array``: The clipped and masked numpy array
+* ``mini_raster_affine``: transformation as an Affine object
+* ``mini_raster_nodata``: The nodata value
 
 Keep in mind that having ndarrays in your stats dictionary means it is more
 difficult to serialize to json and other text formats.
 
-Point Query
-------------
-TODO
 
 Design Goals
 ------------

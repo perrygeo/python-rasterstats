@@ -52,7 +52,7 @@ help:
 clean:
 	rm -rf $(BUILDDIR)/*
 
-html:
+html: apidocs
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html."
@@ -196,3 +196,9 @@ zip: html
 	rm $(BUILDDIR)/$(ZIPFILE)
 	cd $(BUILDDIR)/html && zip -r9 ../$(ZIPFILE) *
 
+test:
+	cd ../ && py.test --doctest-glob="*.rst" docs/*.rst
+
+.PHONY: apidocs
+apidocs:
+	sphinx-apidoc -f -e -T -M -o . ../src/rasterstats ../src/rasterstats/point.py ../src/rasterstats/main.py ../src/rasterstats/cli.py

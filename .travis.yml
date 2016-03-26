@@ -20,7 +20,7 @@ before_install:
   - pip install -U pip setuptools --upgrade
   - pip install wheel
 install:
-  - pip install numpy>=1.8 Cython
+  - pip install numpy>=1.9 Cython
   - pip install -r requirements_dev.txt
   - pip install coveralls
   - pip install -e .
