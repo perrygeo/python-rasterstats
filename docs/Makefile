@@ -193,6 +193,7 @@ pseudoxml:
 	@echo "Build finished. The pseudo-XML files are in $(BUILDDIR)/pseudoxml."
 
 zip: html
+	touch $(BUILDDIR)/$(ZIPFILE)
 	rm $(BUILDDIR)/$(ZIPFILE)
 	cd $(BUILDDIR)/html && zip -r9 ../$(ZIPFILE) *
 

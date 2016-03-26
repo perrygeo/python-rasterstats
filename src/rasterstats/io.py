@@ -193,27 +193,34 @@ def boundless_array(arr, window, nodata, masked=False):
 class Raster(object):
     """ Raster abstraction for data access to 2/3D array-like things
 
-    Use as a context manager to ensure dataset gets closed properly.
-        with Raster(path) as rast:
-            ...
+    Use as a context manager to ensure dataset gets closed properly::
+
+        >>> with Raster(path) as rast:
+        ...
+
+    Parameters
+    ----------
+    raster: 2/3D array-like data source, required
+        Currently supports paths to rasterio-supported rasters and
+        numpy arrays with Affine transforms.
+
+    affine: Affine object
+        Maps row/col to coordinate reference system
+        required if raster is ndarray
+
+    nodata: nodata value, optional
+        Overrides the datasource's internal nodata if specified
+
+    band: integer
+        raster band number, optional (default: 1)
+
+    Methods
+    -------
+    index
+    read
     """
 
     def __init__(self, raster, affine=None, nodata=None, band=1):
-        """ Initialize Raster object
-
-        Parameters
-        ----------
-        raster: 2/3D array-like data source, required
-            Currently supports paths to rasterio-supported rasters and
-            numpy arrays with Affine transforms.
-
-        affine: Affine object for going from crs to row/col, required if raster is ndarray
-
-        nodata: nodata value, optional
-            Overrides the datasource's internal nodata if specified
-
-        band: raster band number, optional (default: 1)
-        """
         self.drivers = None
         self.array = None
         self.src = None
@@ -250,11 +257,13 @@ class Raster(object):
 
         Parameters
         ----------
-        bounds: bounding box in w, s, e, n order, iterable, optional
+        bounds: bounding box
+            in w, s, e, n order, iterable, optional
         window: rasterio-style window, optional
-            bounds OR window are required, specifying both or neither will raise exception
-
-        masked: return a masked numpy array, default: False
+            bounds OR window are required,
+            specifying both or neither will raise exception
+        masked: boolean
+            return a masked numpy array, default: False
 
         Returns
         -------

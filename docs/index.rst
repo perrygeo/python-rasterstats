@@ -1,8 +1,3 @@
-.. rasterstats documentation master file, created by
-   sphinx-quickstart on Mon Aug 31 09:59:38 2015.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
 rasterstats
 ===========
 
