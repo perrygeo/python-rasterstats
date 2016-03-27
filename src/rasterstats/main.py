@@ -41,7 +41,7 @@ def gen_zonal_stats(
     add_stats=None,
     raster_out=False,
     prefix=None,
-    geojson_out=False,**kwargs):
+    geojson_out=False, **kwargs):
     """Zonal statistics of raster values aggregated to vector geometries.
 
     Parameters
@@ -150,6 +150,7 @@ def gen_zonal_stats(
 
             # create ndarray of rasterized geometry
             rv_array = rasterize_geom(geom, like=fsrc, all_touched=all_touched)
+            assert rv_array.shape == fsrc.shape
 
             # Mask the source data array with our current feature
             # we take the logical_not to flip 0<->1 for the correct mask effect
@@ -217,8 +218,7 @@ def gen_zonal_stats(
 
             if 'nodata' in stats:
                 featmasked = np.ma.MaskedArray(fsrc.array, mask=np.logical_not(rv_array))
-                nodata_count = float((featmasked == fsrc.nodata).sum())
-                feature_stats['nodata'] = nodata_count
+                feature_stats['nodata'] = float((featmasked == fsrc.nodata).sum())
 
             if add_stats is not None:
                 for stat_name, stat_func in add_stats.items():
