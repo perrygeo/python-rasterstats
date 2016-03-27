@@ -300,13 +300,48 @@ def test_Raster_nan():
     assert np.isnan(r2.array).sum() == 0  # nans were converted to nodata
 
 
+def test_geointerface():
+    class MockGeo(object):
+        def __init__(self, features):
+            self.__geo_interface__ = {
+                'type': "FeatureCollection",
+                'features': features}
+
+        # Make it iterable just to ensure that geo interface
+        # takes precendence over iterability
+        def __iter__(self):
+            pass
+
+        def __next__(self):
+            pass
+
+        def next(self):
+            pass
+
+    features = [{
+        "type": "Feature",
+        "properties": {},
+        "geometry": {
+            "type": "Point",
+            "coordinates": [0, 0]}
+    }, {
+        "type": "Feature",
+        "properties": {},
+        "geometry": {
+            "type": "Polygon",
+            "coordinates": [[[-50, -10], [-40, 10], [-30, -10], [-50, -10]]]}}]
+
+    geothing = MockGeo(features)
+    assert list(read_features(geothing)) == features
+
+
 # Optional tests
 def test_geodataframe():
     try:
         import geopandas as gpd
-        df = gpd.GeoDataFrame.from_file(polygons)
+        df = gpd.read_file(polygons)
         if not hasattr(df, '__geo_interface__'):
             pytest.skip("This version of geopandas doesn't support df.__geo_interface__")
     except ImportError:
         pytest.skip("Can't import geopands")
-    assert read_features(df)
+    assert list(read_features(df))

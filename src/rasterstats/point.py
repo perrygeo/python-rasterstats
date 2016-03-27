@@ -86,23 +86,78 @@ def geom_xys(geom):
             yield pair
 
 
-def point_query(vectors,
-                raster,
-                band=1,
-                layer=1,
-                nodata=None,
-                affine=None,
-                interpolate='bilinear',
-                property_name='value',
-                geojson_out=False):
-    """Given a set of n vector features and a raster,
-    generates n lists of raster values at each vertex of the geometry
+def point_query(*args, **kwargs):
+    """The primary point query entry point.
 
-    Effectively creates a 2D list, even for a single point, such that
+    All arguments are passed directly to ``gen_point_query``.
+    See its docstring for details.
 
-        value = point_query(point, raster)[0][0]
+    The only difference is that ``point_query`` will
+    return a list rather than a generator."""
+    return list(gen_point_query(*args, **kwargs))
 
-    The first index is the geometry, the second is the vertex within the geometry
+
+def gen_point_query(
+    vectors,
+    raster,
+    band=1,
+    layer=0,
+    nodata=None,
+    affine=None,
+    interpolate='bilinear',
+    property_name='value',
+    geojson_out=False):
+    """
+    Given a set of vector features and a raster,
+    generate raster values at each vertex of the geometry
+
+    For features with point geometry,
+    the values will be a 1D with the index refering to the feature
+
+    For features with other geometry types,
+    it effectively creates a 2D list, such that
+    the first index is the feature, the second is the vertex within the geometry
+
+    Parameters
+    ----------
+    vectors: path to an vector source or geo-like python objects
+
+    raster: ndarray or path to a GDAL raster source
+        If ndarray is passed, the `transform` kwarg is required.
+
+    layer: int or string, optional
+        If `vectors` is a path to an fiona source,
+        specify the vector layer to use either by name or number.
+        defaults to 0
+
+    band_num: int, optional
+        If `raster` is a GDAL source, the band number to use (counting from 1).
+        defaults to 1.
+
+    nodata: float, optional
+        If `raster` is a GDAL source, this value overrides any NODATA value
+        specified in the file's metadata.
+        If `None`, the file's metadata's NODATA value (if any) will be used.
+        defaults to `None`.
+
+    affine: Affine instance
+        required only for ndarrays, otherwise it is read from src
+
+    interpolate: string
+        'bilinear' or 'nearest' interpolation
+
+    property_name: string
+        name of property key if geojson_out
+
+    geojson_out: boolean
+        generate GeoJSON-like features (default: False)
+        original feature geometry and properties will be retained
+        point query values appended as additional properties.
+
+    Returns
+    -------
+    generator of arrays (if ``geojson_out`` is False)
+    generator of geojson features (if ``geojson_out`` is True)
     """
     if interpolate not in ['nearest', 'bilinear']:
         raise ValueError("interpolate must be nearest or bilinear")
@@ -111,7 +166,6 @@ def point_query(vectors,
 
     with Raster(raster, nodata=nodata, affine=affine, band=band) as rast:
 
-        results = []
         for feat in features_iter:
             geom = shape(feat['geometry'])
             vals = []
@@ -131,12 +185,13 @@ def point_query(vectors,
                     src_array = rast.read(window=window, masked=True).array
                     vals.append(bilinear(src_array, *unitxy))
 
+            if len(vals) == 1:
+                vals = vals[0]  # flatten single-element lists
+
             if geojson_out:
                 if 'properties' not in feat:
                     feat['properties'] = {}
                 feat['properties'][property_name] = vals
-                results.append(feat)
+                yield feat
             else:
-                results.append(vals)
-
-        return results
+                yield vals

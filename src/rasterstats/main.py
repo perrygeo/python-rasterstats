@@ -17,21 +17,31 @@ def raster_stats(*args, **kwargs):
     return zonal_stats(*args, **kwargs)
 
 
-def zonal_stats(vectors,
-                raster,
-                layer=0,
-                band_num=1,
-                nodata=None,
-                affine=None,
-                stats=None,
-                all_touched=False,
-                categorical=False,
-                category_map=None,
-                add_stats=None,
-                raster_out=False,
-                prefix=None,
-                geojson_out=False,
-                **kwargs):
+def zonal_stats(*args, **kwargs):
+    """The primary zonal statistics entry point.
+
+    All arguments are passed directly to ``gen_zonal_stats``.
+    See its docstring for details.
+
+    The only difference is that ``zonal_stats`` will
+    return a list rather than a generator."""
+    return list(gen_zonal_stats(*args, **kwargs))
+
+
+def gen_zonal_stats(
+    vectors, raster,
+    layer=0,
+    band_num=1,
+    nodata=None,
+    affine=None,
+    stats=None,
+    all_touched=False,
+    categorical=False,
+    category_map=None,
+    add_stats=None,
+    raster_out=False,
+    prefix=None,
+    geojson_out=False, **kwargs):
     """Zonal statistics of raster values aggregated to vector geometries.
 
     Parameters
@@ -39,7 +49,7 @@ def zonal_stats(vectors,
     vectors: path to an vector source or geo-like python objects
 
     raster: ndarray or path to a GDAL raster source
-        If ndarray is passed, the `transform` kwarg is required.
+        If ndarray is passed, the ``affine`` kwarg is required.
 
     layer: int or string, optional
         If `vectors` is a path to an fiona source,
@@ -56,13 +66,13 @@ def zonal_stats(vectors,
         If `None`, the file's metadata's NODATA value (if any) will be used.
         defaults to `None`.
 
-    affine: Affine object or 6 tuple in Affine order NOT GDAL order
+    affine: Affine instance
         required only for ndarrays, otherwise it is read from src
 
     stats:  list of str, or space-delimited str, optional
         Which statistics to calculate for each zone.
-        All possible choices are listed in `utils.VALID_STATS`.
-        defaults to `DEFAULT_STATS`, a subset of these.
+        All possible choices are listed in ``utils.VALID_STATS``.
+        defaults to ``DEFAULT_STATS``, a subset of these.
 
     all_touched: bool, optional
         Whether to include every raster cell touched by a geometry, or only
@@ -71,31 +81,37 @@ def zonal_stats(vectors,
 
     categorical: bool, optional
 
-    category_map: A dictionary mapping raster values to human-readable categorical names
+    category_map: dict
+        A dictionary mapping raster values to human-readable categorical names.
         Only applies when categorical is True
 
-    add_stats: dict with names and functions of additional stats to compute, optional
+    add_stats: dict
+        with names and functions of additional stats to compute, optional
 
-    raster_out: Include the masked numpy array for each feature, optional
+    raster_out: boolean
+        Include the masked numpy array for each feature?, optional
+
         Each feature dictionary will have the following additional keys:
         mini_raster_array: The clipped and masked numpy array
         mini_raster_affine: Affine transformation
         mini_raster_nodata: NoData Value
 
-    prefix: add a prefix to the keys (default: None )
+    prefix: string
+        add a prefix to the keys (default: None)
 
-    geojson_out: Return list of geojson-like features (default: False)
-        original feautur geometry and properties will be retained
+    geojson_out: boolean
+        Return list of GeoJSON-like features (default: False)
+        Original feature geometry and properties will be retained
         with zonal stats appended as additional properties.
         Use with `prefix` to ensure unique and meaningful property names.
 
     Returns
     -------
-    list of dicts (if geojson_out is False)
+    generator of dicts (if geojson_out is False)
         Each item corresponds to a single vector feature and
         contains keys for each of the specified stats.
 
-    list of geojson features (if geojson_out is True)
+    generator of geojson features (if geojson_out is True)
         GeoJSON-like Feature as python dict
     """
     stats, run_count = check_stats(stats, categorical)
@@ -121,8 +137,6 @@ def zonal_stats(vectors,
                       DeprecationWarning)
 
     with Raster(raster, affine, nodata, band_num) as rast:
-        results = []
-
         features_iter = read_features(vectors, layer)
         for i, feat in enumerate(features_iter):
             geom = shape(feat['geometry'])
@@ -227,10 +241,6 @@ def zonal_stats(vectors,
                     if 'properties' not in feat:
                         feat['properties'] = {}
                     feat['properties'][key] = val
-                results.append(feat)
+                yield feat
             else:
-                results.append(feature_stats)
-
-            # import ipdb; ipdb.set_trace()
-
-    return results
+                yield feature_stats
