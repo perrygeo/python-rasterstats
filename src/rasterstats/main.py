@@ -31,7 +31,7 @@ def zonal_stats(*args, **kwargs):
 def gen_zonal_stats(
     vectors, raster,
     layer=0,
-    band_num=1,
+    band=1,
     nodata=None,
     affine=None,
     stats=None,
@@ -56,7 +56,7 @@ def gen_zonal_stats(
         specify the vector layer to use either by name or number.
         defaults to 0
 
-    band_num: int, optional
+    band: int, optional
         If `raster` is a GDAL source, the band number to use (counting from 1).
         defaults to 1.
 
@@ -136,7 +136,7 @@ def gen_zonal_stats(
         warnings.warn("Use `geojson_out` to preserve feature properties",
                       DeprecationWarning)
 
-    with Raster(raster, affine, nodata, band_num) as rast:
+    with Raster(raster, affine, nodata, band) as rast:
         features_iter = read_features(vectors, layer)
         for i, feat in enumerate(features_iter):
             geom = shape(feat['geometry'])
