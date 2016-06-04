@@ -130,7 +130,7 @@ def gen_point_query(
         specify the vector layer to use either by name or number.
         defaults to 0
 
-    band_num: int, optional
+    band: int, optional
         If `raster` is a GDAL source, the band number to use (counting from 1).
         defaults to 1.
 
