@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 import itertools
-from multiprocessing import Pool
 import multiprocessing
 
 from rasterstats import zonal_stats
@@ -12,7 +11,7 @@ tif = "benchmark_data/srtm.tif"
 
 
 def chunks(data, n):
-    """Yield successive n-sized chunks from list data."""
+    """Yield successive n-sized chunks from a slice-able iterable."""
     for i in range(0, len(data), n):
         yield data[i:i+n]
 
@@ -29,10 +28,12 @@ if __name__ == "__main__":
 
     # Create a process pool using all cores
     cores = multiprocessing.cpu_count()
-    p = Pool(cores)
+    p = multiprocessing.Pool(cores)
 
     # parallel map
     stats_lists = p.map(zonal_stats_partial, chunks(features, cores))
 
     # flatten to a single list
-    stats = itertools.chain(*stats_lists)
+    stats = list(itertools.chain(*stats_lists))
+
+    assert len(stats) == len(features)
