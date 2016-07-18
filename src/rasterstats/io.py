@@ -246,7 +246,7 @@ class Raster(object):
                 self.nodata = self.src.nodata
 
     def index(self, x, y):
-        """Given x,y in crs, return the (column, row) on the raster
+        """ Given (x, y) in crs, return the (row, column) on the raster
         """
         col, row = [math.floor(a) for a in (~self.affine * (x, y))]
         return row, col
