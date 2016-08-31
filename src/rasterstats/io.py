@@ -221,7 +221,6 @@ class Raster(object):
     """
 
     def __init__(self, raster, affine=None, nodata=None, band=1):
-        self.drivers = None
         self.array = None
         self.src = None
 
@@ -233,7 +232,6 @@ class Raster(object):
             self.shape = raster.shape
             self.nodata = nodata
         else:
-            self.drivers = rasterio.drivers()
             self.src = rasterio.open(raster, 'r')
             self.affine = self.src.affine
             self.shape = (self.src.height, self.src.width)
