@@ -29,19 +29,19 @@ def zonal_stats(*args, **kwargs):
 
 
 def gen_zonal_stats(
-    vectors, raster,
-    layer=0,
-    band=1,
-    nodata=None,
-    affine=None,
-    stats=None,
-    all_touched=False,
-    categorical=False,
-    category_map=None,
-    add_stats=None,
-    raster_out=False,
-    prefix=None,
-    geojson_out=False, **kwargs):
+        vectors, raster,
+        layer=0,
+        band=1,
+        nodata=None,
+        affine=None,
+        stats=None,
+        all_touched=False,
+        categorical=False,
+        category_map=None,
+        add_stats=None,
+        raster_out=False,
+        prefix=None,
+        geojson_out=False, **kwargs):
     """Zonal statistics of raster values aggregated to vector geometries.
 
     Parameters
@@ -138,7 +138,7 @@ def gen_zonal_stats(
 
     with Raster(raster, affine, nodata, band) as rast:
         features_iter = read_features(vectors, layer)
-        for i, feat in enumerate(features_iter):
+        for _, feat in enumerate(features_iter):
             geom = shape(feat['geometry'])
 
             if 'Point' in geom.type:
@@ -170,7 +170,7 @@ def gen_zonal_stats(
                 if run_count:
                     keys, counts = np.unique(masked.compressed(), return_counts=True)
                     pixel_count = dict(zip([np.asscalar(k) for k in keys],
-                                       [np.asscalar(c) for c in counts]))
+                                           [np.asscalar(c) for c in counts]))
 
                 if categorical:
                     feature_stats = dict(pixel_count)
@@ -222,7 +222,7 @@ def gen_zonal_stats(
 
             if add_stats is not None:
                 for stat_name, stat_func in add_stats.items():
-                        feature_stats[stat_name] = stat_func(masked)
+                    feature_stats[stat_name] = stat_func(masked)
 
             if raster_out:
                 feature_stats['mini_raster_array'] = masked
