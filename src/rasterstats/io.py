@@ -7,6 +7,7 @@ import math
 import fiona
 import rasterio
 import warnings
+from rasterio.transform import guard_transform
 from affine import Affine
 import numpy as np
 from shapely.geos import ReadingError
@@ -180,9 +181,11 @@ def boundless_array(arr, window, nodata, masked=False):
     nc_start = olc_start - wc_start
     nc_stop = nc_start + overlap_shape[1]
     if dim3:
-        out[:, nr_start:nr_stop, nc_start:nc_stop] = arr[:, olr_start:olr_stop, olc_start:olc_stop]
+        out[:, nr_start:nr_stop, nc_start:nc_stop] = \
+            arr[:, olr_start:olr_stop, olc_start:olc_stop]
     else:
-        out[nr_start:nr_stop, nc_start:nc_stop] = arr[olr_start:olr_stop, olc_start:olc_stop]
+        out[nr_start:nr_stop, nc_start:nc_stop] = \
+            arr[olr_start:olr_stop, olc_start:olc_stop]
 
     if masked:
         out = np.ma.MaskedArray(out, mask=(out == nodata))
@@ -226,14 +229,14 @@ class Raster(object):
 
         if isinstance(raster, np.ndarray):
             if affine is None:
-                raise ValueError("Must specify affine for numpy arrays")
+                raise ValueError("Specify affine transform for numpy arrays")
             self.array = raster
             self.affine = affine
             self.shape = raster.shape
             self.nodata = nodata
         else:
             self.src = rasterio.open(raster, 'r')
-            self.affine = self.src.affine
+            self.affine = guard_transform(self.src.transform)
             self.shape = (self.src.height, self.src.width)
             self.band = band
 
@@ -291,10 +294,12 @@ class Raster(object):
 
         if self.array is not None:
             # It's an ndarray already
-            new_array = boundless_array(self.array, window=win, nodata=nodata, masked=masked)
+            new_array = boundless_array(
+                self.array, window=win, nodata=nodata, masked=masked)
         elif self.src:
             # It's an open rasterio dataset
-            new_array = self.src.read(self.band, window=win, boundless=True, masked=masked)
+            new_array = self.src.read(
+                self.band, window=win, boundless=True, masked=masked)
 
         if nan_as_nodata:
             nans = np.isnan(new_array)
