@@ -46,7 +46,7 @@ setup(
     packages=['rasterstats'],
     long_description=read('README.rst'),
     install_requires=read('requirements.txt').splitlines(),
-    tests_require=['pytest', 'pyshp>=1.1.4', 'coverage'],
+    tests_require=['pytest', 'pyshp>=1.1.4', 'coverage', 'simplejson'],
     cmdclass={'test': PyTest},
     classifiers=[
         "Development Status :: 4 - Beta",
