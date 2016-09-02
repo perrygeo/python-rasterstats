@@ -25,14 +25,27 @@ def get_percentile(stat):
 
 
 def rasterize_geom(geom, like, all_touched=False):
+    """
+    Parameters
+    ----------
+    geom: GeoJSON geometry
+    like: raster object with desired shape and transform
+    all_touched: rasterization strategy
+
+    Returns
+    -------
+    ndarray: boolean
+    """
     geoms = [(geom, 1)]
     rv_array = features.rasterize(
         geoms,
         out_shape=like.shape,
         transform=like.affine,
         fill=0,
+        dtype='uint8',
         all_touched=all_touched)
-    return rv_array
+
+    return rv_array.astype(bool)
 
 
 def stats_to_csv(stats):

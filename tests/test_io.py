@@ -283,23 +283,6 @@ def test_Raster_context():
     assert r2.src.closed
 
 
-def test_Raster_nan():
-    with rasterio.open(raster) as src:
-        win = ((0, src.height), (0, src.width))
-        arr = src.read(1, window=win)
-        affine = src.affine
-        nodata = src.nodata
-
-    assert (arr == nodata).sum() == 320
-
-    # throw in a few nans and run it through Raster
-    arr[20:25, 20:25] = float('nan')  # 25 nans
-    r2 = Raster(arr, affine, nodata, band=1).read(window=win, nan_as_nodata=True)
-
-    assert (r2.array == nodata).sum() == 345  # 25 more nodatas
-    assert np.isnan(r2.array).sum() == 0  # nans were converted to nodata
-
-
 def test_geointerface():
     class MockGeo(object):
         def __init__(self, features):

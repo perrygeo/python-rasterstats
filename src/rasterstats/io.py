@@ -252,7 +252,7 @@ class Raster(object):
         col, row = [math.floor(a) for a in (~self.affine * (x, y))]
         return row, col
 
-    def read(self, bounds=None, window=None, masked=False, nan_as_nodata=False):
+    def read(self, bounds=None, window=None, masked=False):
         """ Performs a boundless read against the underlying array source
 
         Parameters
@@ -265,8 +265,6 @@ class Raster(object):
         masked: boolean
             return a masked numpy array, default: False
             bounds OR window are required, specifying both or neither will raise exception
-        nan_as_nodata: boolean
-            Treat NaN values as nodata, default: False
 
         Returns
         -------
@@ -300,15 +298,6 @@ class Raster(object):
             # It's an open rasterio dataset
             new_array = self.src.read(
                 self.band, window=win, boundless=True, masked=masked)
-
-        if nan_as_nodata:
-            nans = np.isnan(new_array)
-            if nans.any():
-                if masked:
-                    # TODO would need to set nan = nodata and remask
-                    raise NotImplementedError("specify nan_as_nodata OR masked")
-                else:
-                    new_array[nans] = nodata
 
         return Raster(new_array, new_affine, nodata)
 

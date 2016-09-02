@@ -148,18 +148,25 @@ def gen_zonal_stats(
 
             fsrc = rast.read(bounds=geom_bounds)
 
-            # create ndarray of rasterized geometry
+            # rasterized geometry
             rv_array = rasterize_geom(geom, like=fsrc, all_touched=all_touched)
-            assert rv_array.shape == fsrc.shape
 
-            # Mask the source data array with our current feature
-            # we take the logical_not to flip 0<->1 for the correct mask effect
-            # we also mask out nodata values explicitly
+            # nodata mask
+            isnodata = (fsrc.array == fsrc.nodata)
+
+            # nan mask (if necessary)
+            if np.issubdtype(fsrc.array.dtype, float) and \
+               np.isnan(fsrc.array.min()):
+                isnan = np.isnan(fsrc.array)
+            else:
+                # isnan = np.zeros_like(fsrc.array).astype(bool)
+                isnan = False
+
+            # Mask the source data array
+            # block everything that is not our feature or an invalid value
             masked = np.ma.MaskedArray(
                 fsrc.array,
-                mask=np.logical_or(
-                    fsrc.array == fsrc.nodata,
-                    np.logical_not(rv_array)))
+                mask=(isnodata | isnan | ~rv_array))
 
             if masked.compressed().size == 0:
                 # nothing here, fill with None and move on
