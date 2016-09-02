@@ -6,3 +6,4 @@ simplejson
 git+git://github.com/mverteuil/pytest-ipdb.git
 twine
 numpydoc
+pytest-cov

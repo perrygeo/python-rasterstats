@@ -160,7 +160,7 @@ def gen_zonal_stats(
                 isnodata = (isnodata | np.isnan(fsrc.array))
 
             # Mask the source data array
-            # mask everything that is not a valid value within our geom 
+            # mask everything that is not a valid value or not within our geom
             masked = np.ma.MaskedArray(
                 fsrc.array,
                 mask=(isnodata | ~rv_array))
