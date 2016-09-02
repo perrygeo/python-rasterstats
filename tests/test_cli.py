@@ -1,5 +1,9 @@
 import os.path
 import json
+import warnings
+# Some warnings must be ignored to parse output properly
+# https://github.com/pallets/click/issues/371#issuecomment-223790894
+
 from click.testing import CliRunner
 from rasterstats.cli import zonalstats, pointquery
 
@@ -8,6 +12,7 @@ def test_cli_feature():
     raster = os.path.join(os.path.dirname(__file__), 'data/slope.tif')
     vector = os.path.join(os.path.dirname(__file__), 'data/feature.geojson')
     runner = CliRunner()
+    warnings.simplefilter('ignore')
     result = runner.invoke(zonalstats, [vector,
                                         '--raster', raster,
                                         '--stats', 'mean',
@@ -26,6 +31,7 @@ def test_cli_feature_stdin():
     vector = os.path.join(os.path.dirname(__file__), 'data/feature.geojson')
 
     runner = CliRunner()
+    warnings.simplefilter('ignore')
     result = runner.invoke(zonalstats,
                            ['--raster', raster,
                             '--stats', 'mean',
