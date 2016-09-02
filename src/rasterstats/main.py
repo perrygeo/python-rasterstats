@@ -154,19 +154,16 @@ def gen_zonal_stats(
             # nodata mask
             isnodata = (fsrc.array == fsrc.nodata)
 
-            # nan mask (if necessary)
+            # add nan mask (if necessary)
             if np.issubdtype(fsrc.array.dtype, float) and \
                np.isnan(fsrc.array.min()):
-                isnan = np.isnan(fsrc.array)
-            else:
-                # isnan = np.zeros_like(fsrc.array).astype(bool)
-                isnan = False
+                isnodata = (isnodata | np.isnan(fsrc.array))
 
             # Mask the source data array
-            # block everything that is not our feature or an invalid value
+            # mask everything that is not a valid value within our geom 
             masked = np.ma.MaskedArray(
                 fsrc.array,
-                mask=(isnodata | isnan | ~rv_array))
+                mask=(isnodata | ~rv_array))
 
             if masked.compressed().size == 0:
                 # nothing here, fill with None and move on
