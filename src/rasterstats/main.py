@@ -125,12 +125,6 @@ def gen_zonal_stats(
         if not affine:
             affine = Affine.from_gdal(*transform)
 
-    ndv = kwargs.get('nodata_value')
-    if ndv:
-        warnings.warn("Use `nodata` instead of `nodata_value`", DeprecationWarning)
-        if not nodata:
-            nodata = ndv
-
     cp = kwargs.get('copy_properties')
     if cp:
         warnings.warn("Use `geojson_out` to preserve feature properties",

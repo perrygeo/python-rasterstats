@@ -12,6 +12,7 @@ VALID_STATS = DEFAULT_STATS + \
     ['sum', 'std', 'median', 'majority', 'minority', 'unique', 'range', 'nodata']
 #  also percentile_{q} but that is handled as special case
 
+
 def get_percentile(stat):
     if not stat.startswith('percentile_'):
         raise ValueError("must start with 'percentile_'")
@@ -50,9 +51,10 @@ def rasterize_geom(geom, like, all_touched=False):
 
 def stats_to_csv(stats):
     if sys.version_info[0] >= 3:
-        from io import StringIO as IO
+        from io import StringIO as IO  # pragma: no cover
     else:
-        from cStringIO import StringIO as IO
+        from cStringIO import StringIO as IO  # pragma: no cover
+
     import csv
 
     csv_fh = IO()

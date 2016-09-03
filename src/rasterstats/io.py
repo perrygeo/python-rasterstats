@@ -20,9 +20,9 @@ geom_types = ["Point", "LineString", "Polygon",
 
 PY3 = sys.version_info[0] >= 3
 if PY3:
-    string_types = str,
+    string_types = str,  # pragma: no cover
 else:
-    string_types = basestring,
+    string_types = basestring,  # pragma: no cover
 
 def wrap_geom(geom):
     """ Wraps a geometry dict in an GeoJSON Feature

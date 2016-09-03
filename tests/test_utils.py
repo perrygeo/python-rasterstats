@@ -1,7 +1,9 @@
 import sys
 import os
 import pytest
-from rasterstats.utils import stats_to_csv, get_percentile, remap_categories
+from shapely.geometry import LineString
+from rasterstats.utils import \
+    stats_to_csv, get_percentile, remap_categories, boxify_points
 from rasterstats import zonal_stats
 from rasterstats.utils import VALID_STATS
 
@@ -31,6 +33,13 @@ def test_get_percentile():
     assert get_percentile('percentile_100') == 100.0
     assert get_percentile('percentile_13.2') == 13.2
 
+def test_get_bad_percentile():
+    with pytest.raises(ValueError):
+        get_percentile('foo')
+
+    with pytest.raises(ValueError):
+        get_percentile('percentile_101')
+
     with pytest.raises(ValueError):
         get_percentile('percentile_101')
 
@@ -48,3 +57,9 @@ def test_remap_categories():
     assert 1 not in new_stats.keys()
     assert 'grassland' in new_stats.keys()
     assert 3 in new_stats.keys()
+
+
+def test_boxify_non_point():
+    line = LineString([(0, 0), (1, 1)])
+    with pytest.raises(ValueError):
+        boxify_points(line, None)
