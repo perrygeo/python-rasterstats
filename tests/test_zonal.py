@@ -405,6 +405,26 @@ def test_geojson_out():
         assert 'id' in feature['properties']  # from orig
         assert 'count' in feature['properties']  # from zonal stats
 
+
+def test_overlap_counts():
+    from affine import Affine
+    transform = Affine(1, 0, 1, 0, -1, 3)
+
+    data = np.array([
+        [1, 0, np.nan],
+        [3, 0, np.nan]
+    ])
+    # geom extends an additional row above
+    geom = 'POLYGON ((4 1, 4 4, 1 4, 1 1, 4 1))'
+
+    stats = zonal_stats(geom, data, affine=transform, nodata=0.0, stats="*")
+    for res in stats:
+        assert res['count'] == 2  # Two pixels of valid data
+        assert res['nodata'] == 2  # Two pixels of nodata
+        assert res['nan'] == 2  # Two pixels of nans
+        assert res['no_overlap'] == 3  # Three pixels of no overlap
+
+
 # Optional tests
 def test_geodataframe_zonal():
     polygons = os.path.join(DATA, 'polygons.shp')
