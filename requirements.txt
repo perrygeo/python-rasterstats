@@ -3,3 +3,4 @@ numpy>=1.9
 rasterio>=0.27
 cligj>=0.4
 fiona
+simplejson

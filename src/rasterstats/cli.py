@@ -3,13 +3,9 @@ from __future__ import absolute_import
 from __future__ import division
 import logging
 
-try:
-    import simplejson as json
-except:
-    import json
-
 import click
 import cligj
+import simplejson as json
 
 from rasterstats import gen_zonal_stats, gen_point_query
 from rasterstats._version import __version__ as version
