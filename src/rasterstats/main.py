@@ -130,6 +130,11 @@ def gen_zonal_stats(
         warnings.warn("Use `geojson_out` to preserve feature properties",
                       DeprecationWarning)
 
+    bn = kwargs.get('band_num')
+    if bn:
+        warnings.warn("Use `band` to specify band number", DeprecationWarning)
+        band = band_num
+
     with Raster(raster, affine, nodata, band) as rast:
         features_iter = read_features(vectors, layer)
         for _, feat in enumerate(features_iter):
