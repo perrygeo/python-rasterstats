@@ -295,6 +295,24 @@ def test_percentile_good():
     assert stats[0]['percentile_50'] == stats[0]['median']
     assert stats[0]['percentile_50'] <= stats[0]['percentile_90']
 
+def test_zone_funcs_good():
+
+    def example_zone_func(zone_arr):
+        zone_arr[:] = 0
+
+    polygons = os.path.join(DATA, 'polygons.shp')
+    stats = zonal_stats(polygons,
+                        raster,
+                        zone_funcs=[example_zone_func])
+    assert stats[0]['max'] == 0
+    assert stats[0]['min'] == 0
+    assert stats[0]['mean'] == 0
+
+def test_zone_funcs_bad():
+    not_funcs = ['jar', 'jar', 'binks']
+    polygons = os.path.join(DATA, 'polygons.shp')
+    with pytest.raises(TypeError):
+        zonal_stats(polygons, raster, zone_funcs=not_funcs)
 
 def test_percentile_nodata():
     polygons = os.path.join(DATA, 'polygons.shp')

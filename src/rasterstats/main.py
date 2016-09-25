@@ -39,6 +39,7 @@ def gen_zonal_stats(
         categorical=False,
         category_map=None,
         add_stats=None,
+        zone_funcs=None,
         raster_out=False,
         prefix=None,
         geojson_out=False, **kwargs):
@@ -87,6 +88,9 @@ def gen_zonal_stats(
 
     add_stats: dict
         with names and functions of additional stats to compute, optional
+
+    zone_funcs: list
+        list of functions to apply to zone ndarray prior to computing stats
 
     raster_out: boolean
         Include the masked numpy array for each feature?, optional
@@ -164,6 +168,9 @@ def gen_zonal_stats(
                 fsrc.array,
                 mask=(isnodata | ~rv_array))
 
+            if zone_funcs is not None:
+                _run_zone_funcs(masked, zone_funcs)
+
             if masked.compressed().size == 0:
                 # nothing here, fill with None and move on
                 feature_stats = dict([(stat, None) for stat in stats])
@@ -174,6 +181,7 @@ def gen_zonal_stats(
                     keys, counts = np.unique(masked.compressed(), return_counts=True)
                     pixel_count = dict(zip([np.asscalar(k) for k in keys],
                                            [np.asscalar(c) for c in counts]))
+
 
                 if categorical:
                     feature_stats = dict(pixel_count)
@@ -247,3 +255,16 @@ def gen_zonal_stats(
                 yield feat
             else:
                 yield feature_stats
+
+def _run_zone_funcs(zone_array, zone_funcs):
+
+    if not isinstance(zone_funcs, list) or not all([callable(f) for f in zone_funcs]):
+           raise TypeError(('zone_funcs must be <list> of <callables>\n'
+                            'Example:\n'
+                            '--------\n'
+                            'def mask_min_threshold(zone_array):\n'
+                            '\tzone_array[zone_array < 100] = np.ma.masked'))
+
+    for func in zone_funcs:
+        func(zone_array)
+
