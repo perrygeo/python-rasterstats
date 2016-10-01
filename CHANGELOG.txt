@@ -1,4 +1,4 @@
-0.11.dev
+0.11
 - change `band_num` parameter to `band`
 - add example of multiprocessing
 - updated for compatibility with upcoming Rasterio 1.0 release
