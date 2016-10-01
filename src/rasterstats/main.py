@@ -39,7 +39,7 @@ def gen_zonal_stats(
         categorical=False,
         category_map=None,
         add_stats=None,
-        zone_funcs=None,
+        zone_func=None,
         raster_out=False,
         prefix=None,
         geojson_out=False, **kwargs):
@@ -89,7 +89,7 @@ def gen_zonal_stats(
     add_stats: dict
         with names and functions of additional stats to compute, optional
 
-    zone_funcs: list
+    zone_func: callable
         list of functions to apply to zone ndarray prior to computing stats
 
     raster_out: boolean
@@ -168,8 +168,13 @@ def gen_zonal_stats(
                 fsrc.array,
                 mask=(isnodata | ~rv_array))
 
-            if zone_funcs is not None:
-                _run_zone_funcs(masked, zone_funcs)
+            # execute zone_func on masked zone ndarray
+            if zone_func is not None:
+                if not callable(zone_func):
+                    raise TypeError(('zone_func must be a callable '
+                                     'which accepts function a '
+                                     'single `zone_array` arg.'))
+                zone_func(masked)
 
             if masked.compressed().size == 0:
                 # nothing here, fill with None and move on
@@ -255,16 +260,3 @@ def gen_zonal_stats(
                 yield feat
             else:
                 yield feature_stats
-
-def _run_zone_funcs(zone_array, zone_funcs):
-
-    if not isinstance(zone_funcs, list) or not all([callable(f) for f in zone_funcs]):
-           raise TypeError(('zone_funcs must be <list> of <callables>\n'
-                            'Example:\n'
-                            '--------\n'
-                            'def mask_min_threshold(zone_array):\n'
-                            '\tzone_array[zone_array < 100] = np.ma.masked'))
-
-    for func in zone_funcs:
-        func(zone_array)
-
