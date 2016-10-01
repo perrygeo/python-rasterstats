@@ -90,7 +90,7 @@ def gen_zonal_stats(
         with names and functions of additional stats to compute, optional
 
     zone_func: callable
-        list of functions to apply to zone ndarray prior to computing stats
+        function to apply to zone ndarray prior to computing stats
 
     raster_out: boolean
         Include the masked numpy array for each feature?, optional
