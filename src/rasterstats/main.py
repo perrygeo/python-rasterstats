@@ -39,6 +39,7 @@ def gen_zonal_stats(
         categorical=False,
         category_map=None,
         add_stats=None,
+        zone_func=None,
         raster_out=False,
         prefix=None,
         geojson_out=False, **kwargs):
@@ -87,6 +88,9 @@ def gen_zonal_stats(
 
     add_stats: dict
         with names and functions of additional stats to compute, optional
+
+    zone_func: callable
+        function to apply to zone ndarray prior to computing stats
 
     raster_out: boolean
         Include the masked numpy array for each feature?, optional
@@ -164,6 +168,14 @@ def gen_zonal_stats(
                 fsrc.array,
                 mask=(isnodata | ~rv_array))
 
+            # execute zone_func on masked zone ndarray
+            if zone_func is not None:
+                if not callable(zone_func):
+                    raise TypeError(('zone_func must be a callable '
+                                     'which accepts function a '
+                                     'single `zone_array` arg.'))
+                zone_func(masked)
+
             if masked.compressed().size == 0:
                 # nothing here, fill with None and move on
                 feature_stats = dict([(stat, None) for stat in stats])
@@ -174,6 +186,7 @@ def gen_zonal_stats(
                     keys, counts = np.unique(masked.compressed(), return_counts=True)
                     pixel_count = dict(zip([np.asscalar(k) for k in keys],
                                            [np.asscalar(c) for c in counts]))
+
 
                 if categorical:
                     feature_stats = dict(pixel_count)
