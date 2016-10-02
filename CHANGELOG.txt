@@ -1,3 +1,6 @@
+0.12dev
+- zone_func argument to apply a function to the masked array before computing stats
+
 0.11
 - change `band_num` parameter to `band`
 - add example of multiprocessing
