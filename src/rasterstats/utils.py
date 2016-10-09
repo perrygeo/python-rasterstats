@@ -6,12 +6,16 @@ from rasterio import features
 from shapely.geometry import box, MultiPolygon
 from .io import window_bounds
 
+try:
+    from functools import lru_cache
+except ImportError:
+    lru_cahe
+
 
 DEFAULT_STATS = ['count', 'min', 'max', 'mean']
 VALID_STATS = DEFAULT_STATS + \
     ['sum', 'std', 'median', 'majority', 'minority', 'unique', 'range', 'nodata']
 #  also percentile_{q} but that is handled as special case
-
 
 def get_percentile(stat):
     if not stat.startswith('percentile_'):
@@ -37,7 +41,12 @@ def rasterize_geom(geom, like, all_touched=False):
     -------
     ndarray: boolean
     """
-    geoms = [(geom, 1)]
+
+    if isinstance(geom, (tuple, list)):
+        geoms = [(g, 1) for g in geom]
+    else:
+        geoms = [(g, 1)]
+
     rv_array = features.rasterize(
         geoms,
         out_shape=like.shape,
@@ -146,3 +155,24 @@ def boxify_points(geom, rast):
         geoms.append(box(*window_bounds(win, rast.affine)).buffer(buff))
 
     return MultiPolygon(geoms)
+
+
+def union_bounds(bounds):
+    """
+    creates new bounds tuple (xmin, ymin, xmax, ymax) 
+    based on union of several bounds tuples
+    """
+    xmin = float("inf")
+    ymin = float("inf")
+    xmax = float("-inf")
+    ymax = float("-inf")
+    for b in bounds:
+        if b[0] < xmin:
+            xmin = b[0]
+        if b[1] < ymin:
+            ymin = b[1]
+        if b[2] > xmax:
+            xmax = b[2]
+        if b[3] > ymax:
+            ymax = b[3]
+    return (xmin, ymin, xmax, ymax)

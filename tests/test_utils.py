@@ -6,6 +6,7 @@ from rasterstats.utils import \
     stats_to_csv, get_percentile, remap_categories, boxify_points
 from rasterstats import zonal_stats
 from rasterstats.utils import VALID_STATS
+from rasterstats.utils import union_bounds
 
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -63,3 +64,9 @@ def test_boxify_non_point():
     line = LineString([(0, 0), (1, 1)])
     with pytest.raises(ValueError):
         boxify_points(line, None)
+
+
+def test_union_bounds():
+    bounds = [(-2,-2,1,1),(-1,-1,2,2)]
+    bounds = union_bounds(bounds)
+    assert bounds == (-2,-2,2,2)

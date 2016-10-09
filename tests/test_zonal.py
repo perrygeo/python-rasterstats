@@ -309,11 +309,47 @@ def test_zone_func_good():
     assert stats[0]['min'] == 0
     assert stats[0]['mean'] == 0
 
+
 def test_zone_func_bad():
     not_a_func = 'jar jar binks'
     polygons = os.path.join(DATA, 'polygons.shp')
     with pytest.raises(TypeError):
         zonal_stats(polygons, raster, zone_func=not_a_func)
+
+
+def test_groupby_fieldname():
+    polygons = os.path.join(DATA, 'polygons_groupby.shp')
+    stats = zonal_stats(polygons, raster, groupby='group')
+    for key in ['count', 'min', 'max', 'mean']:
+        assert key in stats[0]
+    assert len(stats) == 1
+    assert stats[0]['count'] == 125
+    assert round(stats[0]['mean'], 2) == 31.44
+    assert stats[0]['zone_id'] == 1
+
+
+def test_groupby_function():
+    polygons = os.path.join(DATA, 'polygons_groupby.shp')
+    groupby = lambda f: f['properties']['group']
+    stats = zonal_stats(polygons, raster, groupby=groupby)
+    for key in ['count', 'min', 'max', 'mean']:
+        assert key in stats[0]
+    assert len(stats) == 1
+    assert stats[0]['count'] == 125
+    assert round(stats[0]['mean'], 2) == 31.44
+    assert stats[0]['zone_id'] == 1
+
+
+def test_groupby_field_bad():
+    polygons = os.path.join(DATA, 'polygons_groupby.shp')
+
+    missing_field = 'jar jar binks'
+    with pytest.raises(ValueError):
+        zonal_stats(polygons, raster, groupby=missing_field)
+
+    wrong_type = []
+    with pytest.raises(TypeError):
+        zonal_stats(polygons, raster, groupby=[])
 
 def test_percentile_nodata():
     polygons = os.path.join(DATA, 'polygons.shp')
