@@ -207,6 +207,7 @@ def test_no_overlap():
         # no polygon should have any overlap
         assert res['count'] is 0
 
+
 def test_all_touched():
     polygons = os.path.join(DATA, 'polygons.shp')
     stats = zonal_stats(polygons, raster, all_touched=True)
@@ -280,8 +281,10 @@ def test_add_stats():
 def test_mini_raster():
     polygons = os.path.join(DATA, 'polygons.shp')
     stats = zonal_stats(polygons, raster, raster_out=True)
-    stats2 = zonal_stats(polygons, stats[0]['mini_raster_array'],
-                         raster_out=True, affine=stats[0]['mini_raster_affine'])
+    stats2 = zonal_stats(polygons,
+                         stats[0]['mini_raster_array'],
+                         raster_out=True,
+                         affine=stats[0]['mini_raster_affine'])
     assert (stats[0]['mini_raster_array'] == stats2[0]['mini_raster_array']).sum() == \
         stats[0]['count']
 
@@ -340,6 +343,24 @@ def test_groupby_function():
     assert stats[0]['zone_id'] == 1
 
 
+def test_demonstrate_groupby_overlap_unexpected_results():
+    polygons = os.path.join(DATA, 'polygons_partial_overlap.shp')
+
+    groupby_stats = zonal_stats(polygons,
+                                raster,
+                                groupby=lambda f: 'single_group',
+                                stats='count')
+
+    normal_stats = zonal_stats(polygons,
+                               raster,
+                               stats='count')
+
+    groupby_sum = sum([v['count'] for v in groupby_stats])
+    normal_sum = sum([v['count'] for v in normal_stats])
+
+    assert groupby_sum != normal_sum
+
+
 def test_groupby_field_bad():
     polygons = os.path.join(DATA, 'polygons_groupby.shp')
 
@@ -349,7 +370,8 @@ def test_groupby_field_bad():
 
     wrong_type = []
     with pytest.raises(TypeError):
-        zonal_stats(polygons, raster, groupby=[])
+        zonal_stats(polygons, raster, groupby=wrong_type)
+
 
 def test_percentile_nodata():
     polygons = os.path.join(DATA, 'polygons.shp')

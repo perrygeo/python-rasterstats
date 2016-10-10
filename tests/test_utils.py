@@ -89,6 +89,6 @@ def test_rasterize_geom():
 
 
 def test_union_bounds():
-    bounds = [(-2,-2,1,1),(-1,-1,2,2)]
+    bounds = [(-2, -2, 1, 1), (-1, -1, 2, 2)]
     bounds = union_bounds(bounds)
-    assert bounds == (-2,-2,2,2)
+    assert bounds == (-2, -2, 2, 2)
