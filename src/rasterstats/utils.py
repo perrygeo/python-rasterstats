@@ -40,7 +40,7 @@ def rasterize_geom(geom, like, all_touched=False):
     if isinstance(geom, (tuple, list)):
         geoms = [(g, 1) for g in geom]
     else:
-        geoms = [(g, 1)]
+        geoms = [(geom, 1)]
 
     rv_array = features.rasterize(
         geoms,
