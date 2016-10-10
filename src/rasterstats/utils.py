@@ -6,11 +6,6 @@ from rasterio import features
 from shapely.geometry import box, MultiPolygon
 from .io import window_bounds
 
-try:
-    from functools import lru_cache
-except ImportError:
-    lru_cahe
-
 
 DEFAULT_STATS = ['count', 'min', 'max', 'mean']
 VALID_STATS = DEFAULT_STATS + \
