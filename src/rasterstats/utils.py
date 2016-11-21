@@ -2,10 +2,10 @@
 from __future__ import absolute_import
 from __future__ import division
 import sys
+import math
 from rasterio import features
 from shapely.geometry import box, MultiPolygon
 from .io import window_bounds
-
 
 DEFAULT_STATS = ['count', 'min', 'max', 'mean']
 VALID_STATS = DEFAULT_STATS + \
@@ -146,3 +146,58 @@ def boxify_points(geom, rast):
         geoms.append(box(*window_bounds(win, rast.affine)).buffer(buff))
 
     return MultiPolygon(geoms)
+
+
+def get_latitude_scale(lat):
+    """get ratio of longitudal measurement at a latitiude relative to equator
+
+    at the equator, the distance between 0 and 0.008993216 degrees
+    longitude is very nearly 1km. this allows the distance returned
+    by the calc_haversine_distance function when using 0 and 0.008993216
+    degrees longitude, with constant latitude, to server as a scale
+    of the distance between lines of longitude at the given latitude
+
+    Args
+        lat (int, float): a latitude value
+    Returns
+        ratio (float): ratio of actual distance (km) between two lines of
+                       longitude at a given latitude and at the equator,
+                       when the distance between those lines at the equator
+                       is 1km
+    """
+    p1 = (0, lat)
+    p2 = (0.008993216, lat)
+    ratio = calc_haversine_distance(p1, p2)
+    return ratio
+
+
+def calc_haversine_distance(p1, p2):
+    """calculate haversine distance between two points
+
+    # formula info
+    # https://en.wikipedia.org/wiki/Haversine_formula
+    # http://www.movable-type.co.uk/scripts/latlong.html
+
+    Args
+        p1: tuple of (longitude, latitude) format containing int or float values
+        p2: tuple of (longitude, latitude) format containing int or float values
+    Returns
+        d (float): haversine distance between given points p1 and p2
+    """
+    lon1, lat1 = p1
+    lon2, lat2 = p2
+
+    # km
+    radius = 6371.0
+
+    delta_lat = math.radians(lat2 - lat1)
+    delta_lon = math.radians(lon2 - lon1)
+
+    a = (math.sin(delta_lat/2)**2 + math.cos(math.radians(lat1)) *
+         math.cos(math.radians(lat2)) * math.sin(delta_lon/2)**2)
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
+
+    # km
+    d = radius * c
+
+    return d

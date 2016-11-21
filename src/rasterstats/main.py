@@ -7,7 +7,7 @@ from affine import Affine
 from shapely.geometry import shape
 from .io import read_features, Raster
 from .utils import (rasterize_geom, get_percentile, check_stats,
-                    remap_categories, key_assoc_val, boxify_points)
+                    remap_categories, key_assoc_val, boxify_points, get_latitude_scale)
 
 
 def raster_stats(*args, **kwargs):
@@ -36,6 +36,7 @@ def gen_zonal_stats(
         affine=None,
         stats=None,
         all_touched=False,
+        latitude_correction=False,
         categorical=False,
         category_map=None,
         add_stats=None,
@@ -79,6 +80,13 @@ def gen_zonal_stats(
         Whether to include every raster cell touched by a geometry, or only
         those having a center point within the polygon.
         defaults to `False`
+
+    latitude_correction: bool, optional
+        * For use with WGS84 data only.
+        * Only applies to "mean" stat.
+        Weights cell values when generating statistics based on latitude
+        (using haversine function) in order to account for actual area
+        represented by pixel cell.
 
     categorical: bool, optional
 
@@ -176,6 +184,12 @@ def gen_zonal_stats(
                                      'single `zone_array` arg.'))
                 zone_func(masked)
 
+            if latitude_correction and 'mean' in stats:
+                latitude_scale = [
+                    get_latitude_scale(fsrc.affine[5] - fsrc.affine[0] * (0.5 + i))
+                    for i in range(fsrc.shape[0])
+                ]
+
             if masked.compressed().size == 0:
                 # nothing here, fill with None and move on
                 feature_stats = dict([(stat, None) for stat in stats])
@@ -200,7 +214,15 @@ def gen_zonal_stats(
                 if 'max' in stats:
                     feature_stats['max'] = float(masked.max())
                 if 'mean' in stats:
-                    feature_stats['mean'] = float(masked.mean())
+
+                    if latitude_correction:
+                        feature_stats['mean'] = float(
+                            np.sum((masked.T * latitude_scale).T) /
+                            np.sum(latitude_scale *
+                                   (masked.shape[1] - np.sum(masked.mask, axis=1))))
+                    else:
+                        feature_stats['mean'] = float(masked.mean())
+
                 if 'count' in stats:
                     feature_stats['count'] = int(masked.count())
                 # optional
