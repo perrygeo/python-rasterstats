@@ -1,6 +1,7 @@
 import sys
 import os
 import pytest
+import numpy as np
 from shapely.geometry import LineString
 from rasterstats.utils import \
     stats_to_csv, get_percentile, remap_categories, boxify_points
@@ -63,3 +64,20 @@ def test_boxify_non_point():
     line = LineString([(0, 0), (1, 1)])
     with pytest.raises(ValueError):
         boxify_points(line, None)
+
+
+def test_rebin_sum():
+
+    test_input = np.array(
+        [
+            [1, 1, 2, 2],
+            [1, 1, 2, 2],
+            [3, 3, 4, 4],
+            [3, 3, 4, 4]
+        ])
+
+    test_output = rebin_sum(test_input, (2,2), np.int32)
+
+    correct_output = np.array([[4, 8],[12, 16]])
+
+    assert np.array_equal(test_output, correct_output)
