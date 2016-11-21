@@ -4,7 +4,8 @@ import pytest
 import numpy as np
 from shapely.geometry import LineString
 from rasterstats.utils import \
-    stats_to_csv, get_percentile, remap_categories, boxify_points
+    stats_to_csv, get_percentile, remap_categories, boxify_points, \
+    rebin_sum
 from rasterstats import zonal_stats
 from rasterstats.utils import VALID_STATS
 
