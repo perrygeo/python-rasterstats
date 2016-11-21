@@ -3,7 +3,8 @@ import os
 import pytest
 from shapely.geometry import LineString
 from rasterstats.utils import \
-    stats_to_csv, get_percentile, remap_categories, boxify_points
+    stats_to_csv, get_percentile, remap_categories, boxify_points, \
+    get_latitude_scale, calc_haversine_distance
 from rasterstats import zonal_stats
 from rasterstats.utils import VALID_STATS
 
