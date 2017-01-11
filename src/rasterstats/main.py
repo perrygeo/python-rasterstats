@@ -202,11 +202,11 @@ def gen_zonal_stats(
                                 'provided ({0}). Must be able to be converted '
                                 'to a float.'.format(percent_cover_selection))
 
-        if not all_touched:
-            warnings.warn('`all_touched` was not enabled but an option requiring '
-                          'percent_cover calculations was selected. Automatically '
-                          'enabling `all_touched`.')
-        all_touched = True
+        # if not all_touched:
+        #     warnings.warn('`all_touched` was not enabled but an option requiring '
+        #                   'percent_cover calculations was selected. Automatically '
+        #                   'enabling `all_touched`.')
+        # all_touched = True
 
 
     with Raster(raster, affine, nodata, band) as rast:
@@ -226,7 +226,8 @@ def gen_zonal_stats(
             if percent_cover:
                 rv_array = rasterize_pctcover_geom(
                     geom, shape=fsrc.shape, affine=fsrc.affine,
-                    scale=percent_cover_scale)
+                    scale=percent_cover_scale,
+                    all_touched=all_touched)
             else:
                 rv_array = rasterize_geom(
                     geom, shape=fsrc.shape, affine=fsrc.affine,

@@ -59,7 +59,7 @@ def rebin_sum(a, shape, dtype):
     return a.reshape(sh).sum(-1, dtype=dtype).sum(1, dtype=dtype)
 
 
-def rasterize_pctcover_geom(geom, shape, affine, scale=None):
+def rasterize_pctcover_geom(geom, shape, affine, scale=None, all_touched=False):
     """
     Parameters
     ----------
@@ -86,7 +86,7 @@ def rasterize_pctcover_geom(geom, shape, affine, scale=None):
 
     new_shape = (shape[0]*scale, shape[1]*scale)
 
-    rv_array = rasterize_geom(geom, new_shape, new_affine, True)
+    rv_array = rasterize_geom(geom, new_shape, new_affine, all_touched=all_touched)
     rv_array = rebin_sum(rv_array, shape, min_dtype)
 
     return rv_array.astype('float32') / (scale**2)
