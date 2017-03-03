@@ -224,10 +224,11 @@ def gen_zonal_stats(
 
             # rasterized geometry
             if percent_cover:
-                rv_array = rasterize_pctcover_geom(
+                cover_weights = rasterize_pctcover_geom(
                     geom, shape=fsrc.shape, affine=fsrc.affine,
                     scale=percent_cover_scale,
                     all_touched=all_touched)
+                rv_array = cover_weights > (percent_cover_selection or 0)
             else:
                 rv_array = rasterize_geom(
                     geom, shape=fsrc.shape, affine=fsrc.affine,
@@ -243,14 +244,9 @@ def gen_zonal_stats(
 
             # Mask the source data array
             # mask everything that is not a valid value or not within our geom
-            if percent_cover_selection is not None:
-                masked = np.ma.MaskedArray(
-                    fsrc.array,
-                    mask=(isnodata | ~rv_array | percent_cover > percent_cover_selection))
-            else:
-                masked = np.ma.MaskedArray(
-                    fsrc.array,
-                    mask=(isnodata | ~rv_array))
+            masked = np.ma.MaskedArray(
+                fsrc.array,
+                mask=(isnodata | ~rv_array))
 
             # execute zone_func on masked zone ndarray
             if zone_func is not None:
@@ -285,19 +281,19 @@ def gen_zonal_stats(
                 if 'mean' in stats:
                     if percent_cover_weighting:
                         feature_stats['mean'] = float(
-                            np.sum(masked * rv_array) /
-                            np.sum(~masked.mask * rv_array))
+                            np.sum(masked * cover_weights) /
+                            np.sum(~masked.mask * cover_weights))
                     else:
                         feature_stats['mean'] = float(masked.mean())
                 if 'count' in stats:
                     if percent_cover_weighting:
-                        feature_stats['count'] = float(np.sum(~masked.mask * rv_array))
+                        feature_stats['count'] = float(np.sum(~masked.mask * cover_weights))
                     else:
                         feature_stats['count'] = int(masked.count())
                 # optional
                 if 'sum' in stats:
                     if percent_cover_weighting:
-                        feature_stats['sum'] = float(np.sum(masked * rv_array))
+                        feature_stats['sum'] = float(np.sum(masked * cover_weights))
                     else:
                         feature_stats['sum'] = float(masked.sum())
                 if 'std' in stats:
