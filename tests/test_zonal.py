@@ -27,6 +27,16 @@ def test_main():
     assert round(stats[0]['mean'], 2) == 14.66
 
 
+# remove after band_num alias is removed
+def test_band_alias():
+    polygons = os.path.join(DATA, 'polygons.shp')
+    stats_a = zonal_stats(polygons, raster)
+    stats_b = zonal_stats(polygons, raster, band=1)
+    with pytest.deprecated_call():
+        stats_c = zonal_stats(polygons, raster, band_num=1)
+    assert stats_a[0]['count'] == stats_b[0]['count'] == stats_c[0]['count']
+
+
 def test_zonal_global_extent():
     polygons = os.path.join(DATA, 'polygons.shp')
     stats = zonal_stats(polygons, raster)
@@ -374,6 +384,27 @@ def test_some_nodata():
     assert stats[1]['nodata'] == 19
     assert stats[1]['count'] == 31
 
+
+# update this if nan end up being incorporated into nodata
+def test_nan_nodata():
+    polygon = Polygon([[0, 0], [2, 0], [2, 2], [0, 2]])
+    arr = np.array([
+        [np.nan, 12.25],
+        [-999, 12.75]
+    ])
+    affine = Affine(1, 0, 0,
+                    0, -1, 2)
+
+    stats = zonal_stats(polygon, arr, affine=affine, nodata=-999,
+                        stats='nodata count sum mean min max')
+
+    assert stats[0]['nodata'] == 1
+    assert stats[0]['count'] == 2
+    assert stats[0]['mean'] == 12.5
+    assert stats[0]['min'] == 12.25
+    assert stats[0]['max'] == 12.75
+
+
 def test_some_nodata_ndarray():
     polygons = os.path.join(DATA, 'polygons.shp')
     raster = os.path.join(DATA, 'slope_nodata.tif')
@@ -424,6 +455,34 @@ def test_geojson_out():
         assert 'id' in feature['properties']  # from orig
         assert 'count' in feature['properties']  # from zonal stats
 
+
+def test_geojson_out_with_no_properties():
+    polygon = Polygon([[0, 0], [0, 0,5], [1, 1.5], [1.5, 2], [2, 2], [2, 0]])
+    arr = np.array([
+        [100, 1],
+        [100, 1]
+    ])
+    affine = Affine(1, 0, 0,
+                    0, -1, 2)
+
+    stats = zonal_stats(polygon, arr, affine=affine, geojson_out=True)
+    for key in ['count', 'min', 'max', 'mean']:
+        assert key in stats[0]
+
+    assert stats[0]['mean'] == 34
+
+
+# remove when copy_properties alias is removed
+def test_geojson_out_alias():
+    polygons = os.path.join(DATA, 'polygons.shp')
+    # run once to trigger any other unrelated deprecation warnings
+    # so the test does not catch them instead
+    stats_a = zonal_stats(polygons, raster)
+    with pytest.deprecated_call():
+        stats_b = zonal_stats(polygons, raster, copy_properties=True)
+    assert stats_a = stats_b
+
+
 # Optional tests
 def test_geodataframe_zonal():
     polygons = os.path.join(DATA, 'polygons.shp')
@@ -438,3 +497,4 @@ def test_geodataframe_zonal():
 
     expected = zonal_stats(polygons, raster)
     assert zonal_stats(df, raster) == expected
+
