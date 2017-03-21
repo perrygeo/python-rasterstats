@@ -427,7 +427,7 @@ def test_geojson_out():
         assert 'count' in feature['properties']  # from zonal stats
 
 
-def test_percent_cover_zonal_stats()
+def test_percent_cover_zonal_stats():
     polygon = Polygon([[0, 0], [0, 0,5], [1, 1.5], [1.5, 2], [2, 2], [2, 0]])
     arr = np.array([
         [100, 1],
