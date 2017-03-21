@@ -48,7 +48,6 @@ def rasterize_geom(geom, shape, affine, all_touched=False):
         fill=0,
         dtype='uint8',
         all_touched=all_touched)
-
     return rv_array.astype(bool)
 
 
@@ -74,21 +73,15 @@ def rasterize_pctcover_geom(geom, shape, affine, scale=None, all_touched=False):
     """
     if scale is None:
         scale = 10
-
     min_dtype = min_scalar_type(scale**2)
-
     pixel_size = affine[0]/scale
     topleftlon = affine[2]
     topleftlat = affine[5]
-
     new_affine = Affine(pixel_size, 0, topleftlon,
                     0, -pixel_size, topleftlat)
-
     new_shape = (shape[0]*scale, shape[1]*scale)
-
     rv_array = rasterize_geom(geom, new_shape, new_affine, all_touched=all_touched)
     rv_array = rebin_sum(rv_array, shape, min_dtype)
-
     return rv_array.astype('float32') / (scale**2)
 
 
@@ -189,3 +182,5 @@ def boxify_points(geom, rast):
         geoms.append(box(*window_bounds(win, rast.affine)).buffer(buff))
 
     return MultiPolygon(geoms)
+
+

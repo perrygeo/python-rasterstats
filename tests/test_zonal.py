@@ -9,6 +9,8 @@ import rasterio
 from rasterstats import zonal_stats, raster_stats
 from rasterstats.utils import VALID_STATS
 from rasterstats.io import read_featurecollection, read_features
+from shapely.geometry import Polygon
+from affine import Affine
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
@@ -424,6 +426,45 @@ def test_geojson_out():
         assert 'id' in feature['properties']  # from orig
         assert 'count' in feature['properties']  # from zonal stats
 
+
+def test_percent_cover_zonal_stats()
+    polygon = Polygon([[0, 0], [0, 0,5], [1, 1.5], [1.5, 2], [2, 2], [2, 0]])
+    arr = np.array([
+        [100, 1],
+        [100, 1]
+    ])
+    affine = Affine(1, 0, 0,
+                    0, -1, 2)
+
+    stats_options = 'min max mean count sum nodata'
+
+    # run base case
+    stats_a = zonal_stats(polygon, arr, affine=affine, stats=stats_options)
+    assert stats_a[0]['mean'] == 34
+
+    # test selection
+    stats_b = zonal_stats(polygon, arr, affine=affine, percent_cover_selection=0.75, percent_cover_scale=10, stats=stats_options)
+    assert stats_b[0]['mean'] == 1
+
+    # test weighting
+    stats_c = zonal_stats(polygon, arr, affine=affine, percent_cover_weighting=True, percent_cover_scale=10, stats=stats_options)
+    assert round(stats_c[0]['count'], 2) == 2.6
+    assert round(stats_c[0]['mean'], 2) == 29.56
+    assert round(stats_c[0]['sum'], 2) == 76.85
+
+    # check that percent_cover_scale is required
+    with pytest.raises(Exception):
+        zonal_stats(polygon, arr, affine=affine, percent_cover_selection=0.75)
+
+    # check invalid percent_cover_scale value
+    with pytest.raises(Exception):
+        zonal_stats(polygon, arr, affine=affine, percent_cover_selection=0.75, percent_cover_scale=0.5)
+
+    # check invalid percent_cover_selection value
+    with pytest.raises(Exception):
+        zonal_stats(polygon, arr, affine=affine, percent_cover_selection='one', percent_cover_scale=10)
+
+
 # Optional tests
 def test_geodataframe_zonal():
     polygons = os.path.join(DATA, 'polygons.shp')
@@ -438,3 +479,5 @@ def test_geodataframe_zonal():
 
     expected = zonal_stats(polygons, raster)
     assert zonal_stats(df, raster) == expected
+
+
