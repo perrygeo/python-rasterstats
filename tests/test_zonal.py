@@ -480,7 +480,7 @@ def test_geojson_out_alias():
     stats_a = zonal_stats(polygons, raster)
     with pytest.deprecated_call():
         stats_b = zonal_stats(polygons, raster, copy_properties=True)
-    assert stats_a = stats_b
+    assert stats_a == stats_b
 
 
 # Optional tests
