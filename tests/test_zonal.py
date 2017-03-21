@@ -458,6 +458,9 @@ def test_geojson_out():
         assert 'count' in feature['properties']  # from zonal stats
 
 
+# do not think this is actually testing the line i wanted it to
+# since the read_features func for this data type is generating
+# the properties field
 def test_geojson_out_with_no_properties():
     polygon = Polygon([[0, 0], [0, 0,5], [1, 1.5], [1.5, 2], [2, 2], [2, 0]])
     arr = np.array([
@@ -476,7 +479,7 @@ def test_geojson_out_with_no_properties():
 
 
 # remove when copy_properties alias is removed
-def test_geojson_out_alias():
+def test_copy_properties_warn():
     polygons = os.path.join(DATA, 'polygons.shp')
     # run once to trigger any other unrelated deprecation warnings
     # so the test does not catch them instead
