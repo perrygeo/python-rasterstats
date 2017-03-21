@@ -246,15 +246,25 @@ def gen_zonal_stats(
             if percent_cover_selection is not None:
                 masked = np.ma.MaskedArray(
                     fsrc.array,
-                    mask=(isnodata | np.logical_not(rv_pct_array) | rv_pct_array < percent_cover_selection))
+                    mask=np.logical_or.reduce((
+                        isnodata,
+                        np.logical_not(rv_pct_array),
+                        rv_pct_array < percent_cover_selection
+                    ))
+                )
             elif percent_cover:
                 masked = np.ma.MaskedArray(
                     fsrc.array,
-                    mask=(isnodata | np.logical_not(rv_pct_array)))
+                    mask=np.logical_or(
+                        isnodata,
+                        np.logical_not(rv_pct_array)
+                    )
+                )
             else:
                 masked = np.ma.MaskedArray(
                     fsrc.array,
-                    mask=(isnodata | np.logical_not(rv_array)))
+                    mask=(isnodata | ~rv_array)
+                )
 
             # execute zone_func on masked zone ndarray
             if zone_func is not None:
