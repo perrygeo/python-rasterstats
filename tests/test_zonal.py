@@ -9,6 +9,7 @@ import rasterio
 from rasterstats import zonal_stats, raster_stats
 from rasterstats.utils import VALID_STATS
 from rasterstats.io import read_featurecollection, read_features
+from shapely.geometry import Polygon
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 

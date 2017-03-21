@@ -134,8 +134,8 @@ def gen_zonal_stats(
         warnings.warn("Use `geojson_out` to preserve feature properties",
                       DeprecationWarning)
 
-    bn = kwargs.get('band_num')
-    if bn:
+    band_num = kwargs.get('band_num')
+    if band_num:
         warnings.warn("Use `band` to specify band number", DeprecationWarning)
         band = band_num
 
