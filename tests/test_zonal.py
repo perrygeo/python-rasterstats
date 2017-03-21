@@ -452,9 +452,9 @@ def test_percent_cover_zonal_stats():
     assert round(stats_c[0]['mean'], 2) == 29.56
     assert round(stats_c[0]['sum'], 2) == 76.85
 
-    # check that percent_cover_scale is required
-    with pytest.raises(Exception):
-        zonal_stats(polygon, arr, affine=affine, percent_cover_selection=0.75)
+    # check that percent_cover_scale is set to 10 when not provided by user
+    stats_d = zonal_stats(polygon, arr, affine=affine, percent_cover_weighting=True, stats=stats_options)
+    assert round(stats_d[0]['mean'], 2) == round(stats_c[0]['mean'], 2)
 
     # check invalid percent_cover_scale value
     with pytest.raises(Exception):
