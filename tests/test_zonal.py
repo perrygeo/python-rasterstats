@@ -468,10 +468,11 @@ def test_geojson_out_with_no_properties():
                     0, -1, 2)
 
     stats = zonal_stats(polygon, arr, affine=affine, geojson_out=True)
+    assert 'properties' in stats[0]
     for key in ['count', 'min', 'max', 'mean']:
-        assert key in stats[0]
+        assert key in stats[0]['properties']
 
-    assert stats[0]['mean'] == 34
+    assert stats[0]['properties']['mean'] == 34
 
 
 # remove when copy_properties alias is removed
