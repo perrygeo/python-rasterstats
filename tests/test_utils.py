@@ -2,10 +2,11 @@ import sys
 import os
 import pytest
 import numpy as np
-from shapely.geometry import LineString
+from affine import Affine
+from shapely.geometry import LineString, Polygon
 from rasterstats.utils import \
     stats_to_csv, get_percentile, remap_categories, boxify_points, \
-    rebin_sum
+    rebin_sum, rasterize_pctcover_geom
 from rasterstats import zonal_stats
 from rasterstats.utils import VALID_STATS
 
@@ -68,7 +69,6 @@ def test_boxify_non_point():
 
 
 def test_rebin_sum():
-
     test_input = np.array(
         [
             [1, 1, 2, 2],
@@ -76,9 +76,32 @@ def test_rebin_sum():
             [3, 3, 4, 4],
             [3, 3, 4, 4]
         ])
-
     test_output = rebin_sum(test_input, (2,2), np.int32)
-
     correct_output = np.array([[4, 8],[12, 16]])
-
     assert np.array_equal(test_output, correct_output)
+
+
+def test_rasterize_pctcover_geom():
+    polygon_a = Polygon([[0, 0], [2, 0], [2, 2], [0, 2]])
+    shape_a = (2, 2)
+    affine_a = Affine(1, 0, 0,
+                      0, -1, 2)
+    pct_cover_a = rasterize_pctcover_geom(polygon_a, shape_a, affine_a, scale=10, all_touched=False)
+    correct_output_a = np.array([[1, 1], [1, 1]])
+    assert np.array_equal(pct_cover_a, correct_output_a)
+
+    polygon_b = Polygon([[0.5, 0.5], [1.5, 0.5], [1.5, 1.5], [0.5, 1.5]])
+    shape_b = (2, 2)
+    affine_b = Affine(1, 0, 0,
+                      0, -1, 2)
+    pct_cover_b = rasterize_pctcover_geom(polygon_b, shape_b, affine_b, scale=10, all_touched=False)
+    correct_output_b = np.array([[0.25, 0.25], [0.25, 0.25]])
+    assert np.array_equal(pct_cover_b, correct_output_b)
+
+    polygon_c = Polygon([[0.5, 0.5], [1.5, 0.5], [1.5, 1.5], [0.5, 1.5]])
+    shape_c = (2, 2)
+    affine_c = Affine(1, 0, 0,
+                      0, -1, 2)
+    pct_cover_c = rasterize_pctcover_geom(polygon_c, shape_c, affine_c, scale=100, all_touched=False)
+    correct_output_c = np.array([[0.25, 0.25], [0.25, 0.25]])
+    assert np.array_equal(pct_cover_c, correct_output_c)
