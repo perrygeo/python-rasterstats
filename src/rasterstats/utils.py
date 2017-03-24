@@ -74,14 +74,21 @@ def rasterize_pctcover_geom(geom, shape, affine, scale=None, all_touched=False):
     if scale is None:
         scale = 10
     min_dtype = min_scalar_type(scale**2)
-    pixel_size = affine[0]/scale
+
+    pixel_size_lon = affine[0]/scale
+    pixel_size_lat = affine[4]/scale
+    
     topleftlon = affine[2]
     topleftlat = affine[5]
-    new_affine = Affine(pixel_size, 0, topleftlon,
-                    0, -pixel_size, topleftlat)
+
+    new_affine = Affine(pixel_size_lon, 0, topleftlon,
+                        0, pixel_size_lat, topleftlat)
+
     new_shape = (shape[0]*scale, shape[1]*scale)
+
     rv_array = rasterize_geom(geom, new_shape, new_affine, all_touched=all_touched)
     rv_array = rebin_sum(rv_array, shape, min_dtype)
+    
     return rv_array.astype('float32') / (scale**2)
 
 
