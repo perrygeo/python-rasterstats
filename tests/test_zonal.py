@@ -452,7 +452,7 @@ def test_nan_counts():
     for res in stats:
         assert res['count'] == 3  # 3 pixels of valid data
         assert res['nodata'] == 3  # 3 pixels of nodata
-        assert 'nan' not in
+        assert 'nan' not in res
 
 
 # Optional tests
