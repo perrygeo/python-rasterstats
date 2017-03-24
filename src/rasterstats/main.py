@@ -326,11 +326,7 @@ def gen_zonal_stats(
                     feature_stats[pctile] = np.percentile(pctarr, q)
 
             if 'nodata' in stats:
-                if percent_cover:
-                    featmasked = np.ma.MaskedArray(fsrc.array, mask=np.logical_not(rv_pct_array))
-                else:
-                    featmasked = np.ma.MaskedArray(fsrc.array, mask=np.logical_not(rv_array))
-
+                featmasked = np.ma.MaskedArray(fsrc.array, mask=np.logical_not(rv_array))
                 feature_stats['nodata'] = float((featmasked == fsrc.nodata).sum())
 
             if add_stats is not None:
