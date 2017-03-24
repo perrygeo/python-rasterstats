@@ -424,6 +424,28 @@ def test_geojson_out():
         assert 'id' in feature['properties']  # from orig
         assert 'count' in feature['properties']  # from zonal stats
 
+
+def test_nan_counts():
+    from affine import Affine
+    transform = Affine(1, 0, 1, 0, -1, 3)
+
+    data = np.array([
+        [np.nan, np.nan, np.nan],
+        [0, 0, 0],
+        [1, 4, 5]
+    ])
+
+    # geom extends an additional row to left
+    geom = 'POLYGON ((1 0, 4 0, 4 3, 1 3, 1 0))'
+
+    stats = zonal_stats(geom, data, affine=transform, nodata=0.0, stats="*")
+
+    for res in stats:
+        assert res['count'] == 3  # 3 pixels of valid data
+        assert res['nodata'] == 3  # 3 pixels of nodata
+        assert res['nan'] == 3  # 3 pixels of nans
+
+
 # Optional tests
 def test_geodataframe_zonal():
     polygons = os.path.join(DATA, 'polygons.shp')
