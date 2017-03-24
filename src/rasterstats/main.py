@@ -244,9 +244,11 @@ def gen_zonal_stats(
 
             # Mask the source data array
             # mask everything that is not a valid value or not within our geom
+
             masked = np.ma.MaskedArray(
                 fsrc.array,
                 mask=(isnodata | ~rv_array))
+
 
             # execute zone_func on masked zone ndarray
             if zone_func is not None:
@@ -294,6 +296,7 @@ def gen_zonal_stats(
                 if 'sum' in stats:
                     if percent_cover_weighting:
                         feature_stats['sum'] = float(np.sum(masked * cover_weights))
+
                     else:
                         feature_stats['sum'] = float(masked.sum())
                 if 'std' in stats:
@@ -323,7 +326,11 @@ def gen_zonal_stats(
                     feature_stats[pctile] = np.percentile(pctarr, q)
 
             if 'nodata' in stats:
-                featmasked = np.ma.MaskedArray(fsrc.array, mask=np.logical_not(rv_array))
+                if percent_cover:
+                    featmasked = np.ma.MaskedArray(fsrc.array, mask=np.logical_not(rv_pct_array))
+                else:
+                    featmasked = np.ma.MaskedArray(fsrc.array, mask=np.logical_not(rv_array))
+
                 feature_stats['nodata'] = float((featmasked == fsrc.nodata).sum())
 
             if add_stats is not None:

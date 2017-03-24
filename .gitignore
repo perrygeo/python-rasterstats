@@ -16,3 +16,4 @@ Vagrantfile
 .idea
 venv
 .eggs
+.cache
