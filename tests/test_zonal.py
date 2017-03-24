@@ -438,12 +438,21 @@ def test_nan_counts():
     # geom extends an additional row to left
     geom = 'POLYGON ((1 0, 4 0, 4 3, 1 3, 1 0))'
 
+    # nan stat is requested
     stats = zonal_stats(geom, data, affine=transform, nodata=0.0, stats="*")
 
     for res in stats:
         assert res['count'] == 3  # 3 pixels of valid data
         assert res['nodata'] == 3  # 3 pixels of nodata
         assert res['nan'] == 3  # 3 pixels of nans
+
+    # nan are ignored if nan stat is not requested
+    stats = zonal_stats(geom, data, affine=transform, nodata=0.0, stats="count nodata")
+
+    for res in stats:
+        assert res['count'] == 3  # 3 pixels of valid data
+        assert res['nodata'] == 3  # 3 pixels of nodata
+        assert 'nan' not in
 
 
 # Optional tests
