@@ -458,6 +458,7 @@ def test_geojson_out():
         assert 'count' in feature['properties']  # from zonal stats
 
 
+
 # do not think this is actually testing the line i wanted it to
 # since the read_features func for this data type is generating
 # the properties field
@@ -487,6 +488,36 @@ def test_copy_properties_warn():
     with pytest.deprecated_call():
         stats_b = zonal_stats(polygons, raster, copy_properties=True)
     assert stats_a == stats_b
+    
+
+def test_nan_counts():
+    from affine import Affine
+    transform = Affine(1, 0, 1, 0, -1, 3)
+
+    data = np.array([
+        [np.nan, np.nan, np.nan],
+        [0, 0, 0],
+        [1, 4, 5]
+    ])
+
+    # geom extends an additional row to left
+    geom = 'POLYGON ((1 0, 4 0, 4 3, 1 3, 1 0))'
+
+    # nan stat is requested
+    stats = zonal_stats(geom, data, affine=transform, nodata=0.0, stats="*")
+
+    for res in stats:
+        assert res['count'] == 3  # 3 pixels of valid data
+        assert res['nodata'] == 3  # 3 pixels of nodata
+        assert res['nan'] == 3  # 3 pixels of nans
+
+    # nan are ignored if nan stat is not requested
+    stats = zonal_stats(geom, data, affine=transform, nodata=0.0, stats="count nodata")
+
+    for res in stats:
+        assert res['count'] == 3  # 3 pixels of valid data
+        assert res['nodata'] == 3  # 3 pixels of nodata
+        assert 'nan' not in res
 
 
 # Optional tests
