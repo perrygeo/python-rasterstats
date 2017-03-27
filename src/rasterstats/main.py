@@ -7,7 +7,8 @@ from affine import Affine
 from shapely.geometry import shape
 from .io import read_features, Raster
 from .utils import (rasterize_geom, get_percentile, check_stats,
-                    remap_categories, key_assoc_val, boxify_points)
+                    remap_categories, key_assoc_val, boxify_points,
+                    union_bounds)
 
 
 def raster_stats(*args, **kwargs):
@@ -40,6 +41,7 @@ def gen_zonal_stats(
         category_map=None,
         add_stats=None,
         zone_func=None,
+        groupby=None,
         raster_out=False,
         prefix=None,
         geojson_out=False, **kwargs):
@@ -89,8 +91,20 @@ def gen_zonal_stats(
     add_stats: dict
         with names and functions of additional stats to compute, optional
 
-    zone_func: callable
+    zone_func: callable, optional
         function to apply to zone ndarray prior to computing stats
+
+    groupby: string or callable, optional
+        group zones together prior to computing stats.
+
+        if value is a string, groupby key is read from feature properties
+        if value is a function, groupby key is the function's return value
+
+        Note: grouped zones are rasterized together which will yield unexpected
+        results for groups with overlapping geometry.
+
+        Each feature dictionary will have the following additional key:
+        zone_id: value which was used to group zones.
 
     raster_out: boolean
         Include the masked numpy array for each feature?, optional
@@ -141,14 +155,14 @@ def gen_zonal_stats(
 
     with Raster(raster, affine, nodata, band) as rast:
         features_iter = read_features(vectors, layer)
-        for _, feat in enumerate(features_iter):
-            geom = shape(feat['geometry'])
 
-            if 'Point' in geom.type:
-                geom = boxify_points(geom, rast)
+        for zone_attrs, features in _group_features(features_iter,
+                                                   groupby):
 
-            geom_bounds = tuple(geom.bounds)
-
+            geom = [shape(f['geometry']) for f in features]
+            geom = [boxify_points(g, rast) if 'Point' in g.type else g for g in geom]
+            geom_bounds = union_bounds([tuple(g.bounds) for g in geom])
+            
             fsrc = rast.read(bounds=geom_bounds)
 
             # rasterized geometry
@@ -165,9 +179,8 @@ def gen_zonal_stats(
 
             # Mask the source data array
             # mask everything that is not a valid value or not within our geom
-            masked = np.ma.MaskedArray(
-                fsrc.array,
-                mask=(isnodata | ~rv_array))
+            masked = np.ma.MaskedArray(fsrc.array,
+                                       mask=(isnodata | ~rv_array))
 
             # execute zone_func on masked zone ndarray
             if zone_func is not None:
@@ -195,6 +208,7 @@ def gen_zonal_stats(
                         feature_stats = remap_categories(category_map, feature_stats)
                 else:
                     feature_stats = {}
+
 
                 if 'min' in stats:
                     feature_stats['min'] = float(masked.min())
@@ -257,11 +271,45 @@ def gen_zonal_stats(
                     prefixed_feature_stats[newkey] = val
                 feature_stats = prefixed_feature_stats
 
+            if 'zone_id' in zone_attrs.keys():
+                feature_stats['zone_id'] = zone_attrs['zone_id']
+
             if geojson_out:
                 for key, val in feature_stats.items():
-                    if 'properties' not in feat:
-                        feat['properties'] = {}
-                    feat['properties'][key] = val
-                yield feat
+                    if 'properties' not in zone_attrs:
+                        zone_attrs['properties'] = {}
+                    zone_attrs['properties'][key] = val
+                yield zone_attrs
             else:
                 yield feature_stats
+
+
+def _group_features(features, groupby):
+
+    from collections import defaultdict
+
+    # return features ungrouped...
+    if groupby is None:
+        for i, f in enumerate(features):
+            yield (f, (f,))
+
+    if groupby is not None:
+        groups = defaultdict(list)
+        # handle groupby property name
+        if isinstance(groupby, str):
+            for f in features:
+                if groupby not in f['properties'].keys():
+                    raise ValueError('invalid groupby {}'.format(groupby))
+
+                if groupby is not None:
+                    groups[f['properties'][groupby]].append(f)
+
+        # handle groupby function
+        elif callable(groupby):
+            for f in features:
+                groups[groupby(f)].append(f)
+        else:
+            raise TypeError('invalid groupby {}'.format(groupby))
+
+        for name, group in groups.items():
+            yield (dict(zone_id=name), group)

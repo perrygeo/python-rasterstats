@@ -219,6 +219,7 @@ def test_no_overlap():
         # no polygon should have any overlap
         assert res['count'] is 0
 
+
 def test_all_touched():
     polygons = os.path.join(DATA, 'polygons.shp')
     stats = zonal_stats(polygons, raster, all_touched=True)
@@ -292,8 +293,10 @@ def test_add_stats():
 def test_mini_raster():
     polygons = os.path.join(DATA, 'polygons.shp')
     stats = zonal_stats(polygons, raster, raster_out=True)
-    stats2 = zonal_stats(polygons, stats[0]['mini_raster_array'],
-                         raster_out=True, affine=stats[0]['mini_raster_affine'])
+    stats2 = zonal_stats(polygons,
+                         stats[0]['mini_raster_array'],
+                         raster_out=True,
+                         affine=stats[0]['mini_raster_affine'])
     assert (stats[0]['mini_raster_array'] == stats2[0]['mini_raster_array']).sum() == \
         stats[0]['count']
 
@@ -321,11 +324,66 @@ def test_zone_func_good():
     assert stats[0]['min'] == 0
     assert stats[0]['mean'] == 0
 
+
 def test_zone_func_bad():
     not_a_func = 'jar jar binks'
     polygons = os.path.join(DATA, 'polygons.shp')
     with pytest.raises(TypeError):
         zonal_stats(polygons, raster, zone_func=not_a_func)
+
+
+def test_groupby_fieldname():
+    polygons = os.path.join(DATA, 'polygons_groupby.shp')
+    stats = zonal_stats(polygons, raster, groupby='group')
+    for key in ['count', 'min', 'max', 'mean']:
+        assert key in stats[0]
+    assert len(stats) == 1
+    assert stats[0]['count'] == 125
+    assert round(stats[0]['mean'], 2) == 31.44
+    assert stats[0]['zone_id'] == 1
+
+
+def test_groupby_function():
+    polygons = os.path.join(DATA, 'polygons_groupby.shp')
+    groupby = lambda f: f['properties']['group']
+    stats = zonal_stats(polygons, raster, groupby=groupby)
+    for key in ['count', 'min', 'max', 'mean']:
+        assert key in stats[0]
+    assert len(stats) == 1
+    assert stats[0]['count'] == 125
+    assert round(stats[0]['mean'], 2) == 31.44
+    assert stats[0]['zone_id'] == 1
+
+
+def test_demonstrate_groupby_overlap_unexpected_results():
+    polygons = os.path.join(DATA, 'polygons_partial_overlap.shp')
+
+    groupby_stats = zonal_stats(polygons,
+                                raster,
+                                groupby=lambda f: 'single_group',
+                                stats='count')
+
+    normal_stats = zonal_stats(polygons,
+                               raster,
+                               stats='count')
+
+    groupby_sum = sum([v['count'] for v in groupby_stats])
+    normal_sum = sum([v['count'] for v in normal_stats])
+
+    assert groupby_sum != normal_sum
+
+
+def test_groupby_field_bad():
+    polygons = os.path.join(DATA, 'polygons_groupby.shp')
+
+    missing_field = 'jar jar binks'
+    with pytest.raises(ValueError):
+        zonal_stats(polygons, raster, groupby=missing_field)
+
+    wrong_type = []
+    with pytest.raises(TypeError):
+        zonal_stats(polygons, raster, groupby=wrong_type)
+
 
 def test_percentile_nodata():
     polygons = os.path.join(DATA, 'polygons.shp')

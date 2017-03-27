@@ -6,7 +6,12 @@ from rasterstats.utils import \
     stats_to_csv, get_percentile, remap_categories, boxify_points
 from rasterstats import zonal_stats
 from rasterstats.utils import VALID_STATS
+from rasterstats.utils import union_bounds
+from rasterstats.utils import rasterize_geom
 
+import fiona as fio
+import rasterio as rio
+import numpy as np
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 DATA = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
@@ -32,6 +37,7 @@ def test_get_percentile():
     assert get_percentile('percentile_0') == 0.0
     assert get_percentile('percentile_100') == 100.0
     assert get_percentile('percentile_13.2') == 13.2
+
 
 def test_get_bad_percentile():
     with pytest.raises(ValueError):
@@ -63,3 +69,26 @@ def test_boxify_non_point():
     line = LineString([(0, 0), (1, 1)])
     with pytest.raises(ValueError):
         boxify_points(line, None)
+
+
+def test_rasterize_geom():
+    raster = os.path.join(DATA, 'slope.tif')
+    polygons = os.path.join(DATA, 'polygons.shp')
+
+    with fio.open(polygons) as feat_src:
+        polys = [f['geometry'] for f in feat_src]
+        with rio.open(raster, 'r') as raster_src:
+
+            # test single geometry
+            result = rasterize_geom(polys[0], like=raster_src)
+            assert isinstance(result, np.ndarray)
+
+            # test geometry list
+            result = rasterize_geom(polys, like=raster_src)
+            assert isinstance(result, np.ndarray)
+
+
+def test_union_bounds():
+    bounds = [(-2, -2, 1, 1), (-1, -1, 2, 2)]
+    bounds = union_bounds(bounds)
+    assert bounds == (-2, -2, 2, 2)
