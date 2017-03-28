@@ -142,6 +142,12 @@ def gen_zonal_stats(
 
 
     if 'no_overlap' in stats:
+
+        if 'nodata' in stats and nodata is None:
+            nodata = -999
+            warnings.warn("Setting nodata to -999; specify nodata explicitly "
+                          "when requesting no_overlap stat")
+
         if no_overlap is None:
             no_overlap = -998
             if no_overlap == nodata:
@@ -157,7 +163,6 @@ def gen_zonal_stats(
     tmp_nodata = no_overlap if 'no_overlap' in stats else nodata
 
 
-
     with Raster(raster, affine=affine, nodata=tmp_nodata, band=band) as rast:
 
         features_iter = read_features(vectors, layer)
@@ -171,21 +176,17 @@ def gen_zonal_stats(
 
             fsrc = rast.read(bounds=geom_bounds, masked=False)
 
-            print stats
-            print "no_overlap: {0}".format(no_overlap)
-            print "nodata: {0}".format(nodata)
-            print "tmp_nodata: {0}".format(tmp_nodata)
-            print "fsrc.nodata: {0}".format(fsrc.nodata)
-
-
             # rasterized geometry
             rv_array = rasterize_geom(geom, like=fsrc, all_touched=all_touched)
+
+            if nodata is None and no_overlap is None:
+                nodata = fsrc.nodata
 
             # nodata mask
             isnodata = (fsrc.array == fsrc.nodata)
 
             # include actual nodata val when no_overlap is used
-            if nodata is not None:
+            if nodata is not None and no_overlap is not None:
                 isnodata = (isnodata | (fsrc.array == nodata))
 
             # add nan mask (if necessary)
@@ -201,15 +202,20 @@ def gen_zonal_stats(
                 fsrc.array,
                 mask=(isnodata | ~rv_array))
 
+            # print stats
+            # print "no_overlap: {0}".format(no_overlap)
+            # print "nodata: {0}".format(nodata)
+            # print "tmp_nodata: {0}".format(tmp_nodata)
+            # print "fsrc.nodata: {0}".format(fsrc.nodata)
 
-            print "fsrc.array"
-            print fsrc.array
-            print "isnodata"
-            print isnodata
-            print "rv_array"
-            print rv_array
-            print "masked"
-            print masked
+            # print "fsrc.array"
+            # print fsrc.array
+            # print "isnodata"
+            # print isnodata
+            # print "rv_array"
+            # print rv_array
+            # print "masked"
+            # print masked
 
             # execute zone_func on masked zone ndarray
             if zone_func is not None:
@@ -280,7 +286,7 @@ def gen_zonal_stats(
                 featmasked = np.ma.MaskedArray(fsrc.array, mask=(~rv_array))
 
                 if 'nodata' in stats:
-                    feature_stats['nodata'] = float((featmasked == fsrc.nodata).sum())
+                    feature_stats['nodata'] = float((featmasked == nodata).sum())
                 if 'nan' in stats:
                     feature_stats['nan'] = float(np.isnan(featmasked).sum()) if has_nan else 0
                 if 'no_overlap' in stats:
