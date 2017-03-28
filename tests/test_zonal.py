@@ -482,7 +482,7 @@ def test_array_overlap_counts():
         assert res['no_overlap'] == 3  # Three pixels of no overlap
 
 
-def test_raster_overlap_counts()
+def test_raster_overlap_counts():
     nodata = -9999
     no_overlap = -8888
 
