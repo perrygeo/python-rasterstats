@@ -555,6 +555,29 @@ def test_array_overlap_counts():
         assert res['nan'] == 1  # One pixel of nan
 
 
+def test_missing_no_overlap_logic():
+    nodata = -998
+    no_overlap = None
+
+    transform = Affine(1, 0, 1, 0, -1, 3)
+
+    data = np.array([
+        [-998, 0.0, 516.2840576171875, np.nan],
+        [-998, 178.74169921875, 573.80126953125, 415.345947265625],
+        [-998, 397.3150939941406, 568.3016357421875, 185.3491973876953]
+    ])
+
+    geom = 'POLYGON ((0 0, 5 0, 5 3, 0 3, 0 0))'
+
+    stats = zonal_stats(geom, data, affine=transform, stats="*", nodata=nodata, no_overlap=no_overlap)
+
+    for res in stats:
+        assert res['count'] == 8  # Two pixels of valid data
+        assert res['nodata'] == 3  # Two pixels of nodata
+        assert res['no_overlap'] == 3  # Three pixels of no overlap
+        assert res['nan'] == 1  # One pixel of nan
+
+
 def test_raster_overlap_counts():
     nodata = -9999
     no_overlap = -8888
