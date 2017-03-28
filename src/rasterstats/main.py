@@ -135,8 +135,8 @@ def gen_zonal_stats(
         warnings.warn("Use `geojson_out` to preserve feature properties",
                       DeprecationWarning)
 
-    bn = kwargs.get('band_num')
-    if bn:
+    band_num = kwargs.get('band_num')
+    if band_num:
         warnings.warn("Use `band` to specify band number", DeprecationWarning)
         band = band_num
 
@@ -189,8 +189,9 @@ def gen_zonal_stats(
                 isnodata = (isnodata | (fsrc.array == nodata))
 
             # add nan mask (if necessary)
-            if np.issubdtype(fsrc.array.dtype, float) and \
-               np.isnan(fsrc.array.min()):
+            has_nan = (np.issubdtype(fsrc.array.dtype, float)
+                and np.isnan(fsrc.array.min()))
+            if has_nan:
                 isnodata = (isnodata | np.isnan(fsrc.array))
 
 
@@ -275,14 +276,15 @@ def gen_zonal_stats(
                     feature_stats[pctile] = np.percentile(pctarr, q)
 
 
-            if 'nodata' in stats or 'no_overlap' in stats:
+            if any(i in stats for i in ['nodata', 'nan', 'no_overlap']):
                 featmasked = np.ma.MaskedArray(fsrc.array, mask=(~rv_array))
 
                 if 'nodata' in stats:
                     feature_stats['nodata'] = float((featmasked == fsrc.nodata).sum())
+                if 'nan' in stats:
+                    feature_stats['nan'] = float(np.isnan(featmasked).sum()) if has_nan else 0
                 if 'no_overlap' in stats:
                     feature_stats['no_overlap'] = float((featmasked == no_overlap).sum())
-
 
             if add_stats is not None:
                 for stat_name, stat_func in add_stats.items():

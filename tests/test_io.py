@@ -268,6 +268,11 @@ def test_Raster():
 
     r2 = Raster(arr, affine, nodata, band=1).read(bounds)
 
+    with pytest.raises(ValueError):
+        r3 = Raster(arr, affine, nodata, band=1).read()
+    with pytest.raises(ValueError):
+        r4 = Raster(arr, affine, nodata, band=1).read(bounds=1, window=1)
+
     # If the abstraction is correct, the arrays are equal
     assert np.array_equal(r1.array, r2.array)
 
