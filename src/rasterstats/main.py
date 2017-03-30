@@ -187,7 +187,7 @@ def gen_zonal_stats(
 
             if latitude_correction and 'mean' in stats:
                 latitude_scale = [
-                    get_latitude_scale(fsrc.affine[5] - fsrc.affine[0] * (0.5 + i))
+                    get_latitude_scale(fsrc.affine[5] - abs(fsrc.affine[4]) * (0.5 + i))
                     for i in range(fsrc.shape[0])
                 ]
 
