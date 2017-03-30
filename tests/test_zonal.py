@@ -9,6 +9,8 @@ import rasterio
 from rasterstats import zonal_stats, raster_stats
 from rasterstats.utils import VALID_STATS
 from rasterstats.io import read_featurecollection, read_features
+from shapely.geometry import Polygon
+from affine import Affine
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
@@ -25,6 +27,16 @@ def test_main():
     assert stats[0]['count'] == 75
     assert stats[1]['count'] == 50
     assert round(stats[0]['mean'], 2) == 14.66
+
+
+# remove after band_num alias is removed
+def test_band_alias():
+    polygons = os.path.join(DATA, 'polygons.shp')
+    stats_a = zonal_stats(polygons, raster)
+    stats_b = zonal_stats(polygons, raster, band=1)
+    with pytest.deprecated_call():
+        stats_c = zonal_stats(polygons, raster, band_num=1)
+    assert stats_a[0]['count'] == stats_b[0]['count'] == stats_c[0]['count']
 
 
 def test_zonal_global_extent():
@@ -388,6 +400,27 @@ def test_some_nodata():
     assert stats[1]['nodata'] == 19
     assert stats[1]['count'] == 31
 
+
+# update this if nan end up being incorporated into nodata
+def test_nan_nodata():
+    polygon = Polygon([[0, 0], [2, 0], [2, 2], [0, 2]])
+    arr = np.array([
+        [np.nan, 12.25],
+        [-999, 12.75]
+    ])
+    affine = Affine(1, 0, 0,
+                    0, -1, 2)
+
+    stats = zonal_stats(polygon, arr, affine=affine, nodata=-999,
+                        stats='nodata count sum mean min max')
+
+    assert stats[0]['nodata'] == 1
+    assert stats[0]['count'] == 2
+    assert stats[0]['mean'] == 12.5
+    assert stats[0]['min'] == 12.25
+    assert stats[0]['max'] == 12.75
+
+
 def test_some_nodata_ndarray():
     polygons = os.path.join(DATA, 'polygons.shp')
     raster = os.path.join(DATA, 'slope_nodata.tif')
@@ -437,6 +470,67 @@ def test_geojson_out():
         assert feature['type'] == 'Feature'
         assert 'id' in feature['properties']  # from orig
         assert 'count' in feature['properties']  # from zonal stats
+
+
+# do not think this is actually testing the line i wanted it to
+# since the read_features func for this data type is generating
+# the properties field
+def test_geojson_out_with_no_properties():
+    polygon = Polygon([[0, 0], [0, 0,5], [1, 1.5], [1.5, 2], [2, 2], [2, 0]])
+    arr = np.array([
+        [100, 1],
+        [100, 1]
+    ])
+    affine = Affine(1, 0, 0,
+                    0, -1, 2)
+
+    stats = zonal_stats(polygon, arr, affine=affine, geojson_out=True)
+    assert 'properties' in stats[0]
+    for key in ['count', 'min', 'max', 'mean']:
+        assert key in stats[0]['properties']
+
+    assert stats[0]['properties']['mean'] == 34
+
+
+# remove when copy_properties alias is removed
+def test_copy_properties_warn():
+    polygons = os.path.join(DATA, 'polygons.shp')
+    # run once to trigger any other unrelated deprecation warnings
+    # so the test does not catch them instead
+    stats_a = zonal_stats(polygons, raster)
+    with pytest.deprecated_call():
+        stats_b = zonal_stats(polygons, raster, copy_properties=True)
+    assert stats_a == stats_b
+    
+
+def test_nan_counts():
+    from affine import Affine
+    transform = Affine(1, 0, 1, 0, -1, 3)
+
+    data = np.array([
+        [np.nan, np.nan, np.nan],
+        [0, 0, 0],
+        [1, 4, 5]
+    ])
+
+    # geom extends an additional row to left
+    geom = 'POLYGON ((1 0, 4 0, 4 3, 1 3, 1 0))'
+
+    # nan stat is requested
+    stats = zonal_stats(geom, data, affine=transform, nodata=0.0, stats="*")
+
+    for res in stats:
+        assert res['count'] == 3  # 3 pixels of valid data
+        assert res['nodata'] == 3  # 3 pixels of nodata
+        assert res['nan'] == 3  # 3 pixels of nans
+
+    # nan are ignored if nan stat is not requested
+    stats = zonal_stats(geom, data, affine=transform, nodata=0.0, stats="count nodata")
+
+    for res in stats:
+        assert res['count'] == 3  # 3 pixels of valid data
+        assert res['nodata'] == 3  # 3 pixels of nodata
+        assert 'nan' not in res
 
 
 # Optional tests

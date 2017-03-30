@@ -1,5 +1,6 @@
-0.12dev
+0.12.0
 - zone_func argument to apply a function to the masked array before computing stats
+- support shapely 1.6 exceptions
 
 0.11
 - change `band_num` parameter to `band`

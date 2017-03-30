@@ -9,7 +9,7 @@ from .io import window_bounds
 
 DEFAULT_STATS = ['count', 'min', 'max', 'mean']
 VALID_STATS = DEFAULT_STATS + \
-    ['sum', 'std', 'median', 'majority', 'minority', 'unique', 'range', 'nodata']
+    ['sum', 'std', 'median', 'majority', 'minority', 'unique', 'range', 'nodata', 'nan']
 #  also percentile_{q} but that is handled as special case
 
 
