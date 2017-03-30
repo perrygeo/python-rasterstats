@@ -53,7 +53,7 @@ def bilinear(arr, x, y):
     if hasattr(arr, 'count') and arr.count() != 4:
         # a masked array with at least one nodata
         # fall back to nearest neighbor
-        val = arr[round(1 - y), round(x)]
+        val = arr[int(round(1 - y)), int(round(x))]
         if val is masked:
             return None
         else:
@@ -172,7 +172,7 @@ def gen_point_query(
             for x, y in geom_xys(geom):
                 if interpolate == 'nearest':
                     r, c = rast.index(x, y)
-                    window = ((r, r+1), (c, c+1))
+                    window = ((int(r), int(r+1)), (int(c), int(c+1)))
                     src_array = rast.read(window=window, masked=True).array
                     val = src_array[0, 0]
                     if val is masked:

@@ -10,7 +10,10 @@ import warnings
 from rasterio.transform import guard_transform
 from affine import Affine
 import numpy as np
-from shapely.geos import ReadingError
+try:
+    from shapely.errors import ReadingError
+except:
+    from shapely.geos import ReadingError
 from shapely import wkt, wkb
 from collections import Iterable, Mapping
 

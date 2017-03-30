@@ -34,7 +34,7 @@ def test_cli_feature_stdin():
     warnings.simplefilter('ignore')
     result = runner.invoke(zonalstats,
                            ['--raster', raster,
-                            '--stats', 'mean',
+                            '--stats', 'all',
                             '--prefix', 'test_'],
                            input=open(vector, 'r').read())
     assert result.exit_code == 0
@@ -42,6 +42,7 @@ def test_cli_feature_stdin():
     assert len(outdata['features']) == 1
     feature = outdata['features'][0]
     assert 'test_mean' in feature['properties']
+    assert 'test_std' in feature['properties']
 
 
 def test_cli_features_sequence():
