@@ -29,6 +29,14 @@ def test_main():
     assert round(stats[0]['mean'], 2) == 14.66
 
 
+def test_polygon_id():
+    polygons = os.path.join(DATA, 'polygons.shp')
+    features = read_features(polygons)
+
+    stats = zonal_stats(polygons, raster)
+    for x, feature in enumerate(features):
+        assert stats[x]['id'] == feature['properties']['id']
+
 # remove after band_num alias is removed
 def test_band_alias():
     polygons = os.path.join(DATA, 'polygons.shp')
