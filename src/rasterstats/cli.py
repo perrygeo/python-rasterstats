@@ -24,10 +24,12 @@ SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--nodata', type=int, default=None)
 @click.option('--prefix', type=str, default='_')
 @click.option('--stats', type=str, default=None)
+@click.option('--keep_ids', default=True)
+@click.option('--keep_properties', default=False)
 @cligj.sequence_opt
 @cligj.use_rs_opt
 def zonalstats(features, raster, all_touched, band, categorical,
-               indent, info, nodata, prefix, stats, sequence, use_rs):
+               indent, info, nodata, prefix, stats,keep_ids, keep_properties, sequence, use_rs):
     '''zonalstats generates summary statistics of geospatial raster datasets
     based on vector features.
 
@@ -61,6 +63,8 @@ def zonalstats(features, raster, all_touched, band, categorical,
         nodata=nodata,
         stats=stats,
         prefix=prefix,
+        preserve_properties=keep_properties,
+        preserve_ids=keep_ids,
         geojson_out=True)
 
     if sequence:
