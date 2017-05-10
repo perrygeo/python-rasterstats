@@ -195,6 +195,12 @@ def gen_zonal_stats(
                         feature_stats = remap_categories(category_map, feature_stats)
                 else:
                     feature_stats = {}
+                
+            
+                if 'properties' in feat:
+                    feature_stats['properties'] = feat['properties']
+                    if 'id' in feat['properties']:
+                        feature_stats['id'] = feat['properties']['id']
 
                 if 'min' in stats:
                     feature_stats['min'] = float(masked.min())
