@@ -44,7 +44,7 @@ def gen_zonal_stats(
         prefix=None,
         geojson_out=False,
         preserve_properties=False,
-        preserve_ids=True, **kwargs):
+        preserve_ids=False, **kwargs):
     """Zonal statistics of raster values aggregated to vector geometries.
 
     Parameters
