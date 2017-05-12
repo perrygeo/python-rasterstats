@@ -18,7 +18,6 @@ def test_cli_feature():
                                         '--stats', 'mean',
                                         '--prefix', 'test_'])
     assert result.exit_code == 0
-    print result.output
     outdata = json.loads(result.output)
     assert len(outdata['features']) == 1
     feature = outdata['features'][0]
