@@ -7,7 +7,8 @@ from affine import Affine
 from shapely.geometry import shape
 from .io import read_features, Raster
 from .utils import (rasterize_geom, get_percentile, check_stats,
-                    remap_categories, key_assoc_val, boxify_points)
+                    remap_categories, key_assoc_val, boxify_points,
+                    split_geom, VALID_STATS)
 
 
 def raster_stats(*args, **kwargs):
@@ -42,6 +43,7 @@ def gen_zonal_stats(
         zone_func=None,
         raster_out=False,
         prefix=None,
+        limit=None,
         geojson_out=False, **kwargs):
     """Zonal statistics of raster values aggregated to vector geometries.
 
@@ -103,6 +105,13 @@ def gen_zonal_stats(
     prefix: string
         add a prefix to the keys (default: None)
 
+    limit: int
+        maximum number of pixels allowed to be read from raster based on
+        feature bounds. Useful when dealing with vector data containing
+        large features and raster with a fine resolution to prevent
+        memory errors. Estimated pixels per GB vary depending on options,
+        but a rough range is 5 to 80 million pixels per GB of memory.
+
     geojson_out: boolean
         Return list of GeoJSON-like features (default: False)
         Original feature geometry and properties will be retained
@@ -139,6 +148,29 @@ def gen_zonal_stats(
         warnings.warn("Use `band` to specify band number", DeprecationWarning)
         band = band_num
 
+
+
+
+    # -----------------------------------------------------------------------------
+    # make sure feature split/aggregations will work with options provided
+
+    invalid_limit_stats = [
+        'minority', 'majority', 'median', 'std', 'unique'
+
+    ] + [s for s in stats if s.startswith('percentile_')]
+
+    invalid_limit_conditions = (
+        any([i in invalid_limit_stats for i in stats])
+        or add_stats is not None
+        or raster_out
+    )
+    if limit is not None and invalid_limit_conditions:
+        raise Exception("Cannot use `limit` to split geometries when using "
+                        "`add_stats` or `raster_out` options")
+
+
+
+
     with Raster(raster, affine, nodata, band) as rast:
         features_iter = read_features(vectors, layer)
         for _, feat in enumerate(features_iter):
@@ -149,97 +181,179 @@ def gen_zonal_stats(
 
             geom_bounds = tuple(geom.bounds)
 
-            fsrc = rast.read(bounds=geom_bounds)
 
-            # rasterized geometry
-            rv_array = rasterize_geom(geom, like=fsrc, all_touched=all_touched)
+            # -----------------------------------------------------------------------------
+            # build geom_list (split geoms if needed)
 
-            # nodata mask
-            isnodata = (fsrc.array == fsrc.nodata)
 
-            # add nan mask (if necessary)
-            has_nan = (np.issubdtype(fsrc.array.dtype, float)
-                and np.isnan(fsrc.array.min()))
-            if has_nan:
-                isnodata = (isnodata | np.isnan(fsrc.array))
+            if limit is None:
+                geom_list = [geom]
 
-            # Mask the source data array
-            # mask everything that is not a valid value or not within our geom
-            masked = np.ma.MaskedArray(
-                fsrc.array,
-                mask=(isnodata | ~rv_array))
-
-            # execute zone_func on masked zone ndarray
-            if zone_func is not None:
-                if not callable(zone_func):
-                    raise TypeError(('zone_func must be a callable '
-                                     'which accepts function a '
-                                     'single `zone_array` arg.'))
-                zone_func(masked)
-
-            if masked.compressed().size == 0:
-                # nothing here, fill with None and move on
-                feature_stats = dict([(stat, None) for stat in stats])
-                if 'count' in stats:  # special case, zero makes sense here
-                    feature_stats['count'] = 0
             else:
-                if run_count:
-                    keys, counts = np.unique(masked.compressed(), return_counts=True)
-                    pixel_count = dict(zip([np.asscalar(k) for k in keys],
-                                           [np.asscalar(c) for c in counts]))
+                # need count for sub geoms to calculate weighted mean
+                if 'mean' in stats and not 'count' in stats:
+                    stats.append('count')
+                pixel_size = rast.affine[0]
+                x_size = (geom_bounds[2] - geom_bounds[0]) / pixel_size
+                y_size = (geom_bounds[3] - geom_bounds[1]) / pixel_size
+                total_size = x_size * y_size
+
+                geom_list = split_geom(geom, limit, pixel_size)
+
+                # should be able to get rid of this if split_geom function is built properly
+                if len(geom_list) < 1:
+                    raise Exception("Error producing split geometries")
 
 
-                if categorical:
-                    feature_stats = dict(pixel_count)
-                    if category_map:
-                        feature_stats = remap_categories(category_map, feature_stats)
+
+            # -----------------------------------------------------------------------------
+            # run sub geom extracts
+
+            sub_feature_stats_list = []
+
+            for sub_geom in geom_list:
+
+
+                sub_geom = shape(geom)
+
+                if 'Point' in sub_geom.type:
+                    sub_geom = boxify_points(sub_geom, rast)
+
+                sub_geom_bounds = tuple(sub_geom.bounds)
+
+                fsrc = rast.read(bounds=sub_geom_bounds)
+
+                # rasterized geometry
+                rv_array = rasterize_geom(sub_geom, like=fsrc, all_touched=all_touched)
+
+                # nodata mask
+                isnodata = (fsrc.array == fsrc.nodata)
+
+                # add nan mask (if necessary)
+                has_nan = (np.issubdtype(fsrc.array.dtype, float)
+                    and np.isnan(fsrc.array.min()))
+                if has_nan:
+                    isnodata = (isnodata | np.isnan(fsrc.array))
+
+                # Mask the source data array
+                # mask everything that is not a valid value or not within our geom
+                masked = np.ma.MaskedArray(
+                    fsrc.array,
+                    mask=(isnodata | ~rv_array))
+
+                # execute zone_func on masked zone ndarray
+                if zone_func is not None:
+                    if not callable(zone_func):
+                        raise TypeError(('zone_func must be a callable '
+                                         'which accepts function a '
+                                         'single `zone_array` arg.'))
+                    zone_func(masked)
+
+                if masked.compressed().size == 0:
+                    # nothing here, fill with None and move on
+                    sub_feature_stats = dict([(stat, None) for stat in stats])
+                    if 'count' in stats:  # special case, zero makes sense here
+                        sub_feature_stats['count'] = 0
                 else:
-                    feature_stats = {}
+                    if run_count:
+                        keys, counts = np.unique(masked.compressed(), return_counts=True)
+                        pixel_count = dict(zip([np.asscalar(k) for k in keys],
+                                               [np.asscalar(c) for c in counts]))
+
+
+                    if categorical:
+                        sub_feature_stats = dict(pixel_count)
+                        if category_map:
+                            sub_feature_stats = remap_categories(category_map, sub_feature_stats)
+                    else:
+                        sub_feature_stats = {}
+
+                    if 'min' in stats:
+                        sub_feature_stats['min'] = float(masked.min())
+                    if 'max' in stats:
+                        sub_feature_stats['max'] = float(masked.max())
+                    if 'mean' in stats:
+                        sub_feature_stats['mean'] = float(masked.mean())
+                    if 'count' in stats:
+                        sub_feature_stats['count'] = int(masked.count())
+                    # optional
+                    if 'sum' in stats:
+                        sub_feature_stats['sum'] = float(masked.sum())
+                    if 'std' in stats:
+                        sub_feature_stats['std'] = float(masked.std())
+                    if 'median' in stats:
+                        sub_feature_stats['median'] = float(np.median(masked.compressed()))
+                    if 'majority' in stats:
+                        sub_feature_stats['majority'] = float(key_assoc_val(pixel_count, max))
+                    if 'minority' in stats:
+                        sub_feature_stats['minority'] = float(key_assoc_val(pixel_count, min))
+                    if 'unique' in stats:
+                        sub_feature_stats['unique'] = len(list(pixel_count.keys()))
+                    if 'range' in stats:
+                        rmin = sub_feature_stats['min']
+                        rmax = sub_feature_stats['max']
+                        sub_feature_stats['range'] = rmax - rmin
+
+                    for pctile in [s for s in stats if s.startswith('percentile_')]:
+                        q = get_percentile(pctile)
+                        pctarr = masked.compressed()
+                        sub_feature_stats[pctile] = np.percentile(pctarr, q)
+
+                if 'nodata' in stats or 'nan' in stats:
+                    featmasked = np.ma.MaskedArray(fsrc.array, mask=(~rv_array))
+
+                    if 'nodata' in stats:
+                        sub_feature_stats['nodata'] = float((featmasked == fsrc.nodata).sum())
+                    if 'nan' in stats:
+                        sub_feature_stats['nan'] = float(np.isnan(featmasked).sum()) if has_nan else 0
+
+
+                sub_feature_stats_list.append(sub_feature_stats)
+
+
+            # -----------------------------------------------------------------------------
+            # aggregate sub geom extracts
+
+            if len(geom_list) == 1:
+
+                feature_stats = sub_feature_stats
+
+            else:
+
+                feature_stats = {}
 
                 if 'min' in stats:
-                    feature_stats['min'] = float(masked.min())
+                    feature_stats['min'] = min([i['min'] for i in sub_feature_stats_list])
                 if 'max' in stats:
-                    feature_stats['max'] = float(masked.max())
-                if 'mean' in stats:
-                    feature_stats['mean'] = float(masked.mean())
+                    feature_stats['max'] = max([i['min'] for i in sub_feature_stats_list])
                 if 'count' in stats:
-                    feature_stats['count'] = int(masked.count())
-                # optional
+                    feature_stats['count'] = sum([i['count'] for i in sub_feature_stats_list])
                 if 'sum' in stats:
-                    feature_stats['sum'] = float(masked.sum())
-                if 'std' in stats:
-                    feature_stats['std'] = float(masked.std())
-                if 'median' in stats:
-                    feature_stats['median'] = float(np.median(masked.compressed()))
-                if 'majority' in stats:
-                    feature_stats['majority'] = float(key_assoc_val(pixel_count, max))
-                if 'minority' in stats:
-                    feature_stats['minority'] = float(key_assoc_val(pixel_count, min))
-                if 'unique' in stats:
-                    feature_stats['unique'] = len(list(pixel_count.keys()))
+                    feature_stats['sum'] = sum([i['sum'] for i in sub_feature_stats_list])
                 if 'range' in stats:
-                    try:
-                        rmin = feature_stats['min']
-                    except KeyError:
-                        rmin = float(masked.min())
-                    try:
-                        rmax = feature_stats['max']
-                    except KeyError:
-                        rmax = float(masked.max())
+                    rmin = min([i['min'] for i in sub_feature_stats_list])
+                    rmax = max([i['max'] for i in sub_feature_stats_list])
                     feature_stats['range'] = rmax - rmin
-
-                for pctile in [s for s in stats if s.startswith('percentile_')]:
-                    q = get_percentile(pctile)
-                    pctarr = masked.compressed()
-                    feature_stats[pctile] = np.percentile(pctarr, q)
-
-            if 'nodata' in stats or 'nan' in stats:
-                featmasked = np.ma.MaskedArray(fsrc.array, mask=(~rv_array))
-
                 if 'nodata' in stats:
-                    feature_stats['nodata'] = float((featmasked == fsrc.nodata).sum())
+                    feature_stats['nodata'] = sum([i['nodata'] for i in sub_feature_stats_list])
                 if 'nan' in stats:
-                    feature_stats['nan'] = float(np.isnan(featmasked).sum()) if has_nan else 0
+                    feature_stats['nan'] = sum([i['nan'] for i in sub_feature_stats_list])
+                if 'mean' in stats:
+                    feature_stats['mean'] = sum([i['mean'] * i['count'] for i in sub_feature_stats_list]) / sum([i['count'] for i in sub_feature_stats_list])
+                if categorical:
+                    for i in sub_feature_stats_list:
+                        for field, value, in i.iteritems():
+                            if field not in VALID_STATS:
+                                if field not in feature_stats:
+                                    feature_stats[field] = value
+                                else:
+                                    feature_stats[field] += value
+
+
+
+
+            # -----------------------------------------------------------------------------
+            # cannot use feature splitting with "add_stats" or "raster_out" options
 
             if add_stats is not None:
                 for stat_name, stat_func in add_stats.items():
@@ -249,6 +363,10 @@ def gen_zonal_stats(
                 feature_stats['mini_raster_array'] = masked
                 feature_stats['mini_raster_affine'] = fsrc.affine
                 feature_stats['mini_raster_nodata'] = fsrc.nodata
+
+
+            # -----------------------------------------------------------------------------
+            # finalize output normally
 
             if prefix is not None:
                 prefixed_feature_stats = {}

@@ -25,6 +25,56 @@ def get_percentile(stat):
     return q
 
 
+def split_geom(geom, limit, pixel_size):
+    """ split geometry into smaller geometries
+
+    used to convert large features into multiple smaller features
+    so that they can be used in an extract job without running
+    into memory limits
+
+    geom: geometry
+    limit: maximum number of pixels
+    pixel_size: pixel size of raster data geometry will be extracting
+
+    returns: list of geometries
+    """
+    split_geom_list = []
+
+    gb = tuple(geom.bounds)
+
+    x_size = (gb[2] - gb[0]) / pixel_size
+    y_size = (gb[3] - gb[1]) / pixel_size
+    total_size = x_size * y_size
+
+    if total_size < limit:
+        return [geom]
+
+    if x_size > y_size:
+        x_split = gb[2] - (gb[2]-gb[0])/2
+        box_a_bounds = (gb[0], gb[1], x_split, gb[3])
+        box_b_bounds = (x_split, gb[1], gb[2], gb[3])
+
+    else:
+        y_split = gb[3] - (gb[3]-gb[1])/2
+        box_a_bounds = (gb[0], gb[1], gb[2], y_split)
+        box_b_bounds = (gb[0], y_split, gb[2], gb[3])
+
+
+    geom_a = box(*box_a_bounds)
+    # geom_a = geom.intersection(box_a)
+    split_a = split_geom(geom_a)
+    split_geom_list += split_a
+
+
+    geom_b = box(*box_b_bounds)
+    # geom_b = geom.intersection(box_b)
+    split_b = split_geom(geom_b)
+    split_geom_list += split_b
+
+    return split_geom_list
+
+
+
 def rasterize_geom(geom, like, all_touched=False):
     """
     Parameters
@@ -94,6 +144,11 @@ def check_stats(stats, categorical):
             raise ValueError(
                 "Stat `%s` not valid; "
                 "must be one of \n %r" % (x, VALID_STATS))
+
+    if 'range' in stats and not 'min' in stats:
+        stats.append('min')
+    if 'range' in stats and not 'max' in stats:
+        stats.append('max')
 
     run_count = False
     if categorical or 'majority' in stats or 'minority' in stats or 'unique' in stats:
