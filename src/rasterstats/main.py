@@ -107,10 +107,14 @@ def gen_zonal_stats(
 
     limit: int
         maximum number of pixels allowed to be read from raster based on
-        feature bounds. Useful when dealing with vector data containing
+        feature bounds. Geometries which will result in reading a larger
+        number of pixels will be split into smaller geometries and then
+        aggregated (note: some stats and options cannot be used along with
+        `limit`. Useful when dealing with vector data containing
         large features and raster with a fine resolution to prevent
         memory errors. Estimated pixels per GB vary depending on options,
-        but a rough range is 5 to 80 million pixels per GB of memory.
+        but a rough range is 5 to 80 million pixels per GB of memory. If
+        values is None (default) geometries will never be split.
 
     geojson_out: boolean
         Return list of GeoJSON-like features (default: False)

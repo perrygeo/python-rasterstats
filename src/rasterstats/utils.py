@@ -29,14 +29,17 @@ def split_geom(geom, limit, pixel_size):
     """ split geometry into smaller geometries
 
     used to convert large features into multiple smaller features
-    so that they can be used in an extract job without running
-    into memory limits
+    so that they can be used without running into memory limits
 
+    Parameters
+    ----------
     geom: geometry
     limit: maximum number of pixels
     pixel_size: pixel size of raster data geometry will be extracting
 
-    returns: list of geometries
+    Returns
+    -------
+    list of geometries
     """
     split_geom_list = []
 
