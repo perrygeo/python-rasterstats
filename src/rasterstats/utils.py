@@ -62,12 +62,10 @@ def split_geom(geom, limit, pixel_size):
         box_a_bounds = (gb[0], gb[1], gb[2], y_split)
         box_b_bounds = (gb[0], y_split, gb[2], gb[3])
 
-
     box_a = box(*box_a_bounds)
     geom_a = geom.intersection(box_a)
     split_a = split_geom(geom_a, limit, pixel_size)
     split_geom_list += split_a
-
 
     box_b = box(*box_b_bounds)
     geom_b = geom.intersection(box_b)
@@ -75,7 +73,6 @@ def split_geom(geom, limit, pixel_size):
     split_geom_list += split_b
 
     return split_geom_list
-
 
 
 def rasterize_geom(geom, like, all_touched=False):

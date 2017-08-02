@@ -317,10 +317,6 @@ def gen_zonal_stats(
                     sub_feature_stats['mini_raster_affine'] = fsrc.affine
                     sub_feature_stats['mini_raster_nodata'] = fsrc.nodata
 
-
-                # print sub_feature_stats
-                # print sub_geom.bounds
-
                 sub_feature_stats_list.append(sub_feature_stats)
 
 
