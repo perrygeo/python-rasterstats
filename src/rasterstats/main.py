@@ -294,8 +294,10 @@ def gen_zonal_stats(
                     if 'unique' in stats:
                         sub_feature_stats['unique'] = len(list(pixel_count.keys()))
                     if 'range' in stats:
-                        rmin = sub_feature_stats['min']
-                        rmax = sub_feature_stats['max']
+                        rmin = float(masked.min())
+                        rmax = float(masked.max())
+                        sub_feature_stats['min'] = rmin
+                        sub_feature_stats['max'] = rmax
                         sub_feature_stats['range'] = rmax - rmin
 
                     for pctile in [s for s in stats if s.startswith('percentile_')]:
@@ -315,12 +317,17 @@ def gen_zonal_stats(
                 sub_feature_stats_list.append(sub_feature_stats)
 
 
-            # -----------------------------------------------------------------------------
+            # -----------------------------------------------------------------
             # aggregate sub geom extracts
 
             if len(geom_list) == 1:
 
                 feature_stats = sub_feature_stats
+
+                if 'range' in stats and not 'min' in stats:
+                    del feature_stats['min']
+                if 'range' in stats and not 'max' in stats:
+                    del feature_stats['max']
 
             else:
 

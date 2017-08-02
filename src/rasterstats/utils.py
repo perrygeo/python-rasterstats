@@ -148,11 +148,6 @@ def check_stats(stats, categorical):
                 "Stat `%s` not valid; "
                 "must be one of \n %r" % (x, VALID_STATS))
 
-    if 'range' in stats and not 'min' in stats:
-        stats.append('min')
-    if 'range' in stats and not 'max' in stats:
-        stats.append('max')
-
     run_count = False
     if categorical or 'majority' in stats or 'minority' in stats or 'unique' in stats:
         # run the counter once, only if needed
