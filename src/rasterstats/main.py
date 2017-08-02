@@ -355,13 +355,13 @@ def gen_zonal_stats(
                 if 'mean' in stats:
                     feature_stats['mean'] = sum([i['mean'] * i['count'] for i in sub_feature_stats_list]) / sum([i['count'] for i in sub_feature_stats_list])
                 if categorical:
-                    for i in sub_feature_stats_list:
-                        for field, value, in i.iteritems():
+                    for sub_stats in sub_feature_stats_list:
+                        for field in sub_stats:
                             if field not in VALID_STATS:
                                 if field not in feature_stats:
-                                    feature_stats[field] = value
+                                    feature_stats[field] = sub_stats[field]
                                 else:
-                                    feature_stats[field] += value
+                                    feature_stats[field] += sub_stats[field]
 
 
 
