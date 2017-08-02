@@ -63,15 +63,15 @@ def split_geom(geom, limit, pixel_size):
         box_b_bounds = (gb[0], y_split, gb[2], gb[3])
 
 
-    geom_a = box(*box_a_bounds)
-    # geom_a = geom.intersection(box_a)
-    split_a = split_geom(geom_a)
+    box_a = box(*box_a_bounds)
+    geom_a = geom.intersection(box_a)
+    split_a = split_geom(geom_a, limit, pixel_size)
     split_geom_list += split_a
 
 
-    geom_b = box(*box_b_bounds)
-    # geom_b = geom.intersection(box_b)
-    split_b = split_geom(geom_b)
+    box_b = box(*box_b_bounds)
+    geom_b = geom.intersection(box_b)
+    split_b = split_geom(geom_b, limit, pixel_size)
     split_geom_list += split_b
 
     return split_geom_list

@@ -154,13 +154,11 @@ def gen_zonal_stats(
 
 
 
-
     # -----------------------------------------------------------------------------
     # make sure feature split/aggregations will work with options provided
 
     invalid_limit_stats = [
         'minority', 'majority', 'median', 'std', 'unique'
-
     ] + [s for s in stats if s.startswith('percentile_')]
 
     invalid_limit_conditions = (
@@ -171,8 +169,6 @@ def gen_zonal_stats(
     if limit is not None and invalid_limit_conditions:
         raise Exception("Cannot use `limit` to split geometries when using "
                         "`add_stats` or `raster_out` options")
-
-
 
 
     with Raster(raster, affine, nodata, band) as rast:
@@ -217,8 +213,7 @@ def gen_zonal_stats(
 
             for sub_geom in geom_list:
 
-
-                sub_geom = shape(geom)
+                sub_geom = shape(sub_geom)
 
                 if 'Point' in sub_geom.type:
                     sub_geom = boxify_points(sub_geom, rast)
@@ -313,6 +308,18 @@ def gen_zonal_stats(
                     if 'nan' in stats:
                         sub_feature_stats['nan'] = float(np.isnan(featmasked).sum()) if has_nan else 0
 
+                if add_stats is not None:
+                    for stat_name, stat_func in add_stats.items():
+                        sub_feature_stats[stat_name] = stat_func(masked)
+
+                if raster_out:
+                    sub_feature_stats['mini_raster_array'] = masked
+                    sub_feature_stats['mini_raster_affine'] = fsrc.affine
+                    sub_feature_stats['mini_raster_nodata'] = fsrc.nodata
+
+
+                # print sub_feature_stats
+                # print sub_geom.bounds
 
                 sub_feature_stats_list.append(sub_feature_stats)
 
@@ -322,7 +329,7 @@ def gen_zonal_stats(
 
             if len(geom_list) == 1:
 
-                feature_stats = sub_feature_stats
+                feature_stats = sub_feature_stats_list[0]
 
                 if 'range' in stats and not 'min' in stats:
                     del feature_stats['min']
@@ -336,7 +343,7 @@ def gen_zonal_stats(
                 if 'min' in stats:
                     feature_stats['min'] = min([i['min'] for i in sub_feature_stats_list])
                 if 'max' in stats:
-                    feature_stats['max'] = max([i['min'] for i in sub_feature_stats_list])
+                    feature_stats['max'] = max([i['max'] for i in sub_feature_stats_list])
                 if 'count' in stats:
                     feature_stats['count'] = sum([i['count'] for i in sub_feature_stats_list])
                 if 'sum' in stats:
@@ -361,23 +368,6 @@ def gen_zonal_stats(
                                     feature_stats[field] += value
 
 
-
-
-            # -----------------------------------------------------------------------------
-            # cannot use feature splitting with "add_stats" or "raster_out" options
-
-            if add_stats is not None:
-                for stat_name, stat_func in add_stats.items():
-                    feature_stats[stat_name] = stat_func(masked)
-
-            if raster_out:
-                feature_stats['mini_raster_array'] = masked
-                feature_stats['mini_raster_affine'] = fsrc.affine
-                feature_stats['mini_raster_nodata'] = fsrc.nodata
-
-
-            # -----------------------------------------------------------------------------
-            # finalize output normally
 
             if prefix is not None:
                 prefixed_feature_stats = {}
