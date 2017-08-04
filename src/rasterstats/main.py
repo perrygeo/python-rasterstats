@@ -336,24 +336,28 @@ def gen_zonal_stats(
 
                 feature_stats = {}
 
-                if 'min' in stats:
-                    feature_stats['min'] = min([i['min'] for i in sub_feature_stats_list])
-                if 'max' in stats:
-                    feature_stats['max'] = max([i['max'] for i in sub_feature_stats_list])
                 if 'count' in stats:
                     feature_stats['count'] = sum([i['count'] for i in sub_feature_stats_list])
-                if 'sum' in stats:
-                    feature_stats['sum'] = sum([i['sum'] for i in sub_feature_stats_list])
+                if 'min' in stats:
+                    vals = [i['min'] for i in sub_feature_stats_list if i['min'] is not None]
+                    feature_stats['min'] = min(vals) if vals else None
+                if 'max' in stats:
+                    feature_stats['max'] = max([i['max'] for i in sub_feature_stats_list])
                 if 'range' in stats:
-                    rmin = min([i['min'] for i in sub_feature_stats_list])
+                    vals = [i['min'] for i in sub_feature_stats_list if i['min'] is not None]
+                    rmin = min(vals) if vals else None
                     rmax = max([i['max'] for i in sub_feature_stats_list])
-                    feature_stats['range'] = rmax - rmin
+                    feature_stats['range'] = rmax - rmin if rmin is not None else None
+                if 'mean' in stats:
+                    vals = [i['mean'] * i['count'] for i in sub_feature_stats_list if i['mean'] is not None]
+                    feature_stats['mean'] = sum(vals) / sum([i['count'] for i in sub_feature_stats_list]) if vals else None
+                if 'sum' in stats:
+                    vals = [i['sum'] for i in sub_feature_stats_list if i['sum'] is not None]
+                    feature_stats['sum'] = sum(vals) if vals else None
                 if 'nodata' in stats:
                     feature_stats['nodata'] = sum([i['nodata'] for i in sub_feature_stats_list])
                 if 'nan' in stats:
                     feature_stats['nan'] = sum([i['nan'] for i in sub_feature_stats_list])
-                if 'mean' in stats:
-                    feature_stats['mean'] = sum([i['mean'] * i['count'] for i in sub_feature_stats_list]) / sum([i['count'] for i in sub_feature_stats_list])
                 if categorical:
                     for sub_stats in sub_feature_stats_list:
                         for field in sub_stats:
