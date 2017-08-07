@@ -25,7 +25,32 @@ def get_percentile(stat):
     return q
 
 
-def split_geom(geom, limit, pixel_size):
+def round_to_grid(point, origin, pixel_size):
+    """Round longitude, latitude values to nearest pixel edges
+
+    Uses an origin's longitude, latitude value (upper left
+    corner coordinates) along with pixel size to adjust
+    an arbitrary point's longitude and latitude values to align
+    with cell edges
+
+    Assumes origin represents edge of pixel and not centroid
+
+    Use to identify x or y coordinate of line for split_geom function
+    to avoid splitting a geometry along the middle of a pixel. Splitting
+    along the edge of pixels prevents errors when using percent cover
+    options.
+    """
+    x_val, y_val = point
+    x_origin, y_origin = origin
+    if x_val < x_origin or y_val < y_origin:
+        raise Exception("Longitude/latitude values for point cannot be less than "
+                        "the longitude/latitude values for the origin.")
+    adj_x_val = round((x_val - x_origin) / pixel_size) * pixel_size + x_origin
+    adj_y_val = round((y_val - y_origin) / pixel_size) * pixel_size + y_origin
+    return (adj_x_val, adj_y_val)
+
+
+def split_geom(geom, limit, pixel_size, origin=None):
     """ split geometry into smaller geometries
 
     used to convert large features into multiple smaller features
@@ -54,11 +79,15 @@ def split_geom(geom, limit, pixel_size):
 
     if x_size > y_size:
         x_split = gb[2] - (gb[2]-gb[0])/2
+        if origin is not None:
+            x_split = round_to_grid((x_split, origin[1]), origin, pixel_size)[0]
         box_a_bounds = (gb[0], gb[1], x_split, gb[3])
         box_b_bounds = (x_split, gb[1], gb[2], gb[3])
 
     else:
         y_split = gb[3] - (gb[3]-gb[1])/2
+        if origin is not None:
+            y_split = round_to_grid((origin[0], y_split), origin, pixel_size)[1]
         box_a_bounds = (gb[0], gb[1], gb[2], y_split)
         box_b_bounds = (gb[0], y_split, gb[2], gb[3])
 
