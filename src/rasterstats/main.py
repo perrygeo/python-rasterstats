@@ -213,15 +213,10 @@ def gen_zonal_stats(
 
                 sub_geom_bounds = tuple(sub_geom_box.bounds)
 
-                if 'Point' in sub_geom.type:
-                    sub_geom = boxify_points(sub_geom, rast)
-
-                sub_geom_bounds = tuple(sub_geom.bounds)
-
                 fsrc = rast.read(bounds=sub_geom_bounds)
 
                 # rasterized geometry
-                rv_array = rasterize_geom(sub_geom, like=fsrc, all_touched=all_touched)
+                rv_array = rasterize_geom(geom, like=fsrc, all_touched=all_touched)
 
                 # nodata mask
                 isnodata = (fsrc.array == fsrc.nodata)
