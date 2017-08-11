@@ -195,10 +195,6 @@ def gen_zonal_stats(
                 geom_list = [geom]
 
             else:
-                # need count for sub geoms to calculate weighted mean
-                if 'mean' in stats and not 'count' in stats:
-                    stats.append('count')
-
                 pixel_size = rast.affine[0]
                 origin = (rast.affine[2], rast.affine[5])
                 geom_list = split_geom(geom, limit, pixel_size, origin=origin)
@@ -260,16 +256,24 @@ def gen_zonal_stats(
                     else:
                         sub_feature_stats = {}
 
+                    if 'count' in stats or limit is not None and 'mean' in stats:
+                        sub_feature_stats['count'] = int(masked.count())
+                    if 'mean' in stats:
+                        sub_feature_stats['mean'] = float(masked.mean())
+
+                    if 'sum' in stats:
+                        sub_feature_stats['sum'] = float(masked.sum())
                     if 'min' in stats:
                         sub_feature_stats['min'] = float(masked.min())
                     if 'max' in stats:
                         sub_feature_stats['max'] = float(masked.max())
-                    if 'mean' in stats:
-                        sub_feature_stats['mean'] = float(masked.mean())
-                    if 'count' in stats:
-                        sub_feature_stats['count'] = int(masked.count())
-                    if 'sum' in stats:
-                        sub_feature_stats['sum'] = float(masked.sum())
+                    if 'range' in stats:
+                        rmin = float(masked.min())
+                        rmax = float(masked.max())
+                        sub_feature_stats['min'] = rmin
+                        sub_feature_stats['max'] = rmax
+                        sub_feature_stats['range'] = rmax - rmin
+
                     if 'std' in stats:
                         sub_feature_stats['std'] = float(masked.std())
                     if 'median' in stats:
@@ -280,12 +284,6 @@ def gen_zonal_stats(
                         sub_feature_stats['minority'] = float(key_assoc_val(pixel_count, min))
                     if 'unique' in stats:
                         sub_feature_stats['unique'] = len(list(pixel_count.keys()))
-                    if 'range' in stats:
-                        rmin = float(masked.min())
-                        rmax = float(masked.max())
-                        sub_feature_stats['min'] = rmin
-                        sub_feature_stats['max'] = rmax
-                        sub_feature_stats['range'] = rmax - rmin
 
                     for pctile in [s for s in stats if s.startswith('percentile_')]:
                         q = get_percentile(pctile)
@@ -334,23 +332,23 @@ def gen_zonal_stats(
 
                 if 'count' in stats:
                     feature_stats['count'] = sum([i['count'] for i in sub_feature_stats_list])
-                if 'min' in stats:
-                    vals = [i['min'] for i in sub_feature_stats_list if i['min'] is not None]
-                    feature_stats['min'] = min(vals) if vals else None
-                if 'max' in stats:
-                    feature_stats['max'] = max([i['max'] for i in sub_feature_stats_list])
-
-                if 'range' in stats:
-                    vals = [i['min'] for i in sub_feature_stats_list if i['min'] is not None]
-                    rmin = min(vals) if vals else None
-                    rmax = max([i['max'] for i in sub_feature_stats_list])
-                    feature_stats['range'] = rmax - rmin if rmin is not None else None
                 if 'mean' in stats:
                     vals = [i['mean'] * i['count'] for i in sub_feature_stats_list if i['mean'] is not None]
                     feature_stats['mean'] = sum(vals) / sum([i['count'] for i in sub_feature_stats_list]) if vals else None
                 if 'sum' in stats:
                     vals = [i['sum'] for i in sub_feature_stats_list if i['sum'] is not None]
                     feature_stats['sum'] = sum(vals) if vals else None
+                if 'min' in stats:
+                    vals = [i['min'] for i in sub_feature_stats_list if i['min'] is not None]
+                    feature_stats['min'] = min(vals) if vals else None
+                if 'max' in stats:
+                    feature_stats['max'] = max([i['max'] for i in sub_feature_stats_list])
+                if 'range' in stats:
+                    vals = [i['min'] for i in sub_feature_stats_list if i['min'] is not None]
+                    rmin = min(vals) if vals else None
+                    rmax = max([i['max'] for i in sub_feature_stats_list])
+                    feature_stats['range'] = rmax - rmin if rmin is not None else None
+
                 if 'nodata' in stats:
                     feature_stats['nodata'] = sum([i['nodata'] for i in sub_feature_stats_list])
                 if 'nan' in stats:
@@ -364,7 +362,6 @@ def gen_zonal_stats(
                                     feature_stats[field] = sub_stats[field]
                                 else:
                                     feature_stats[field] += sub_stats[field]
-
 
 
 
