@@ -349,7 +349,6 @@ def test_json_serializable():
     stats = zonal_stats(polygons, raster,
                         stats=VALID_STATS + ["percentile_90"],
                         categorical=True)
-    print(stats)
     try:
         json.dumps(stats)
         simplejson.dumps(stats)
