@@ -112,9 +112,8 @@ def gen_zonal_stats(
         aggregated (note: some stats and options cannot be used along with
         `limit`. Useful when dealing with vector data containing
         large features and raster with a fine resolution to prevent
-        memory errors. Estimated pixels per GB vary depending on options,
-        but a rough range is 5 to 80 million pixels per GB of memory. If
-        values is None (default) geometries will never be split.
+        memory errors. If the limit value is None (default) or 0
+        geometries will never be split.
 
     geojson_out: boolean
         Return list of GeoJSON-like features (default: False)
@@ -153,22 +152,30 @@ def gen_zonal_stats(
         band = band_num
 
 
-
     # -----------------------------------------------------------------------------
     # make sure feature split/aggregations will work with options provided
 
-    invalid_limit_stats = [
-        'minority', 'majority', 'median', 'std', 'unique'
-    ] + [s for s in stats if s.startswith('percentile_')]
+    limit = None if not limit else limit
 
-    invalid_limit_conditions = (
-        any([i in invalid_limit_stats for i in stats])
-        or add_stats is not None
-        or raster_out
-    )
-    if limit is not None and invalid_limit_conditions:
-        raise Exception("Cannot use `limit` to split geometries when using "
-                        "`add_stats` or `raster_out` options")
+    if limit is not None:
+
+        try:
+            limit = int(limit)
+        except ValueError:
+            raise ValueError('`limit` must be a number (Input: {0}, {1})'.format(type(limit), limit))
+
+        invalid_limit_stats = [
+            'minority', 'majority', 'median', 'std', 'unique'
+        ] + [s for s in stats if s.startswith('percentile_')]
+
+        invalid_limit_conditions = (
+            any([i in invalid_limit_stats for i in stats])
+            or add_stats is not None
+            or raster_out
+        )
+        if invalid_limit_conditions:
+            raise Exception("Cannot use `limit` to split geometries when using "
+                            "`add_stats` or `raster_out` options")
 
 
     with Raster(raster, affine, nodata, band) as rast:
@@ -178,8 +185,6 @@ def gen_zonal_stats(
 
             if 'Point' in geom.type:
                 geom = boxify_points(geom, rast)
-
-            geom_bounds = tuple(geom.bounds)
 
 
             # -----------------------------------------------------------------------------
@@ -204,9 +209,9 @@ def gen_zonal_stats(
 
             sub_feature_stats_list = []
 
-            for sub_geom in geom_list:
+            for sub_geom_box in geom_list:
 
-                sub_geom = shape(sub_geom)
+                sub_geom_bounds = tuple(sub_geom_box.bounds)
 
                 if 'Point' in sub_geom.type:
                     sub_geom = boxify_points(sub_geom, rast)
@@ -268,7 +273,6 @@ def gen_zonal_stats(
                         sub_feature_stats['mean'] = float(masked.mean())
                     if 'count' in stats:
                         sub_feature_stats['count'] = int(masked.count())
-                    # optional
                     if 'sum' in stats:
                         sub_feature_stats['sum'] = float(masked.sum())
                     if 'std' in stats:
@@ -297,7 +301,12 @@ def gen_zonal_stats(
                     featmasked = np.ma.MaskedArray(fsrc.array, mask=(~rv_array))
 
                     if 'nodata' in stats:
-                        sub_feature_stats['nodata'] = float((featmasked == fsrc.nodata).sum())
+                        nodata_match = (featmasked == fsrc.nodata)
+                        if nodata_match.count() == 0:
+                            sub_feature_stats['nodata'] = 0
+                        else:
+                            sub_feature_stats['nodata'] = nodata_match.sum()
+
                     if 'nan' in stats:
                         sub_feature_stats['nan'] = float(np.isnan(featmasked).sum()) if has_nan else 0
 
@@ -326,7 +335,6 @@ def gen_zonal_stats(
                     del feature_stats['max']
 
             else:
-
                 feature_stats = {}
 
                 if 'count' in stats:
@@ -336,6 +344,7 @@ def gen_zonal_stats(
                     feature_stats['min'] = min(vals) if vals else None
                 if 'max' in stats:
                     feature_stats['max'] = max([i['max'] for i in sub_feature_stats_list])
+
                 if 'range' in stats:
                     vals = [i['min'] for i in sub_feature_stats_list if i['min'] is not None]
                     rmin = min(vals) if vals else None
@@ -351,6 +360,7 @@ def gen_zonal_stats(
                     feature_stats['nodata'] = sum([i['nodata'] for i in sub_feature_stats_list])
                 if 'nan' in stats:
                     feature_stats['nan'] = sum([i['nan'] for i in sub_feature_stats_list])
+
                 if categorical:
                     for sub_stats in sub_feature_stats_list:
                         for field in sub_stats:
@@ -359,6 +369,7 @@ def gen_zonal_stats(
                                     feature_stats[field] = sub_stats[field]
                                 else:
                                     feature_stats[field] += sub_stats[field]
+
 
 
 
