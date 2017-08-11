@@ -359,9 +359,9 @@ def gen_zonal_stats(
                         for field in sub_stats:
                             if field not in VALID_STATS:
                                 if field not in feature_stats:
-                                    feature_stats[str(field)] = sub_stats[field]
+                                    feature_stats[field] = sub_stats[field]
                                 else:
-                                    feature_stats[str(field)] += sub_stats[field]
+                                    feature_stats[field] += sub_stats[field]
 
 
 
