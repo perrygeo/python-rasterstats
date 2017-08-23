@@ -488,7 +488,7 @@ def test_copy_properties_warn():
     with pytest.deprecated_call():
         stats_b = zonal_stats(polygons, raster, copy_properties=True)
     assert stats_a == stats_b
-    
+
 
 def test_nan_counts():
     from affine import Affine
@@ -520,7 +520,9 @@ def test_nan_counts():
         assert 'nan' not in res
 
 
+# -----------------------------------------------------------------------------
 # Optional tests
+
 def test_geodataframe_zonal():
     polygons = os.path.join(DATA, 'polygons.shp')
 
@@ -535,3 +537,30 @@ def test_geodataframe_zonal():
     expected = zonal_stats(polygons, raster)
     assert zonal_stats(df, raster) == expected
 
+
+# -----------------------------------------------------------------------------
+# test geom splits
+
+def test_geom_split_main():
+    polygons = os.path.join(DATA, 'polygons.shp')
+    stats1 = zonal_stats(polygons, raster)
+    stats2 = zonal_stats(polygons, raster, limit=50)
+    for key in ['count', 'min', 'max', 'mean']:
+        assert key in stats1[0]
+        assert key in stats2[0]
+    assert len(stats1) == len(stats2) == 2
+    assert stats1[0]['count'] == stats2[0]['count'] == 75
+    assert stats1[1]['count'] == stats2[1]['count'] == 50
+    assert stats1[0]['min'] == stats2[0]['min']
+    assert stats1[0]['max'] == stats2[0]['max']
+    assert round(stats1[0]['mean'], 2) == round(stats2[0]['mean'], 2) == 14.66
+
+
+def test_geom_split_categorical():
+    polygons = os.path.join(DATA, 'polygons.shp')
+    categorical_raster = os.path.join(DATA, 'slope_classes.tif')
+    stats1 = zonal_stats(polygons, categorical_raster, categorical=True)
+    stats2 = zonal_stats(polygons, categorical_raster, categorical=True, limit=50)
+    assert len(stats1) == len(stats2) == 2
+    assert stats1[0][1.0] == stats2[0][1.0]  == 75
+    assert 5.0 in stats1[1] and 5.0 in stats2[1]
