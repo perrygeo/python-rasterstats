@@ -33,6 +33,7 @@ def gen_zonal_stats(
         layer=0,
         band=1,
         nodata=None,
+        no_overlap=None,
         affine=None,
         stats=None,
         all_touched=False,
@@ -139,7 +140,31 @@ def gen_zonal_stats(
         warnings.warn("Use `band` to specify band number", DeprecationWarning)
         band = band_num
 
-    with Raster(raster, affine, nodata, band) as rast:
+
+    if 'no_overlap' in stats:
+
+        if 'nodata' in stats and nodata is None:
+            nodata = -999
+            warnings.warn("Setting nodata to -999; specify nodata explicitly "
+                          "when requesting no_overlap stat")
+
+        if no_overlap is None:
+            no_overlap = -998
+            if no_overlap == nodata:
+                no_overlap = -997
+
+            warnings.warn("Setting no_overlap to {0}; specify no_overlap "
+                          "explicitly when request the `no_overlap` stat".format(
+                            no_overlap))
+        elif no_overlap == nodata:
+            raise Exception("`no_overlap` value is equal to `nodata` value. "
+                            "Values must be distinct to calculate `no_overlap`")
+
+    tmp_nodata = no_overlap if 'no_overlap' in stats else nodata
+
+
+    with Raster(raster, affine=affine, nodata=tmp_nodata, band=band) as rast:
+
         features_iter = read_features(vectors, layer)
         for _, feat in enumerate(features_iter):
             geom = shape(feat['geometry'])
@@ -149,13 +174,20 @@ def gen_zonal_stats(
 
             geom_bounds = tuple(geom.bounds)
 
-            fsrc = rast.read(bounds=geom_bounds)
+            fsrc = rast.read(bounds=geom_bounds, masked=False)
 
             # rasterized geometry
             rv_array = rasterize_geom(geom, like=fsrc, all_touched=all_touched)
 
+            if nodata is None and no_overlap is None:
+                nodata = fsrc.nodata
+
             # nodata mask
             isnodata = (fsrc.array == fsrc.nodata)
+
+            # include actual nodata val when no_overlap is used
+            if nodata is not None and no_overlap is not None:
+                isnodata = (isnodata | (fsrc.array == nodata))
 
             # add nan mask (if necessary)
             has_nan = (np.issubdtype(fsrc.array.dtype, float)
@@ -163,11 +195,27 @@ def gen_zonal_stats(
             if has_nan:
                 isnodata = (isnodata | np.isnan(fsrc.array))
 
+
             # Mask the source data array
             # mask everything that is not a valid value or not within our geom
             masked = np.ma.MaskedArray(
                 fsrc.array,
                 mask=(isnodata | ~rv_array))
+
+            # print stats
+            # print "no_overlap: {0}".format(no_overlap)
+            # print "nodata: {0}".format(nodata)
+            # print "tmp_nodata: {0}".format(tmp_nodata)
+            # print "fsrc.nodata: {0}".format(fsrc.nodata)
+
+            # print "fsrc.array"
+            # print fsrc.array
+            # print "isnodata"
+            # print isnodata
+            # print "rv_array"
+            # print rv_array
+            # print "masked"
+            # print masked
 
             # execute zone_func on masked zone ndarray
             if zone_func is not None:
@@ -233,13 +281,16 @@ def gen_zonal_stats(
                     pctarr = masked.compressed()
                     feature_stats[pctile] = np.percentile(pctarr, q)
 
-            if 'nodata' in stats or 'nan' in stats:
+
+            if any(i in stats for i in ['nodata', 'nan', 'no_overlap']):
                 featmasked = np.ma.MaskedArray(fsrc.array, mask=(~rv_array))
 
                 if 'nodata' in stats:
-                    feature_stats['nodata'] = float((featmasked == fsrc.nodata).sum())
+                    feature_stats['nodata'] = float((featmasked == nodata).sum())
                 if 'nan' in stats:
                     feature_stats['nan'] = float(np.isnan(featmasked).sum()) if has_nan else 0
+                if 'no_overlap' in stats:
+                    feature_stats['no_overlap'] = float((featmasked == no_overlap).sum())
 
             if add_stats is not None:
                 for stat_name, stat_func in add_stats.items():

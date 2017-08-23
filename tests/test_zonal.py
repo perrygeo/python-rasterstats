@@ -457,8 +457,6 @@ def test_geojson_out():
         assert 'id' in feature['properties']  # from orig
         assert 'count' in feature['properties']  # from zonal stats
 
-
-
 # do not think this is actually testing the line i wanted it to
 # since the read_features func for this data type is generating
 # the properties field
@@ -488,10 +486,9 @@ def test_copy_properties_warn():
     with pytest.deprecated_call():
         stats_b = zonal_stats(polygons, raster, copy_properties=True)
     assert stats_a == stats_b
-    
+
 
 def test_nan_counts():
-    from affine import Affine
     transform = Affine(1, 0, 1, 0, -1, 3)
 
     data = np.array([
@@ -504,7 +501,7 @@ def test_nan_counts():
     geom = 'POLYGON ((1 0, 4 0, 4 3, 1 3, 1 0))'
 
     # nan stat is requested
-    stats = zonal_stats(geom, data, affine=transform, nodata=0.0, stats="*")
+    stats = zonal_stats(geom, data, affine=transform, nodata=0.0, stats="count nodata nan")
 
     for res in stats:
         assert res['count'] == 3  # 3 pixels of valid data
@@ -518,6 +515,100 @@ def test_nan_counts():
         assert res['count'] == 3  # 3 pixels of valid data
         assert res['nodata'] == 3  # 3 pixels of nodata
         assert 'nan' not in res
+
+    # nan stat is not impacted by no_overlap
+    stats = zonal_stats(geom, data, affine=transform, nodata=0.0, stats="*")
+
+    for res in stats:
+        assert res['count'] == 3  # 3 pixels of valid data
+        assert res['nodata'] == 3  # 3 pixels of nodata
+        assert res['nan'] == 3  # 3 pixels of nans
+        assert res['no_overlap'] == 0  # 3 pixels of nans
+
+
+def test_array_overlap_counts():
+    nodata = -9999
+    no_overlap = -8888
+
+    transform = Affine(1, 0, 1, 0, -1, 3)
+
+    # data = np.array([
+    #     [-9999, 0.0, 516.2840576171875, 524.4825439453125],
+    #     [-9999, 178.74169921875, 573.80126953125, 415.345947265625],
+    #     [-9999, 397.3150939941406, 568.3016357421875, 185.3491973876953]
+    # ])
+
+    data = np.array([
+        [-9999, 0.0, 516.2840576171875, np.nan],
+        [-9999, 178.74169921875, 573.80126953125, 415.345947265625],
+        [-9999, 397.3150939941406, 568.3016357421875, 185.3491973876953]
+    ])
+
+    geom = 'POLYGON ((0 0, 5 0, 5 3, 0 3, 0 0))'
+
+    stats = zonal_stats(geom, data, affine=transform, stats="*", nodata=nodata, no_overlap=no_overlap)
+
+    for res in stats:
+        assert res['count'] == 8  # Two pixels of valid data
+        assert res['nodata'] == 3  # Two pixels of nodata
+        assert res['no_overlap'] == 3  # Three pixels of no overlap
+        assert res['nan'] == 1  # One pixel of nan
+
+
+def test_missing_no_overlap_logic():
+    nodata = -998
+    no_overlap = None
+
+    transform = Affine(1, 0, 1, 0, -1, 3)
+
+    data = np.array([
+        [-998, 0.0, 516.2840576171875, np.nan],
+        [-998, 178.74169921875, 573.80126953125, 415.345947265625],
+        [-998, 397.3150939941406, 568.3016357421875, 185.3491973876953]
+    ])
+
+    geom = 'POLYGON ((0 0, 5 0, 5 3, 0 3, 0 0))'
+
+    stats = zonal_stats(geom, data, affine=transform, stats="*", nodata=nodata, no_overlap=no_overlap)
+
+    for res in stats:
+        assert res['count'] == 8  # Two pixels of valid data
+        assert res['nodata'] == 3  # Two pixels of nodata
+        assert res['no_overlap'] == 3  # Three pixels of no overlap
+        assert res['nan'] == 1  # One pixel of nan
+
+
+def test_nodata_and_no_overlap_check():
+    nodata = -9999
+    no_overlap = -9999
+
+    transform = Affine(1, 0, 1, 0, -1, 3)
+
+    data = np.array([
+        [-998, 0.0, 516.2840576171875, np.nan],
+        [-998, 178.74169921875, 573.80126953125, 415.345947265625],
+        [-998, 397.3150939941406, 568.3016357421875, 185.3491973876953]
+    ])
+
+    geom = 'POLYGON ((0 0, 5 0, 5 3, 0 3, 0 0))'
+
+    with pytest.raises(Exception):
+        stats = zonal_stats(geom, data, affine=transform, stats="*", nodata=nodata, no_overlap=no_overlap)
+
+
+def test_raster_overlap_counts():
+    nodata = -9999
+    no_overlap = -8888
+
+    # same shape/overlap/nodata-pixel as test_array_overlap_counts
+    polygons = os.path.join(DATA, 'single_polygon_partial_overlap.shp')
+
+    stats = zonal_stats(polygons, raster, stats="*", nodata=nodata, no_overlap=no_overlap)
+
+    for res in stats:
+        assert res['count'] == 9  # Two pixels of valid data
+        assert res['nodata'] == 3  # Two pixels of nodata
+        assert res['no_overlap'] == 3  # Three pixels of no overlap
 
 
 # Optional tests
