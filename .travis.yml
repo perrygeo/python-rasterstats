@@ -14,9 +14,10 @@ addons:
     - gdal-bin
     - libgdal-dev
 python:
-  - "2.7"
-  - "3.4"
-  - "3.5"
+  - 2.7
+  - 3.4
+  - 3.5
+  - 3.6
 before_install:
   - pip install -U pip setuptools --upgrade
   - pip install wheel
