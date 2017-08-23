@@ -226,6 +226,20 @@ def test_all_touched():
     assert stats[1]['count'] == 73  # 50 if ALL_TOUCHED=False
 
 
+def test_latitude_correction():
+    polygon = os.path.join(DATA, 'latitude_correction_polygon.shp')
+    raster = os.path.join(DATA, 'latitude_correction_raster.tif')
+
+    stats_with = zonal_stats(polygon, raster, stats="mean",
+                             latitude_correction=True)
+
+    stats_without = zonal_stats(polygon, raster, stats="mean",
+                                latitude_correction=False)
+
+    assert round(stats_with[0]['mean'], 3) == 25.963
+    assert stats_without[0]['mean'] == 25
+
+
 def test_ndarray_without_affine():
     with rasterio.open(raster) as src:
         polygons = os.path.join(DATA, 'polygons.shp')
@@ -456,7 +470,6 @@ def test_geojson_out():
         assert feature['type'] == 'Feature'
         assert 'id' in feature['properties']  # from orig
         assert 'count' in feature['properties']  # from zonal stats
-
 
 
 # do not think this is actually testing the line i wanted it to

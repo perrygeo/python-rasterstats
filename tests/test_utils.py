@@ -3,7 +3,8 @@ import os
 import pytest
 from shapely.geometry import LineString
 from rasterstats.utils import \
-    stats_to_csv, get_percentile, remap_categories, boxify_points
+    stats_to_csv, get_percentile, remap_categories, boxify_points, \
+    get_latitude_scale, calc_haversine_distance
 from rasterstats import zonal_stats
 from rasterstats.utils import VALID_STATS
 
@@ -63,3 +64,15 @@ def test_boxify_non_point():
     line = LineString([(0, 0), (1, 1)])
     with pytest.raises(ValueError):
         boxify_points(line, None)
+
+
+def test_calc_haversine_distance():
+    test_val = calc_haversine_distance((10,20.563),(22.22,35.3))
+    assert round(test_val, 3) == 2027.46
+
+
+def test_get_latitude_scale():
+    lat = 20
+    p1 = (0, lat)
+    p2 = (0.008993216, lat)
+    assert get_latitude_scale(20) == calc_haversine_distance(p1, p2)
