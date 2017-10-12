@@ -110,6 +110,12 @@ def gen_zonal_stats(
         Original feature geometry and properties will be retained
         with zonal stats appended as additional properties.
         Use with `prefix` to ensure unique and meaningful property names.
+    
+    preserve_properties: boolean (default: False)
+        preserve the properties of each feature in the returned stats data
+    
+    preserve_ids: boolean (default: False)
+        Preserve the IDs of each feature in the returned stats data
 
     Returns
     -------
@@ -199,9 +205,8 @@ def gen_zonal_stats(
                     feature_stats = {}
                 
             
-                if 'properties' in feat:
-                    if preserve_properties:
-                        feature_stats['properties'] = feat['properties']
+                if preserve_properties and 'properties' in feat:
+                    feature_stats['properties'] = feat['properties']
                     if preserve_ids:
                         if 'id' in feat['properties']:
                             feature_stats['id'] = feat['properties']['id']
