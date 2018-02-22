@@ -1,10 +1,13 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
 from __future__ import division
-import numpy as np
-import warnings
+
 from affine import Affine
 from shapely.geometry import shape
+import numpy as np
+import numpy.distutils.system_info as sysinfo
+import warnings
+
 from .io import read_features, Raster
 from .utils import (rasterize_geom, get_percentile, check_stats,
                     remap_categories, key_assoc_val, boxify_points)
@@ -158,7 +161,8 @@ def gen_zonal_stats(
             isnodata = (fsrc.array == fsrc.nodata)
 
             # add nan mask (if necessary)
-            has_nan = (np.issubdtype(fsrc.array.dtype, float)
+            has_nan = (
+                np.issubdtype(fsrc.array.dtype, float)
                 and np.isnan(fsrc.array.min()))
             if has_nan:
                 isnodata = (isnodata | np.isnan(fsrc.array))
@@ -168,6 +172,14 @@ def gen_zonal_stats(
             masked = np.ma.MaskedArray(
                 fsrc.array,
                 mask=(isnodata | ~rv_array))
+
+            # If we're on 64 bit platform and the array is an integer type
+            # make sure we cast to 64 bit to avoid overflow.
+            # workaround for https://github.com/numpy/numpy/issues/8433
+            if sysinfo.platform_bits == 64 and \
+                    masked.dtype != np.int64 and \
+                    issubclass(masked.dtype.type, np.integer):
+                masked = masked.astype(np.int64)
 
             # execute zone_func on masked zone ndarray
             if zone_func is not None:
@@ -187,7 +199,6 @@ def gen_zonal_stats(
                     keys, counts = np.unique(masked.compressed(), return_counts=True)
                     pixel_count = dict(zip([np.asscalar(k) for k in keys],
                                            [np.asscalar(c) for c in counts]))
-
 
                 if categorical:
                     feature_stats = dict(pixel_count)
