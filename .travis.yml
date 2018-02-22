@@ -16,7 +16,7 @@ before_install:
   - pip install -U pip setuptools --upgrade
   - pip install wheel
 install:
-  - pip install numpy "rasterio>=1.12a"
+  - pip install numpy "rasterio>=1.0a12"
   - pip install -r requirements_dev.txt
   - pip install coveralls
   - pip install -e .
