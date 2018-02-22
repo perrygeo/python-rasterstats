@@ -161,7 +161,8 @@ def gen_zonal_stats(
             isnodata = (fsrc.array == fsrc.nodata)
 
             # add nan mask (if necessary)
-            has_nan = (np.issubdtype(fsrc.array.dtype, float)
+            has_nan = (
+                np.issubdtype(fsrc.array.dtype, float)
                 and np.isnan(fsrc.array.min()))
             if has_nan:
                 isnodata = (isnodata | np.isnan(fsrc.array))
@@ -198,7 +199,6 @@ def gen_zonal_stats(
                     keys, counts = np.unique(masked.compressed(), return_counts=True)
                     pixel_count = dict(zip([np.asscalar(k) for k in keys],
                                            [np.asscalar(c) for c in counts]))
-
 
                 if categorical:
                     feature_stats = dict(pixel_count)
