@@ -162,7 +162,7 @@ def gen_zonal_stats(
 
             # add nan mask (if necessary)
             has_nan = (
-                np.issubdtype(fsrc.array.dtype, float)
+                np.issubdtype(fsrc.array.dtype, np.floating)
                 and np.isnan(fsrc.array.min()))
             if has_nan:
                 isnodata = (isnodata | np.isnan(fsrc.array))
