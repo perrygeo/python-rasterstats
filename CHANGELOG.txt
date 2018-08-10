@@ -1,3 +1,10 @@
+0.13.0
+- Require Rasterio>=1.0
+- Fix buffer logic for boxify_points (#171)
+
+0.12.1
+- Cast all integer data to int64 if we're on a 64 bit platform (#159)
+
 0.12.0
 - zone_func argument to apply a function to the masked array before computing stats
 - support shapely 1.6 exceptions
