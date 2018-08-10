@@ -105,7 +105,7 @@ to a coordinate reference system::
 
     >>> import rasterio
     >>> with rasterio.open('tests/data/slope.tif') as src:
-    ...     affine = src.affine
+    ...     affine = src.transform
     ...     array = src.read(1)
     >>> zs = zonal_stats('tests/data/polygons.shp', array, affine=affine)
 
