@@ -7,7 +7,8 @@ raster = os.path.join(os.path.dirname(__file__), 'data/slope.tif')
 raster_nodata = os.path.join(os.path.dirname(__file__), 'data/slope_nodata.tif')
 
 with rasterio.open(raster) as src:
-    affine = src.affine
+    affine = src.transform
+
 
 def test_unitxy_ul():
     win, unitxy = point_window_unitxy(245300, 1000073, affine)
@@ -16,6 +17,7 @@ def test_unitxy_ul():
     # should be in LR of new unit square
     assert x > 0.5
     assert y < 0.5
+
 
 def test_unitxy_ur():
     win, unitxy = point_window_unitxy(245318, 1000073, affine)
@@ -32,6 +34,7 @@ def test_unitxy_ur():
     assert x < 0.5
     assert y < 0.5
 
+
 def test_unitxy_lr():
     win, unitxy = point_window_unitxy(245318, 1000056, affine)
     assert win == ((31, 33), (39, 41))
@@ -40,6 +43,7 @@ def test_unitxy_lr():
     assert x < 0.5
     assert y > 0.5
 
+
 def test_unitxy_ll():
     win, unitxy = point_window_unitxy(245300, 1000056, affine)
     assert win == ((31, 33), (38, 40))
@@ -47,6 +51,7 @@ def test_unitxy_ll():
     # should be in UR of new unit square
     assert x > 0.5
     assert y > 0.5
+
 
 def test_bilinear():
     import numpy as np

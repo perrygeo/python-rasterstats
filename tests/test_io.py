@@ -224,15 +224,15 @@ def test_boundless_masked():
 def test_window_bounds():
     with rasterio.open(raster) as src:
         win = ((0, src.shape[0]), (0, src.shape[1]))
-        assert src.bounds == window_bounds(win, src.affine)
+        assert src.bounds == window_bounds(win, src.transform)
 
         win = ((5, 10), (5, 10))
-        assert src.window_bounds(win) == window_bounds(win, src.affine)
+        assert src.window_bounds(win) == window_bounds(win, src.transform)
 
 
 def test_bounds_window():
     with rasterio.open(raster) as src:
-        assert bounds_window(src.bounds, src.affine) == \
+        assert bounds_window(src.bounds, src.transform) == \
             ((0, src.shape[0]), (0, src.shape[1]))
 
 
@@ -242,8 +242,8 @@ def test_rowcol():
         x, _, _, y = src.bounds
         x += 1.0
         y -= 1.0
-        assert rowcol(x, y, src.affine, op=math.floor) == (0, 0)
-        assert rowcol(x, y, src.affine, op=math.ceil) == (1, 1)
+        assert rowcol(x, y, src.transform, op=math.floor) == (0, 0)
+        assert rowcol(x, y, src.transform, op=math.ceil) == (1, 1)
 
 def test_Raster_index():
     x, y = 245114, 1000968
@@ -263,7 +263,7 @@ def test_Raster():
 
     with rasterio.open(raster) as src:
         arr = src.read(1)
-        affine = src.affine
+        affine = src.transform
         nodata = src.nodata
 
     r2 = Raster(arr, affine, nodata, band=1).read(bounds)
