@@ -198,7 +198,7 @@ def boxify_points(geom, rast):
 
 
 def rs_mean(masked, cover_weights=None):
-    if cover_weights:
+    if cover_weights is not None:
         val = float(
             np.sum(masked * cover_weights) /
             np.sum(~masked.mask * cover_weights))
@@ -208,7 +208,7 @@ def rs_mean(masked, cover_weights=None):
 
 
 def rs_count(masked, cover_weights=None):
-    if cover_weights:
+    if cover_weights is not None:
         val = float(np.sum(~masked.mask * cover_weights))
     else:
         val = int(masked.count())
@@ -216,7 +216,7 @@ def rs_count(masked, cover_weights=None):
 
 
 def rs_sum(masked, cover_weights=None):
-    if cover_weights:
+    if cover_weights is not None:
         val = float(np.sum(masked * cover_weights))
     else:
         val = float(masked.sum())
