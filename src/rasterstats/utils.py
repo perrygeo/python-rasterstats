@@ -215,7 +215,7 @@ def rs_count(masked, cover_weights=None):
     return val
 
 
- def rs_sum(masked, cover_weights=None):
+def rs_sum(masked, cover_weights=None):
     if cover_weights:
         val = float(np.sum(masked * cover_weights))
     else:
