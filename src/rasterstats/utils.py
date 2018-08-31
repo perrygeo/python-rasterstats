@@ -2,6 +2,7 @@
 from __future__ import absolute_import
 from __future__ import division
 import sys
+import numpy as np
 from rasterio import features
 from affine import Affine
 from numpy import min_scalar_type
@@ -195,3 +196,28 @@ def boxify_points(geom, rast):
     return MultiPolygon(geoms)
 
 
+
+def rs_mean(masked, cover_weights=None):
+    if cover_weights:
+        val = float(
+            np.sum(masked * cover_weights) /
+            np.sum(~masked.mask * cover_weights))
+    else:
+        val = float(masked.mean())
+    return val
+
+
+def rs_count(masked, cover_weights=None):
+    if cover_weights:
+        val = float(np.sum(~masked.mask * cover_weights))
+    else:
+        val = int(masked.count())
+    return val
+
+
+ def rs_sum(masked, cover_weights=None):
+    if cover_weights:
+        val = float(np.sum(masked * cover_weights))
+    else:
+        val = float(masked.sum())
+    return val

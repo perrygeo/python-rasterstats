@@ -11,7 +11,8 @@ import warnings
 from .io import read_features, Raster
 from .utils import (rasterize_geom, get_percentile, check_stats,
                     remap_categories, key_assoc_val, boxify_points,
-                    rasterize_pctcover_geom)
+                    rasterize_pctcover_geom,
+                    rs_mean, rs_count, rs_sum)
 
 
 def raster_stats(*args, **kwargs):
@@ -233,6 +234,7 @@ def gen_zonal_stats(
                     all_touched=all_touched)
                 rv_array = cover_weights > (percent_cover_selection or 0)
             else:
+                cover_weights = None
                 rv_array = rasterize_geom(
                     geom, like=fsrc,
                     all_touched=all_touched)
@@ -294,24 +296,12 @@ def gen_zonal_stats(
                 if 'max' in stats:
                     feature_stats['max'] = float(masked.max())
                 if 'mean' in stats:
-                    if percent_cover_weighting:
-                        feature_stats['mean'] = float(
-                            np.sum(masked * cover_weights) /
-                            np.sum(~masked.mask * cover_weights))
-                    else:
-                        feature_stats['mean'] = float(masked.mean())
+                    feature_stats['mean'] = rs_mean(masked, cover_weights)
                 if 'count' in stats:
-                    if percent_cover_weighting:
-                        feature_stats['count'] = float(np.sum(~masked.mask * cover_weights))
-                    else:
-                        feature_stats['count'] = int(masked.count())
+                    feature_stats['count'] = rs_count(masked, cover_weights)
                 # optional
                 if 'sum' in stats:
-                    if percent_cover_weighting:
-                        feature_stats['sum'] = float(np.sum(masked * cover_weights))
-
-                    else:
-                        feature_stats['sum'] = float(masked.sum())
+                    feature_stats['sum'] = rs_sum(masked, cover_weights)
                 if 'std' in stats:
                     feature_stats['std'] = float(masked.std())
                 if 'median' in stats:
