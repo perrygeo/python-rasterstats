@@ -250,7 +250,7 @@ def _assert_dict_eq(a, b):
 def test_ndarray():
     with rasterio.open(raster) as src:
         arr = src.read(1)
-        affine = src.affine
+        affine = src.transform
 
     polygons = os.path.join(DATA, 'polygons.shp')
     stats = zonal_stats(polygons, arr, affine=affine)
@@ -412,7 +412,7 @@ def test_some_nodata_ndarray():
     raster = os.path.join(DATA, 'slope_nodata.tif')
     with rasterio.open(raster) as src:
         arr = src.read(1)
-        affine = src.affine
+        affine = src.transform
 
     # without nodata
     stats = zonal_stats(polygons, arr, affine=affine, stats=['nodata', 'count', 'min'])
@@ -431,7 +431,7 @@ def test_some_nodata_ndarray():
 def test_transform():
     with rasterio.open(raster) as src:
         arr = src.read(1)
-        affine = src.affine
+        affine = src.transform
     polygons = os.path.join(DATA, 'polygons.shp')
 
     stats = zonal_stats(polygons, arr, affine=affine)
@@ -487,7 +487,7 @@ def test_copy_properties_warn():
     with pytest.deprecated_call():
         stats_b = zonal_stats(polygons, raster, copy_properties=True)
     assert stats_a == stats_b
-    
+
 
 def test_nan_counts():
     from affine import Affine

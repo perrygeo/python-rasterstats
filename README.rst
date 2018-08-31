@@ -69,9 +69,8 @@ Find a bug? Report it via github issues by providing
 - python code or command to reproduce the error
 - information on your environment: versions of python, gdal and numpy and system memory
 
-.. |BuildStatus| image:: https://api.travis-ci.org/perrygeo/python-rasterstats.png
+.. |BuildStatus| image:: https://api.travis-ci.org/perrygeo/python-rasterstats.svg
 .. _BuildStatus: https://travis-ci.org/perrygeo/python-rasterstats
 
-.. |CoverageStatus| image:: https://coveralls.io/repos/perrygeo/python-rasterstats/badge.png
-.. _CoverageStatus: https://coveralls.io/r/perrygeo/python-raster-stats
-
+.. |CoverageStatus| image:: https://coveralls.io/repos/github/perrygeo/python-rasterstats/badge.svg?branch=master
+.. _CoverageStatus: https://coveralls.io/github/perrygeo/python-rasterstats?branch=master

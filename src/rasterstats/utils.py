@@ -176,7 +176,7 @@ def boxify_points(geom, rast):
     if 'Point' not in geom.type:
         raise ValueError("Points or multipoints only")
 
-    buff = -0.01 * min(rast.affine.a, rast.affine.e)
+    buff = -0.01 * abs(min(rast.affine.a, rast.affine.e))
 
     if geom.type == 'Point':
         pts = [geom]
