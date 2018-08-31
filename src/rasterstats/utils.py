@@ -57,6 +57,10 @@ def rebin_sum(a, shape, dtype):
     return a.reshape(sh).sum(-1, dtype=dtype).sum(1, dtype=dtype)
 
 
+class objectview(object):
+    def __init__(self, d):
+        self.__dict__ = d
+
 def rasterize_pctcover_geom(geom, like, scale=None, all_touched=False):
     """
     Parameters
@@ -84,7 +88,9 @@ def rasterize_pctcover_geom(geom, like, scale=None, all_touched=False):
 
     new_shape = (like.shape[0]*scale, like.shape[1]*scale)
 
-    rv_array = rasterize_geom(geom, new_shape, new_affine, all_touched=all_touched)
+    new_like = objectview({'shape': new_shape, 'affine': new_affine})
+
+    rv_array = rasterize_geom(geom, new_like, all_touched=all_touched)
     rv_array = rebin_sum(rv_array, like.shape, min_dtype)
 
     return rv_array.astype('float32') / (scale**2)
