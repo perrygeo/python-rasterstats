@@ -27,13 +27,12 @@ def get_percentile(stat):
     return q
 
 
-def rasterize_geom(geom, shape, affine, all_touched=False):
+def rasterize_geom(geom, like, all_touched=False):
     """
     Parameters
     ----------
     geom: GeoJSON geometry
-    shape: desired shape
-    affine: desired transform
+    like: raster object with desired shape and transform
     all_touched: rasterization strategy
 
     Returns
@@ -43,8 +42,8 @@ def rasterize_geom(geom, shape, affine, all_touched=False):
     geoms = [(geom, 1)]
     rv_array = features.rasterize(
         geoms,
-        out_shape=shape,
-        transform=affine,
+        out_shape=like.shape,
+        transform=like.affine,
         fill=0,
         dtype='uint8',
         all_touched=all_touched)
@@ -58,13 +57,12 @@ def rebin_sum(a, shape, dtype):
     return a.reshape(sh).sum(-1, dtype=dtype).sum(1, dtype=dtype)
 
 
-def rasterize_pctcover_geom(geom, shape, affine, scale=None, all_touched=False):
+def rasterize_pctcover_geom(geom, like, scale=None, all_touched=False):
     """
     Parameters
     ----------
     geom: GeoJSON geometry
-    shape: desired shape
-    affine: desired transform
+    like: raster object with desired shape and transform
     scale: scale at which to generate percent cover estimate
 
     Returns
@@ -75,20 +73,20 @@ def rasterize_pctcover_geom(geom, shape, affine, scale=None, all_touched=False):
         scale = 10
     min_dtype = min_scalar_type(scale**2)
 
-    pixel_size_lon = affine[0]/scale
-    pixel_size_lat = affine[4]/scale
-    
-    topleftlon = affine[2]
-    topleftlat = affine[5]
+    pixel_size_lon = like.affine[0]/scale
+    pixel_size_lat = like.affine[4]/scale
+
+    topleftlon = like.affine[2]
+    topleftlat = like.affine[5]
 
     new_affine = Affine(pixel_size_lon, 0, topleftlon,
                         0, pixel_size_lat, topleftlat)
 
-    new_shape = (shape[0]*scale, shape[1]*scale)
+    new_shape = (like.shape[0]*scale, like.shape[1]*scale)
 
     rv_array = rasterize_geom(geom, new_shape, new_affine, all_touched=all_touched)
-    rv_array = rebin_sum(rv_array, shape, min_dtype)
-    
+    rv_array = rebin_sum(rv_array, like.shape, min_dtype)
+
     return rv_array.astype('float32') / (scale**2)
 
 

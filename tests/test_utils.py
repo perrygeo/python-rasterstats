@@ -82,11 +82,18 @@ def test_rebin_sum():
 
 
 def test_rasterize_pctcover_geom():
+    # https://goodcode.io/articles/python-dict-object/
+    class objectview(object):
+        def __init__(self, d):
+            self.__dict__ = d
+
     polygon_a = Polygon([[0, 0], [2, 0], [2, 2], [0, 2]])
     shape_a = (2, 2)
     affine_a = Affine(1, 0, 0,
                       0, -1, 2)
-    pct_cover_a = rasterize_pctcover_geom(polygon_a, shape_a, affine_a, scale=10, all_touched=False)
+    like_a = objectview({'shape': shape_a, 'affine': affine_a})
+
+    pct_cover_a = rasterize_pctcover_geom(polygon_a, like_a, scale=10, all_touched=False)
     correct_output_a = np.array([[1, 1], [1, 1]])
     assert np.array_equal(pct_cover_a, correct_output_a)
 
@@ -94,7 +101,9 @@ def test_rasterize_pctcover_geom():
     shape_b = (2, 2)
     affine_b = Affine(1, 0, 0,
                       0, -1, 2)
-    pct_cover_b = rasterize_pctcover_geom(polygon_b, shape_b, affine_b, scale=10, all_touched=False)
+    like_b = objectview({'shape': shape_b, 'affine': affine_b})
+
+    pct_cover_b = rasterize_pctcover_geom(polygon_b, like_b, scale=10, all_touched=False)
     correct_output_b = np.array([[0.25, 0.25], [0.25, 0.25]])
     assert np.array_equal(pct_cover_b, correct_output_b)
 
@@ -102,6 +111,8 @@ def test_rasterize_pctcover_geom():
     shape_c = (2, 2)
     affine_c = Affine(1, 0, 0,
                       0, -1, 2)
-    pct_cover_c = rasterize_pctcover_geom(polygon_c, shape_c, affine_c, scale=100, all_touched=False)
+    like_c = objectview({'shape': shape_c, 'affine': affine_c})
+
+    pct_cover_c = rasterize_pctcover_geom(polygon_c, like_c, scale=100, all_touched=False)
     correct_output_c = np.array([[0.25, 0.25], [0.25, 0.25]])
     assert np.array_equal(pct_cover_c, correct_output_c)
