@@ -86,6 +86,12 @@ def test_point_query():
     assert round(val) == 74
 
 
+def test_point_query_invalid_interp():
+    point = "POINT(245309 1000064)"
+    with pytest.raises(ValueError):
+        point_query(point, raster, interpolate="invalid_type")
+
+
 def test_point_query_geojson():
     point = "POINT(245309 1000064)"
     features = point_query(point, raster, property_name="TEST", geojson_out=True)
