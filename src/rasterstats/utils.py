@@ -74,8 +74,7 @@ def rasterize_pctcover_geom(geom, like, scale=None, all_touched=False):
     -------
     ndarray: float32
     """
-    if scale is None:
-        scale = 10
+    scale = scale if scale is not None else 10
     min_dtype = min_scalar_type(scale**2)
 
     pixel_size_lon = like.affine[0]/scale
