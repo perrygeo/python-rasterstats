@@ -1,4 +1,5 @@
 import os
+import pytest
 import rasterio
 from rasterstats.point import point_window_unitxy, bilinear, geom_xys
 from rasterstats import point_query
