@@ -1,4 +1,11 @@
+#!/bin/bash
+
 python setup.py sdist --formats=gztar,zip bdist_wheel
+# Redirect any warnings and check for failures
+if [[ -n $(twine check dist/* 2>/dev/null | grep "Failed") ]]; then
+    echo "Detected invalid markup, exiting!"
+    exit 1
+fi
 twine upload dist/*
 
 echo "Don't forget to publish the docs..."

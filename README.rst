@@ -6,13 +6,13 @@ rasterstats
 
 ``rasterstats`` is a Python module for summarizing geospatial raster datasets based on vector geometries.
 It includes functions for **zonal statistics** and interpolated **point queries**. The command-line interface allows for
-easy interoperability with other GeoJSON tools. 
+easy interoperability with other GeoJSON tools.
 
 Documentation
 -------------
 For details on installation and usage, visit the documentation at `http://pythonhosted.org/rasterstats <http://pythonhosted.org/rasterstats/>`_.
 
-What does it do? 
+What does it do?
 ----------------
 Given a vector layer and a raster band, calculate the summary statistics of each vector geometry.
 For example, with a polygon vector layer and a digital elevation model (DEM) raster, compute the
@@ -25,19 +25,19 @@ mean elevation of each polygon.
 Command Line Quick Start
 ------------------------
 
-The command line interfaces to zonalstats and point_query 
+The command line interfaces to zonalstats and point_query
 are `rio` subcommands which read and write geojson features
 
 .. code-block:: bash
 
-    $ fio cat polygon.shp | rio zonalstats -r elevation.tif 
+    $ fio cat polygon.shp | rio zonalstats -r elevation.tif
 
     $ fio cat points.shp | rio pointquery -r elevation.tif
 
 See the `CLI Docs <http://pythonhosted.org/rasterstats/cli.html>`_. for more detail.
 
 Python Quick Start
------------
+------------------
 
 For zonal statistics
 
