@@ -5,6 +5,7 @@ import sys
 import json
 import math
 import fiona
+from fiona.errors import DriverError
 import rasterio
 import warnings
 from rasterio.transform import guard_transform
@@ -88,7 +89,7 @@ def read_features(obj, layer=0):
                         yield feature
 
             features_iter = fiona_generator(obj)
-        except (AssertionError, TypeError, IOError, OSError):
+        except (DriverError, AssertionError, TypeError, IOError, OSError):
             try:
                 mapping = json.loads(obj)
                 if 'type' in mapping and mapping['type'] == 'FeatureCollection':
