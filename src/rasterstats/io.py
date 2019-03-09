@@ -3,7 +3,6 @@ from __future__ import absolute_import
 from __future__ import division
 import sys
 import json
-from json.decoder import JSONDecodeError
 import math
 import fiona
 from fiona.errors import DriverError
@@ -16,6 +15,10 @@ try:
     from shapely.errors import ReadingError
 except:
     from shapely.geos import ReadingError
+try:
+    from json.decoder import JSONDecodeError
+except ImportError:
+    JSONDecodeError = ValueError
 from shapely import wkt, wkb
 from collections import Iterable, Mapping
 
