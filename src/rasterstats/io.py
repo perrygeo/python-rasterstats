@@ -3,8 +3,10 @@ from __future__ import absolute_import
 from __future__ import division
 import sys
 import json
+from json.decoder import JSONDecodeError
 import math
 import fiona
+from fiona.errors import DriverError
 import rasterio
 import warnings
 from rasterio.transform import guard_transform
@@ -88,14 +90,14 @@ def read_features(obj, layer=0):
                         yield feature
 
             features_iter = fiona_generator(obj)
-        except (AssertionError, TypeError, IOError, OSError):
+        except (AssertionError, TypeError, IOError, OSError, DriverError):
             try:
                 mapping = json.loads(obj)
                 if 'type' in mapping and mapping['type'] == 'FeatureCollection':
                     features_iter = mapping['features']
                 elif mapping['type'] in geom_types + ['Feature']:
                     features_iter = [parse_feature(mapping)]
-            except ValueError:
+            except (ValueError, JSONDecodeError):
                 # Single feature-like string
                 features_iter = [parse_feature(obj)]
     elif isinstance(obj, Mapping):
