@@ -5,6 +5,7 @@ import sys
 import json
 import math
 import fiona
+from fiona.errors import DriverError
 import rasterio
 import warnings
 from rasterio.transform import guard_transform
@@ -14,6 +15,10 @@ try:
     from shapely.errors import ReadingError
 except:
     from shapely.geos import ReadingError
+try:
+    from json.decoder import JSONDecodeError
+except ImportError:
+    JSONDecodeError = ValueError
 from shapely import wkt, wkb
 from collections import Iterable, Mapping
 
@@ -76,6 +81,7 @@ def parse_feature(obj):
 
 def read_features(obj, layer=0):
     features_iter = None
+    
     if isinstance(obj, string_types):
         try:
             # test it as fiona data source
@@ -88,14 +94,14 @@ def read_features(obj, layer=0):
                         yield feature
 
             features_iter = fiona_generator(obj)
-        except (AssertionError, TypeError, IOError, OSError):
+        except (AssertionError, TypeError, IOError, OSError, DriverError, UnicodeDecodeError):
             try:
                 mapping = json.loads(obj)
                 if 'type' in mapping and mapping['type'] == 'FeatureCollection':
                     features_iter = mapping['features']
                 elif mapping['type'] in geom_types + ['Feature']:
                     features_iter = [parse_feature(mapping)]
-            except ValueError:
+            except (ValueError, JSONDecodeError):
                 # Single feature-like string
                 features_iter = [parse_feature(obj)]
     elif isinstance(obj, Mapping):

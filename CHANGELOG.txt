@@ -1,3 +1,6 @@
+0.13.1
+- Bug fix for io.read_features with Fiona 1.8+
+
 0.13.0
 - Require Rasterio>=1.0
 - Fix buffer logic for boxify_points (#171)
