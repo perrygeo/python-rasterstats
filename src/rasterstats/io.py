@@ -81,6 +81,7 @@ def parse_feature(obj):
 
 def read_features(obj, layer=0):
     features_iter = None
+    
     if isinstance(obj, string_types):
         try:
             # test it as fiona data source
@@ -93,7 +94,7 @@ def read_features(obj, layer=0):
                         yield feature
 
             features_iter = fiona_generator(obj)
-        except (AssertionError, TypeError, IOError, OSError, DriverError):
+        except (AssertionError, TypeError, IOError, OSError, DriverError, UnicodeDecodeError):
             try:
                 mapping = json.loads(obj)
                 if 'type' in mapping and mapping['type'] == 'FeatureCollection':
