@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
 from __future__ import division
+from distutils.version import LooseVersion
 
 from affine import Affine
 from shapely.geometry import shape
@@ -197,8 +198,12 @@ def gen_zonal_stats(
             else:
                 if run_count:
                     keys, counts = np.unique(masked.compressed(), return_counts=True)
-                    pixel_count = dict(zip([np.asscalar(k) for k in keys],
-                                           [np.asscalar(c) for c in counts]))
+                    if LooseVersion(np.__version__) < LooseVersion('1.16.0'):
+                        pixel_count = dict(zip([np.asscalar(k) for k in keys],
+                                               [np.asscalar(c) for c in counts]))
+                    else:
+                        pixel_count = dict(zip([k.item() for k in keys],
+                                               [c.item() for c in counts]))
 
                 if categorical:
                     feature_stats = dict(pixel_count)
