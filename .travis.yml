@@ -20,7 +20,7 @@ before_install:
   - pip install -U pip setuptools --upgrade
   - pip install wheel
 install:
-  - if [[ "$NEWNUMPY" == true ]]; then pip install numpy>=1.16; fi
+  - if [[ "$NEWNUMPY" == true ]]; then pip install numpy==1.16; fi
   - pip install numpy "rasterio>=1.0a12"
   - pip install -r requirements_dev.txt
   - pip install coveralls
