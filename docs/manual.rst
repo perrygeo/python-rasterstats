@@ -174,6 +174,20 @@ then use it in your ``zonal_stats`` call like so::
     ...             add_stats={'mymean':mymean})
     [{'count': 75, 'mymean': 14.660084635416666}, {'count': 50, 'mymean': 56.605761718750003}]
 
+To have access to geometry properties, a dictionnary can be passed to the user-defined function::
+
+    >>> def mymean_prop(x,prop):
+    ...     return np.ma.mean(x) * prop['id']
+
+then use it in your ``zonal_stats`` call like so::
+
+    >>> zonal_stats("tests/data/polygons.shp",
+    ...             "tests/data/slope.tif",
+    ...             stats="count",
+    ...             add_stats={'mymean_prop':mymean_prop},
+    ...             properties=['id'])
+    [{'count': 75, 'mymean_prop': 14.660084635416666}, {'count': 50, 'mymean_prop': 113.2115234375}]
+
 
 GeoJSON output
 ^^^^^^^^^^^^^^
