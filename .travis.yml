@@ -7,15 +7,20 @@ env:
   global:
     - PIP_WHEEL_DIR=$HOME/.cache/pip/wheels
     - PIP_FIND_LINKS=file://$HOME/.cache/pip/wheels
-python:
-  - 2.7
-  - 3.4
-  - 3.5
-  - 3.6
+matrix:
+  include:
+    - python: 2.7
+    - python: 3.4
+    - python: 3.5
+    - python: 3.6
+    - python: 3.6
+      env: NEWNUMPY=true
+
 before_install:
   - pip install -U pip setuptools --upgrade
   - pip install wheel
 install:
+  - if [[ "$NEWNUMPY" == true ]]; then pip install numpy==1.16; fi
   - pip install numpy "rasterio>=1.0a12"
   - pip install -r requirements_dev.txt
   - pip install coveralls

@@ -197,8 +197,12 @@ def gen_zonal_stats(
             else:
                 if run_count:
                     keys, counts = np.unique(masked.compressed(), return_counts=True)
-                    pixel_count = dict(zip([np.asscalar(k) for k in keys],
-                                           [np.asscalar(c) for c in counts]))
+                    try:
+                        pixel_count = dict(zip([k.item() for k in keys],
+                                               [c.item() for c in counts]))
+                    except AttributeError:
+                        pixel_count = dict(zip([np.asscalar(k) for k in keys],
+                                               [np.asscalar(c) for c in counts]))
 
                 if categorical:
                     feature_stats = dict(pixel_count)
