@@ -45,8 +45,7 @@ def gen_zonal_stats(
         zone_func=None,
         raster_out=False,
         prefix=None,
-        geojson_out=False,
-        properties=None, **kwargs):
+        geojson_out=False, **kwargs):
     """Zonal statistics of raster values aggregated to vector geometries.
 
     Parameters
@@ -113,8 +112,6 @@ def gen_zonal_stats(
         with zonal stats appended as additional properties.
         Use with `prefix` to ensure unique and meaningful property names.
 
-    properties: list of str, , optional
-        Property names of the geo-like python objects to be used in the user-defined stats.
         
     Returns
     -------
@@ -150,8 +147,6 @@ def gen_zonal_stats(
         features_iter = read_features(vectors, layer)
         for _, feat in enumerate(features_iter):
             geom = shape(feat['geometry'])
-            if properties:
-                prop_dic = {k: feat['properties'][k] for k in properties}
 
             if 'Point' in geom.type:
                 geom = boxify_points(geom, rast)
@@ -261,8 +256,9 @@ def gen_zonal_stats(
             if add_stats is not None:
                 for stat_name, stat_func in add_stats.items():
                     try:
-                        feature_stats[stat_name] = stat_func(masked, prop_dic)
-                    except:
+                        feature_stats[stat_name] = stat_func(masked, feat['properties'])
+                    except TypeError:
+                        # backwards compatible with single-argument function
                         feature_stats[stat_name] = stat_func(masked)
 
             if raster_out:
