@@ -112,6 +112,7 @@ def gen_zonal_stats(
         with zonal stats appended as additional properties.
         Use with `prefix` to ensure unique and meaningful property names.
 
+        
     Returns
     -------
     generator of dicts (if geojson_out is False)
@@ -258,7 +259,11 @@ def gen_zonal_stats(
 
             if add_stats is not None:
                 for stat_name, stat_func in add_stats.items():
-                    feature_stats[stat_name] = stat_func(masked)
+                    try:
+                        feature_stats[stat_name] = stat_func(masked, feat['properties'])
+                    except TypeError:
+                        # backwards compatible with single-argument function
+                        feature_stats[stat_name] = stat_func(masked)
 
             if raster_out:
                 feature_stats['mini_raster_array'] = masked

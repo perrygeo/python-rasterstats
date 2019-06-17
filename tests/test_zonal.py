@@ -289,6 +289,17 @@ def test_add_stats():
         assert stats[i]['mean'] == stats[i]['mymean']
 
 
+def test_add_stats_prop():
+    polygons = os.path.join(DATA, 'polygons.shp')
+
+    def mymean_prop(x, prop):
+        return np.ma.mean(x) * prop['id']
+
+    stats = zonal_stats(polygons, raster, add_stats={'mymean_prop': mymean_prop})
+    for i in range(len(stats)):
+        assert stats[i]['mymean_prop'] == stats[i]['mean'] * (i+1)
+
+
 def test_mini_raster():
     polygons = os.path.join(DATA, 'polygons.shp')
     stats = zonal_stats(polygons, raster, raster_out=True)
