@@ -204,6 +204,14 @@ def test_nodata():
     assert '1.0' not in stats[0]
 
 
+def test_dataset_mask():
+    polygons = os.path.join(DATA, 'polygons.shp')
+    raster = os.path.join(DATA, 'dataset_mask.tif')
+    stats = zonal_stats(polygons, raster, stats="*")
+    assert stats[0]['count'] == 75
+    assert stats[1]['count'] == 0
+
+
 def test_partial_overlap():
     polygons = os.path.join(DATA, 'polygons_partial_overlap.shp')
     stats = zonal_stats(polygons, raster, stats="count")
