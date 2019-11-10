@@ -9,6 +9,7 @@ from fiona.errors import DriverError
 import rasterio
 import warnings
 from rasterio.transform import guard_transform
+from rasterio.enums import MaskFlags
 from affine import Affine
 import numpy as np
 try:
@@ -305,6 +306,11 @@ class Raster(object):
                 self.array, window=win, nodata=nodata, masked=masked)
         elif self.src:
             # It's an open rasterio dataset
+            if all(MaskFlags.per_dataset in flags for flags in self.src.mask_flag_enums):
+                if not masked:
+                    masked = True
+                    warnings.warn("Setting masked to True because dataset mask has been detected")
+
             new_array = self.src.read(
                 self.band, window=win, boundless=True, masked=masked)
 
