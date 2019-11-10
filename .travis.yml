@@ -9,10 +9,10 @@ env:
     - PIP_FIND_LINKS=file://$HOME/.cache/pip/wheels
 matrix:
   include:
-    - python: 2.7
     - python: 3.5
     - python: 3.6
-    - python: 3.6
+    - python: 3.7
+    - python: 3.7
       env: NEWNUMPY=true
 
 before_install:
