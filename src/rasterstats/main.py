@@ -188,7 +188,11 @@ def gen_zonal_stats(
                     raise TypeError(('zone_func must be a callable '
                                      'which accepts function a '
                                      'single `zone_array` arg.'))
-                zone_func(masked)
+                value = zone_func(masked)
+
+                # check if zone_func has return statement
+                if value is not None:
+                    masked = value
 
             if masked.compressed().size == 0:
                 # nothing here, fill with None and move on

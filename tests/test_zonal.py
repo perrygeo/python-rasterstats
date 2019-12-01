@@ -327,6 +327,20 @@ def test_percentile_good():
     assert stats[0]['percentile_50'] <= stats[0]['percentile_90']
 
 
+def test_zone_func_has_return():
+
+    def example_zone_func(zone_arr):
+        return np.ma.masked_array(np.full(zone_arr.shape, 1))
+
+    polygons = os.path.join(DATA, 'polygons.shp')
+    stats = zonal_stats(polygons,
+                        raster,
+                        zone_func=example_zone_func)
+    assert stats[0]['max'] == 1
+    assert stats[0]['min'] == 1
+    assert stats[0]['mean'] == 1
+
+
 def test_zone_func_good():
 
     def example_zone_func(zone_arr):
