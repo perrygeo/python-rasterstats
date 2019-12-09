@@ -147,6 +147,13 @@ def test_jsonstr_collection():
     _test_read_features(indata)
 
 
+def test_jsonstr_collection_without_features():
+    indata = {'type': "FeatureCollection", 'features': []}
+    indata = json.dumps(indata)
+    with pytest.raises(ValueError):
+        _test_read_features(indata)
+
+
 def test_invalid_jsonstr():
     indata = {'type': "InvalidGeometry", 'coordinates': [30, 10]}
     indata = json.dumps(indata)
