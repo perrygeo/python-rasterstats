@@ -1,3 +1,9 @@
+0.14.0
+- Add support return statement to zone_func #203
+- Take into account per dataset mask #198
+- Accessing geometry properties for user-defined stats #193
+- Updated method calls for numpy v1.16 #184
+
 0.13.1
 - Bug fix for io.read_features with Fiona 1.8+
 
