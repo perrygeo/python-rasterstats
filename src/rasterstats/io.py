@@ -21,7 +21,7 @@ try:
 except ImportError:
     JSONDecodeError = ValueError
 from shapely import wkt, wkb
-from collections import Iterable, Mapping
+from collections.abc import Iterable, Mapping
 
 
 geom_types = ["Point", "LineString", "Polygon",
