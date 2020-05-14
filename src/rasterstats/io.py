@@ -154,8 +154,8 @@ def bounds_window(bounds, affine):
 
 def window_bounds(window, affine):
     (row_start, row_stop), (col_start, col_stop) = window
-    w, s = (col_start, row_stop) * affine
-    e, n = (col_stop, row_start) * affine
+    w, s = affine * (col_start, row_stop)
+    e, n = affine * (col_stop, row_start)
     return w, s, e, n
 
 
