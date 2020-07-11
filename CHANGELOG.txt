@@ -1,3 +1,7 @@
+0.15.0
+- Fix deprecation warning with Affine #211
+- Avoid unnecessary memory copy operation #213
+
 0.14.0
 - Add support return statement to zone_func #203
 - Take into account per dataset mask #198
