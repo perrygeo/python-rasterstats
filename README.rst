@@ -58,6 +58,7 @@ and for point queries
     >>> point = "POINT(245309 1000064)"
     >>> point_query(point, "tests/data/elevation.tif")
     [723.9872347624]
+   
 
 
 Issues
@@ -74,3 +75,4 @@ Find a bug? Report it via github issues by providing
 
 .. |CoverageStatus| image:: https://coveralls.io/repos/github/perrygeo/python-rasterstats/badge.svg?branch=master
 .. _CoverageStatus: https://coveralls.io/github/perrygeo/python-rasterstats?branch=master
+This is an amazing project done by you
