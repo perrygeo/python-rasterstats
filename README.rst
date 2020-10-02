@@ -44,20 +44,20 @@ For zonal statistics
 .. code-block:: python
 
     >>> from rasterstats import zonal_stats
-    >>> stats = zonal_stats("tests/data/polygons.shp", "tests/data/elevation.tif")
-    >>> stats[1].keys()
-    ['count', 'min', 'max', 'mean']
+    >>> stats = zonal_stats("tests/data/polygons.shp", "tests/data/slope.tif")
+    >>> stats[0].keys()
+    dict_keys(['min', 'max', 'mean', 'count'])
     >>> [f['mean'] for f in stats]
-    [756.6057470703125, 114.660084635416666]
+    [14.660084635416666, 56.60576171875]
 
 and for point queries
 
 .. code-block:: python
 
     >>> from rasterstats import point_query
-    >>> point = "POINT(245309 1000064)"
-    >>> point_query(point, "tests/data/elevation.tif")
-    [723.9872347624]
+    >>> point = {'type': 'Point', 'coordinates': (245309.0, 1000064.0)}
+    >>> point_query(point, "tests/data/slope.tif")
+    [74.09817594635244]
 
 
 Issues
