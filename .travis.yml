@@ -9,18 +9,15 @@ env:
     - PIP_FIND_LINKS=file://$HOME/.cache/pip/wheels
 matrix:
   include:
-    - python: 2.7
-    - python: 3.5
     - python: 3.6
-    - python: 3.6
-      env: NEWNUMPY=true
+    - python: 3.7
+    - python: 3.8
 
 before_install:
   - pip install -U pip setuptools --upgrade
   - pip install wheel
 install:
-  - if [[ "$NEWNUMPY" == true ]]; then pip install numpy==1.16; fi
-  - pip install numpy "rasterio>=1.0a12"
+  - pip install numpy "rasterio>=1.0"
   - pip install -r requirements_dev.txt
   - pip install coveralls
   - pip install -e .
