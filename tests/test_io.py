@@ -290,6 +290,34 @@ def test_Raster():
     # If the abstraction is correct, the arrays are equal
     assert np.array_equal(r1.array, r2.array)
 
+def test_Raster_boundless_disabled():
+    import numpy as np
+
+    bounds = (244300.61494985913, 998877.8262535353, 246444.72726211764, 1000868.7876863468)
+    outside_bounds = (244156, 1000258, 245114, 1000968)
+
+    # rasterio src fails outside extent
+    with pytest.raises(ValueError):
+        r1 = Raster(raster, band=1).read(outside_bounds, boundless=False)
+
+    # rasterio src works inside extent
+    r2 = Raster(raster, band=1).read(bounds, boundless=False)
+
+    with rasterio.open(raster) as src:
+        arr = src.read(1)
+        affine = src.transform
+        nodata = src.nodata
+
+    # ndarray works inside extent
+    r3 = Raster(arr, affine, nodata, band=1).read(bounds, boundless=False)
+    
+    # ndarray src fails outside extent
+    with pytest.raises(ValueError):
+        r4 = Raster(arr, affine, nodata, band=1).read(outside_bounds, boundless=False)
+    
+    # If the abstraction is correct, the arrays are equal
+    assert np.array_equal(r2.array, r3.array)
+
 def test_Raster_context():
     # Assigned a regular name, stays open
     r1 = Raster(raster, band=1)

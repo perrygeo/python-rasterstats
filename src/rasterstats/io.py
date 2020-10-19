@@ -162,6 +162,12 @@ def window_bounds(window, affine):
     return w, s, e, n
 
 
+def beyond_extent(window, shape):
+    """Checks if window references pixels beyond the raster extent"""
+    (wr_start, wr_stop), (wc_start, wc_stop) = window
+    return wr_start < 0 or wc_start < 0 or wr_stop > shape[0] or wc_stop > shape[1]
+
+
 def boundless_array(arr, window, nodata, masked=False):
     dim3 = False
     if len(arr.shape) == 3:
@@ -266,8 +272,8 @@ class Raster(object):
         col, row = [math.floor(a) for a in (~self.affine * (x, y))]
         return row, col
 
-    def read(self, bounds=None, window=None, masked=False):
-        """ Performs a boundless read against the underlying array source
+    def read(self, bounds=None, window=None, masked=False, boundless=True):
+        """ Performs a read against the underlying array source
 
         Parameters
         ----------
@@ -279,6 +285,9 @@ class Raster(object):
         masked: boolean
             return a masked numpy array, default: False
             bounds OR window are required, specifying both or neither will raise exception
+        boundless: boolean
+            allow window/bounds that extend beyond the dataset’s extent, default: True
+            partially or completely filled arrays will be returned as appropriate.
 
         Returns
         -------
@@ -294,6 +303,9 @@ class Raster(object):
             win = window
         else:
             raise ValueError("Specify either bounds or window")
+
+        if not boundless and beyond_extent(win, self.shape):
+            raise ValueError("Window/bounds is outside dataset extent and boundless reads are disabled")
 
         c, _, _, f = window_bounds(win, self.affine)  # c ~ west, f ~ north
         a, b, _, d, e, _, _, _, _ = tuple(self.affine)
@@ -316,7 +328,7 @@ class Raster(object):
                     warnings.warn("Setting masked to True because dataset mask has been detected")
 
             new_array = self.src.read(
-                self.band, window=win, boundless=True, masked=masked)
+                self.band, window=win, boundless=boundless, masked=masked)
 
         return Raster(new_array, new_affine, nodata)
 

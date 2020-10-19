@@ -45,7 +45,8 @@ def gen_zonal_stats(
         zone_func=None,
         raster_out=False,
         prefix=None,
-        geojson_out=False, **kwargs):
+        geojson_out=False, 
+        boundless=True, **kwargs):
     """Zonal statistics of raster values aggregated to vector geometries.
 
     Parameters
@@ -111,7 +112,10 @@ def gen_zonal_stats(
         Original feature geometry and properties will be retained
         with zonal stats appended as additional properties.
         Use with `prefix` to ensure unique and meaningful property names.
-
+    
+    boundless: boolean
+        Allow features that extend beyond the raster dataset’s extent, default: True
+        Cells outside dataset extents are treated as nodata.
         
     Returns
     -------
@@ -153,7 +157,7 @@ def gen_zonal_stats(
 
             geom_bounds = tuple(geom.bounds)
 
-            fsrc = rast.read(bounds=geom_bounds)
+            fsrc = rast.read(bounds=geom_bounds, boundless=boundless)
 
             # rasterized geometry
             rv_array = rasterize_geom(geom, like=fsrc, all_touched=all_touched)
