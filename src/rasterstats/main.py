@@ -45,7 +45,9 @@ def gen_zonal_stats(
         zone_func=None,
         raster_out=False,
         prefix=None,
-        geojson_out=False, **kwargs):
+        geojson_out=False,
+        preserve_properties=False,
+        preserve_ids=False, **kwargs):
     """Zonal statistics of raster values aggregated to vector geometries.
 
     Parameters
@@ -111,6 +113,12 @@ def gen_zonal_stats(
         Original feature geometry and properties will be retained
         with zonal stats appended as additional properties.
         Use with `prefix` to ensure unique and meaningful property names.
+    
+    preserve_properties: boolean (default: False)
+        preserve the properties of each feature in the returned stats data
+    
+    preserve_ids: boolean (default: False)
+        Preserve the IDs of each feature in the returned stats data
 
         
     Returns
@@ -215,6 +223,13 @@ def gen_zonal_stats(
                         feature_stats = remap_categories(category_map, feature_stats)
                 else:
                     feature_stats = {}
+                
+            
+                if preserve_properties and 'properties' in feat:
+                    feature_stats['properties'] = feat['properties']
+                    if preserve_ids:
+                        if 'id' in feat['properties']:
+                            feature_stats['id'] = feat['properties']['id']
 
                 if 'min' in stats:
                     feature_stats['min'] = float(masked.min())

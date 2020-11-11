@@ -24,3 +24,4 @@ install:
 script: py.test --cov rasterstats --cov-report term-missing
 after_success:
   - coveralls
+
