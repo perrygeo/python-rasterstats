@@ -149,9 +149,9 @@ def gen_zonal_stats(
         band = band_num
 
     with Raster(raster, affine, nodata, band) as rast:
-        try:
-            features_iter = read_features(vectors, layer)
-            for _, feat in enumerate(features_iter):
+        features_iter = read_features(vectors, layer)
+        for _, feat in enumerate(features_iter):
+            try:
                 geom = shape(feat['geometry'])
 
                 if 'Point' in geom.type:
@@ -295,8 +295,8 @@ def gen_zonal_stats(
                     yield feat
                 else:
                     yield feature_stats
-        except Exception as exc:
-            if yield_exception:
-                yield exc
-            else:
-                raise exc
+            except Exception as exc:
+                if yield_exception:
+                    yield exc
+                else:
+                    raise exc
