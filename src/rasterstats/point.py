@@ -106,7 +106,8 @@ def gen_point_query(
     affine=None,
     interpolate='bilinear',
     property_name='value',
-    geojson_out=False):
+    geojson_out=False,
+    boundless=True):
     """
     Given a set of vector features and a raster,
     generate raster values at each vertex of the geometry
@@ -154,6 +155,10 @@ def gen_point_query(
         original feature geometry and properties will be retained
         point query values appended as additional properties.
 
+    boundless: boolean
+        Allow features that extend beyond the raster dataset’s extent, default: True
+        Cells outside dataset extents are treated as nodata.
+
     Returns
     -------
     generator of arrays (if ``geojson_out`` is False)
@@ -173,7 +178,7 @@ def gen_point_query(
                 if interpolate == 'nearest':
                     r, c = rast.index(x, y)
                     window = ((int(r), int(r+1)), (int(c), int(c+1)))
-                    src_array = rast.read(window=window, masked=True).array
+                    src_array = rast.read(window=window, masked=True, boundless=boundless).array
                     val = src_array[0, 0]
                     if val is masked:
                         vals.append(None)
@@ -182,7 +187,7 @@ def gen_point_query(
 
                 elif interpolate == 'bilinear':
                     window, unitxy = point_window_unitxy(x, y, rast.affine)
-                    src_array = rast.read(window=window, masked=True).array
+                    src_array = rast.read(window=window, masked=True, boundless=boundless).array
                     vals.append(bilinear(src_array, *unitxy))
 
             if len(vals) == 1:
