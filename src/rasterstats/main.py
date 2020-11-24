@@ -144,151 +144,148 @@ def gen_zonal_stats(
         band = band_num
 
     with Raster(raster, affine, nodata, band) as rast:
-        try:
-            features_iter = read_features(vectors, layer)
-            for _, feat in enumerate(features_iter):
-                geom = shape(feat['geometry'])
+        features_iter = read_features(vectors, layer)
+        for _, feat in enumerate(features_iter):
+            geom = shape(feat['geometry'])
 
-                if 'Point' in geom.type:
-                    geom = boxify_points(geom, rast)
+            if 'Point' in geom.type:
+                geom = boxify_points(geom, rast)
 
-                geom_bounds = tuple(geom.bounds)
+            geom_bounds = tuple(geom.bounds)
 
-                fsrc = rast.read(bounds=geom_bounds)
+            fsrc = rast.read(bounds=geom_bounds)
 
-                # rasterized geometry
-                rv_array = rasterize_geom(geom, like=fsrc, all_touched=all_touched)
+            # rasterized geometry
+            rv_array = rasterize_geom(geom, like=fsrc, all_touched=all_touched)
 
-                # nodata mask
-                isnodata = (fsrc.array == fsrc.nodata)
+            # nodata mask
+            isnodata = (fsrc.array == fsrc.nodata)
 
-                # add nan mask (if necessary)
-                has_nan = (
-                    np.issubdtype(fsrc.array.dtype, np.floating)
-                    and np.isnan(fsrc.array.min()))
-                if has_nan:
-                    isnodata = (isnodata | np.isnan(fsrc.array))
+            # add nan mask (if necessary)
+            has_nan = (
+                np.issubdtype(fsrc.array.dtype, np.floating)
+                and np.isnan(fsrc.array.min()))
+            if has_nan:
+                isnodata = (isnodata | np.isnan(fsrc.array))
 
-                # Mask the source data array
-                # mask everything that is not a valid value or not within our geom
-                masked = np.ma.MaskedArray(
-                    fsrc.array,
-                    mask=(isnodata | ~rv_array))
+            # Mask the source data array
+            # mask everything that is not a valid value or not within our geom
+            masked = np.ma.MaskedArray(
+                fsrc.array,
+                mask=(isnodata | ~rv_array))
 
-                # If we're on 64 bit platform and the array is an integer type
-                # make sure we cast to 64 bit to avoid overflow.
-                # workaround for https://github.com/numpy/numpy/issues/8433
-                if sysinfo.platform_bits == 64 and \
-                        masked.dtype != np.int64 and \
-                        issubclass(masked.dtype.type, np.integer):
-                    masked = masked.astype(np.int64)
+            # If we're on 64 bit platform and the array is an integer type
+            # make sure we cast to 64 bit to avoid overflow.
+            # workaround for https://github.com/numpy/numpy/issues/8433
+            if sysinfo.platform_bits == 64 and \
+                    masked.dtype != np.int64 and \
+                    issubclass(masked.dtype.type, np.integer):
+                masked = masked.astype(np.int64)
 
-                # execute zone_func on masked zone ndarray
-                if zone_func is not None:
-                    if not callable(zone_func):
-                        raise TypeError(('zone_func must be a callable '
-                                         'which accepts function a '
-                                         'single `zone_array` arg.'))
-                    value = zone_func(masked)
+            # execute zone_func on masked zone ndarray
+            if zone_func is not None:
+                if not callable(zone_func):
+                    raise TypeError(('zone_func must be a callable '
+                                     'which accepts function a '
+                                     'single `zone_array` arg.'))
+                value = zone_func(masked)
 
-                    # check if zone_func has return statement
-                    if value is not None:
-                        masked = value
+                # check if zone_func has return statement
+                if value is not None:
+                    masked = value
 
-                if masked.compressed().size == 0:
-                    # nothing here, fill with None and move on
-                    feature_stats = dict([(stat, None) for stat in stats])
-                    if 'count' in stats:  # special case, zero makes sense here
-                        feature_stats['count'] = 0
+            if masked.compressed().size == 0:
+                # nothing here, fill with None and move on
+                feature_stats = dict([(stat, None) for stat in stats])
+                if 'count' in stats:  # special case, zero makes sense here
+                    feature_stats['count'] = 0
+            else:
+                if run_count:
+                    keys, counts = np.unique(masked.compressed(), return_counts=True)
+                    try:
+                        pixel_count = dict(zip([k.item() for k in keys],
+                                               [c.item() for c in counts]))
+                    except AttributeError:
+                        pixel_count = dict(zip([np.asscalar(k) for k in keys],
+                                               [np.asscalar(c) for c in counts]))
+
+                if categorical:
+                    feature_stats = dict(pixel_count)
+                    if category_map:
+                        feature_stats = remap_categories(category_map, feature_stats)
                 else:
-                    if run_count:
-                        keys, counts = np.unique(masked.compressed(), return_counts=True)
-                        try:
-                            pixel_count = dict(zip([k.item() for k in keys],
-                                                   [c.item() for c in counts]))
-                        except AttributeError:
-                            pixel_count = dict(zip([np.asscalar(k) for k in keys],
-                                                   [np.asscalar(c) for c in counts]))
+                    feature_stats = {}
 
-                    if categorical:
-                        feature_stats = dict(pixel_count)
-                        if category_map:
-                            feature_stats = remap_categories(category_map, feature_stats)
-                    else:
-                        feature_stats = {}
+                if 'min' in stats:
+                    feature_stats['min'] = float(masked.min())
+                if 'max' in stats:
+                    feature_stats['max'] = float(masked.max())
+                if 'mean' in stats:
+                    feature_stats['mean'] = float(masked.mean())
+                if 'count' in stats:
+                    feature_stats['count'] = int(masked.count())
+                # optional
+                if 'sum' in stats:
+                    feature_stats['sum'] = float(masked.sum())
+                if 'std' in stats:
+                    feature_stats['std'] = float(masked.std())
+                if 'median' in stats:
+                    feature_stats['median'] = float(np.median(masked.compressed()))
+                if 'majority' in stats:
+                    feature_stats['majority'] = float(key_assoc_val(pixel_count, max))
+                if 'minority' in stats:
+                    feature_stats['minority'] = float(key_assoc_val(pixel_count, min))
+                if 'unique' in stats:
+                    feature_stats['unique'] = len(list(pixel_count.keys()))
+                if 'range' in stats:
+                    try:
+                        rmin = feature_stats['min']
+                    except KeyError:
+                        rmin = float(masked.min())
+                    try:
+                        rmax = feature_stats['max']
+                    except KeyError:
+                        rmax = float(masked.max())
+                    feature_stats['range'] = rmax - rmin
 
-                    if 'min' in stats:
-                        feature_stats['min'] = float(masked.min())
-                    if 'max' in stats:
-                        feature_stats['max'] = float(masked.max())
-                    if 'mean' in stats:
-                        feature_stats['mean'] = float(masked.mean())
-                    if 'count' in stats:
-                        feature_stats['count'] = int(masked.count())
-                    # optional
-                    if 'sum' in stats:
-                        feature_stats['sum'] = float(masked.sum())
-                    if 'std' in stats:
-                        feature_stats['std'] = float(masked.std())
-                    if 'median' in stats:
-                        feature_stats['median'] = float(np.median(masked.compressed()))
-                    if 'majority' in stats:
-                        feature_stats['majority'] = float(key_assoc_val(pixel_count, max))
-                    if 'minority' in stats:
-                        feature_stats['minority'] = float(key_assoc_val(pixel_count, min))
-                    if 'unique' in stats:
-                        feature_stats['unique'] = len(list(pixel_count.keys()))
-                    if 'range' in stats:
-                        try:
-                            rmin = feature_stats['min']
-                        except KeyError:
-                            rmin = float(masked.min())
-                        try:
-                            rmax = feature_stats['max']
-                        except KeyError:
-                            rmax = float(masked.max())
-                        feature_stats['range'] = rmax - rmin
+                for pctile in [s for s in stats if s.startswith('percentile_')]:
+                    q = get_percentile(pctile)
+                    pctarr = masked.compressed()
+                    feature_stats[pctile] = np.percentile(pctarr, q)
 
-                    for pctile in [s for s in stats if s.startswith('percentile_')]:
-                        q = get_percentile(pctile)
-                        pctarr = masked.compressed()
-                        feature_stats[pctile] = np.percentile(pctarr, q)
+            if 'nodata' in stats or 'nan' in stats:
+                featmasked = np.ma.MaskedArray(fsrc.array, mask=(~rv_array))
 
-                if 'nodata' in stats or 'nan' in stats:
-                    featmasked = np.ma.MaskedArray(fsrc.array, mask=(~rv_array))
+                if 'nodata' in stats:
+                    feature_stats['nodata'] = float((featmasked == fsrc.nodata).sum())
+                if 'nan' in stats:
+                    feature_stats['nan'] = float(np.isnan(featmasked).sum()) if has_nan else 0
 
-                    if 'nodata' in stats:
-                        feature_stats['nodata'] = float((featmasked == fsrc.nodata).sum())
-                    if 'nan' in stats:
-                        feature_stats['nan'] = float(np.isnan(featmasked).sum()) if has_nan else 0
+            if add_stats is not None:
+                for stat_name, stat_func in add_stats.items():
+                    try:
+                        feature_stats[stat_name] = stat_func(masked, feat['properties'])
+                    except TypeError:
+                        # backwards compatible with single-argument function
+                        feature_stats[stat_name] = stat_func(masked)
 
-                if add_stats is not None:
-                    for stat_name, stat_func in add_stats.items():
-                        try:
-                            feature_stats[stat_name] = stat_func(masked, feat['properties'])
-                        except TypeError:
-                            # backwards compatible with single-argument function
-                            feature_stats[stat_name] = stat_func(masked)
+            if raster_out:
+                feature_stats['mini_raster_array'] = masked
+                feature_stats['mini_raster_affine'] = fsrc.affine
+                feature_stats['mini_raster_nodata'] = fsrc.nodata
 
-                if raster_out:
-                    feature_stats['mini_raster_array'] = masked
-                    feature_stats['mini_raster_affine'] = fsrc.affine
-                    feature_stats['mini_raster_nodata'] = fsrc.nodata
+            if prefix is not None:
+                prefixed_feature_stats = {}
+                for key, val in feature_stats.items():
+                    newkey = "{}{}".format(prefix, key)
+                    prefixed_feature_stats[newkey] = val
+                feature_stats = prefixed_feature_stats
 
-                if prefix is not None:
-                    prefixed_feature_stats = {}
-                    for key, val in feature_stats.items():
-                        newkey = "{}{}".format(prefix, key)
-                        prefixed_feature_stats[newkey] = val
-                    feature_stats = prefixed_feature_stats
-
-                if geojson_out:
-                    for key, val in feature_stats.items():
-                        if 'properties' not in feat:
-                            feat['properties'] = {}
-                        feat['properties'][key] = val
-                    yield feat
-                else:
-                    yield feature_stats
-        except Exception as exc:
-            yield exc
+            if geojson_out:
+                for key, val in feature_stats.items():
+                    if 'properties' not in feat:
+                        feat['properties'] = {}
+                    feat['properties'][key] = val
+                yield feat
+            else:
+                yield feature_stats
