@@ -192,7 +192,7 @@ def boundless_array(arr, window, nodata, masked=False):
         window_shape = (wr_stop - wr_start, wc_stop - wc_start)
 
     # create an array of nodata values
-    out = np.empty(shape=window_shape)
+    out = np.empty(shape=window_shape, dtype=arr.dtype)
     out[:] = nodata
 
     # Fill with data where overlapping
