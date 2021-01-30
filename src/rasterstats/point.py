@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from __future__ import division
 from shapely.geometry import shape
-from shapely import wkt
+from shapely.ops import transform
 from numpy.ma import masked
 from .io import read_features, Raster
 
@@ -70,8 +70,8 @@ def geom_xys(geom):
     generate a flattened series of 2D points as x,y tuples
     """
     if geom.has_z:
-        # hack to convert to 2D, https://gist.github.com/ThomasG77/cad711667942826edc70
-        geom = wkt.loads(geom.to_wkt())
+        # convert to 2D, https://gist.github.com/ThomasG77/cad711667942826edc70
+        geom = transform(lambda x, y, z=None: (x, y), geom)
         assert not geom.has_z
 
     if hasattr(geom, "geoms"):
