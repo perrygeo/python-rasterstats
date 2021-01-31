@@ -24,7 +24,7 @@ SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--nodata', type=int, default=None)
 @click.option('--prefix', type=str, default='_')
 @click.option('--stats', type=str, default=None)
-@cligj.sequence_opt
+@click.option('--sequence/--no-sequence', type=bool, default=False)
 @cligj.use_rs_opt
 def zonalstats(features, raster, all_touched, band, categorical,
                indent, info, nodata, prefix, stats, sequence, use_rs):
@@ -43,7 +43,6 @@ def zonalstats(features, raster, all_touched, band, categorical,
     \b
        rio zonalstats states.geojson -r rainfall.tif > mean_rainfall_by_state.geojson
     '''
-
     if info:
         logging.basicConfig(level=logging.INFO)
 
@@ -83,7 +82,7 @@ def zonalstats(features, raster, all_touched, band, categorical,
 @click.option('--indent', type=int, default=None)
 @click.option('--interpolate', type=str, default='bilinear')
 @click.option('--property-name', type=str, default='value')
-@cligj.sequence_opt
+@click.option('--sequence/--no-sequence', type=bool, default=False)
 @cligj.use_rs_opt
 def pointquery(features, raster, band, indent, nodata,
                interpolate, property_name, sequence, use_rs):
