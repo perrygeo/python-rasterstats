@@ -2,7 +2,6 @@ rasterstats
 ===========
 
 |BuildStatus|_
-|CoverageStatus|_
 
 ``rasterstats`` is a Python module for summarizing geospatial raster datasets based on vector geometries.
 It includes functions for **zonal statistics** and interpolated **point queries**. The command-line interface allows for
@@ -69,8 +68,4 @@ Find a bug? Report it via github issues by providing
 - python code or command to reproduce the error
 - information on your environment: versions of python, gdal and numpy and system memory
 
-.. |BuildStatus| image:: https://api.travis-ci.org/perrygeo/python-rasterstats.svg
-.. _BuildStatus: https://travis-ci.org/perrygeo/python-rasterstats
-
-.. |CoverageStatus| image:: https://coveralls.io/repos/github/perrygeo/python-rasterstats/badge.svg?branch=master
-.. _CoverageStatus: https://coveralls.io/github/perrygeo/python-rasterstats?branch=master
+.. |BuildStatus| image:: https://github.com/perrygeo/python-rasterstats/workflows/Rasterstats%20Python%20Package/badge.svg
