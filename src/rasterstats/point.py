@@ -70,9 +70,8 @@ def geom_xys(geom):
     generate a flattened series of 2D points as x,y tuples
     """
     if geom.has_z:
-        # convert to 2D, https://gist.github.com/ThomasG77/cad711667942826edc70
+        # convert to 2D
         geom = transform(lambda x, y, z=None: (x, y), geom)
-        assert not geom.has_z
 
     if hasattr(geom, "geoms"):
         geoms = geom.geoms
