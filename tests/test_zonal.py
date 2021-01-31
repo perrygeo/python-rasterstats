@@ -281,9 +281,9 @@ def test_ndarray():
 def test_alias():
     polygons = os.path.join(DATA, 'polygons.shp')
     stats = zonal_stats(polygons, raster)
-    stats2 = raster_stats(polygons, raster)
+    with pytest.deprecated_call():
+        stats2 = raster_stats(polygons, raster)
     assert stats == stats2
-    pytest.deprecated_call(raster_stats, polygons, raster)
 
 
 def test_add_stats():
@@ -468,9 +468,9 @@ def test_transform():
     polygons = os.path.join(DATA, 'polygons.shp')
 
     stats = zonal_stats(polygons, arr, affine=affine)
-    stats2 = zonal_stats(polygons, arr, transform=affine.to_gdal())
+    with pytest.deprecated_call():
+        stats2 = zonal_stats(polygons, arr, transform=affine.to_gdal())
     assert stats == stats2
-    pytest.deprecated_call(zonal_stats, polygons, raster, transform=affine.to_gdal())
 
 
 def test_prefix():
