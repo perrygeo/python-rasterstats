@@ -1,15 +1,15 @@
 ---
 name: Bug report
 about: Create a report to help us improve python-rasterstats
-title: "[BUG] "
+title: ""
 labels: ''
 assignees: ''
 
 ---
 
-Welcome to the `python-rasterstats` Issue Tracker. Help us help you by providing enough information about your issue to reproduce it elsewhere.
+Welcome to the `python-rasterstats` issue tracker. Thanks for putting together a bug report! By following the template below, we'll be better able to reproduce the problem on our end.
 
-If you don't have a bug specifically but a more general support question, please visit https://gis.stackexchange.com/
+If you don't have a bug specifically but a general support question, please visit https://gis.stackexchange.com/
 
 **Describe the bug**
 A clear and concise description of what the bug is. What you expected to happen vs. what did happen.
@@ -23,7 +23,6 @@ Steps to reproduce the behavior:
 ```python
 # Code to reproduce the error
 ```
-
 
 **Feature Requests**
 
