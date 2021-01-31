@@ -68,5 +68,5 @@ Find a bug? Report it via github issues by providing
 - python code or command to reproduce the error
 - information on your environment: versions of python, gdal and numpy and system memory
 
-.. |BuildStatus| image:: https://github.com/perrygeo/python-rasterstats/workflows/Rasterstats%20Python%20Package/badge.svg
+.. |BuildStatus| image:: https://github.com/perrygeo/python-rasterstats/workflows/Rasterstats%20Python%20package/badge.svg
 .. _BuildStatus: https://github.com/perrygeo/python-rasterstats/actions
