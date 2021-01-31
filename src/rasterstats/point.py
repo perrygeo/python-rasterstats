@@ -1,9 +1,8 @@
 from __future__ import absolute_import
 from __future__ import division
 from shapely.geometry import shape
-from shapely import wkt
+from shapely.ops import transform
 from numpy.ma import masked
-from numpy import asscalar
 from .io import read_features, Raster
 
 
@@ -57,7 +56,7 @@ def bilinear(arr, x, y):
         if val is masked:
             return None
         else:
-            return asscalar(val)
+            return val.item()
 
     # bilinear interp on unit square
     return ((llv * (1 - x) * (1 - y)) +
@@ -71,8 +70,8 @@ def geom_xys(geom):
     generate a flattened series of 2D points as x,y tuples
     """
     if geom.has_z:
-        # hack to convert to 2D, https://gist.github.com/ThomasG77/cad711667942826edc70
-        geom = wkt.loads(geom.to_wkt())
+        # convert to 2D, https://gist.github.com/ThomasG77/cad711667942826edc70
+        geom = transform(lambda x, y, z=None: (x, y), geom)
         assert not geom.has_z
 
     if hasattr(geom, "geoms"):
@@ -183,7 +182,7 @@ def gen_point_query(
                     if val is masked:
                         vals.append(None)
                     else:
-                        vals.append(asscalar(val))
+                        vals.append(val.item())
 
                 elif interpolate == 'bilinear':
                     window, unitxy = point_window_unitxy(x, y, rast.affine)
