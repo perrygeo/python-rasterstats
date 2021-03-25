@@ -1,4 +1,5 @@
 import os
+import pytest
 import rasterio
 from rasterstats.point import point_window_unitxy, bilinear, geom_xys
 from rasterstats import point_query
@@ -84,6 +85,12 @@ def test_point_query():
     point = "POINT(245309 1000064)"
     val = point_query(point, raster)[0]
     assert round(val) == 74
+
+
+def test_point_query_invalid_interp():
+    point = "POINT(245309 1000064)"
+    with pytest.raises(ValueError):
+        point_query(point, raster, interpolate="invalid_type")
 
 
 def test_point_query_geojson():

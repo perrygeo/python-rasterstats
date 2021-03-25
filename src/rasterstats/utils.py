@@ -2,7 +2,10 @@
 from __future__ import absolute_import
 from __future__ import division
 import sys
+import numpy as np
 from rasterio import features
+from affine import Affine
+from numpy import min_scalar_type
 from shapely.geometry import box, MultiPolygon
 from .io import window_bounds
 
@@ -45,8 +48,52 @@ def rasterize_geom(geom, like, all_touched=False):
         fill=0,
         dtype='uint8',
         all_touched=all_touched)
-
     return rv_array.astype(bool)
+
+
+# https://stackoverflow.com/questions/8090229/
+#   resize-with-averaging-or-rebin-a-numpy-2d-array/8090605#8090605
+def rebin_sum(a, shape, dtype):
+    sh = shape[0],a.shape[0]//shape[0],shape[1],a.shape[1]//shape[1]
+    return a.reshape(sh).sum(-1, dtype=dtype).sum(1, dtype=dtype)
+
+
+class objectview(object):
+    def __init__(self, d):
+        self.__dict__ = d
+
+def rasterize_pctcover_geom(geom, like, scale=None, all_touched=False):
+    """
+    Parameters
+    ----------
+    geom: GeoJSON geometry
+    like: raster object with desired shape and transform
+    scale: scale at which to generate percent cover estimate
+
+    Returns
+    -------
+    ndarray: float32
+    """
+    scale = scale if scale is not None else 10
+    min_dtype = min_scalar_type(scale**2)
+
+    pixel_size_lon = like.affine[0]/scale
+    pixel_size_lat = like.affine[4]/scale
+
+    topleftlon = like.affine[2]
+    topleftlat = like.affine[5]
+
+    new_affine = Affine(pixel_size_lon, 0, topleftlon,
+                        0, pixel_size_lat, topleftlat)
+
+    new_shape = (like.shape[0]*scale, like.shape[1]*scale)
+
+    new_like = objectview({'shape': new_shape, 'affine': new_affine})
+
+    rv_array = rasterize_geom(geom, new_like, all_touched=all_touched)
+    rv_array = rebin_sum(rv_array, like.shape, min_dtype)
+
+    return rv_array.astype('float32') / (scale**2)
 
 
 def stats_to_csv(stats):
@@ -146,3 +193,30 @@ def boxify_points(geom, rast):
         geoms.append(box(*window_bounds(win, rast.affine)).buffer(buff))
 
     return MultiPolygon(geoms)
+
+
+
+def rs_mean(masked, cover_weights=None):
+    if cover_weights is not None:
+        val = float(
+            np.sum(masked * cover_weights) /
+            np.sum(~masked.mask * cover_weights))
+    else:
+        val = float(masked.mean())
+    return val
+
+
+def rs_count(masked, cover_weights=None):
+    if cover_weights is not None:
+        val = float(np.sum(~masked.mask * cover_weights))
+    else:
+        val = int(masked.count())
+    return val
+
+
+def rs_sum(masked, cover_weights=None):
+    if cover_weights is not None:
+        val = float(np.sum(masked * cover_weights))
+    else:
+        val = float(masked.sum())
+    return val
