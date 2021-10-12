@@ -125,7 +125,7 @@ def gen_point_query(
         If ndarray is passed, the `transform` kwarg is required.
 
     layer: int or string, optional
-        If `vectors` is a path to an fiona source,
+        If `vectors` is a path to a fiona source,
         specify the vector layer to use either by name or number.
         defaults to 0
 
