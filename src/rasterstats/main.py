@@ -5,7 +5,7 @@ from __future__ import division
 from affine import Affine
 from shapely.geometry import shape
 import numpy as np
-import numpy.distutils.system_info as sysinfo
+import platform
 import warnings
 
 from .io import read_features, Raster
@@ -181,7 +181,7 @@ def gen_zonal_stats(
             # If we're on 64 bit platform and the array is an integer type
             # make sure we cast to 64 bit to avoid overflow.
             # workaround for https://github.com/numpy/numpy/issues/8433
-            if sysinfo.platform_bits == 64 and \
+            if platform.architecture()[0] == '64bit' and \
                     masked.dtype != np.int64 and \
                     issubclass(masked.dtype.type, np.integer):
                 masked = masked.astype(np.int64)
