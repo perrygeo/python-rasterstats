@@ -375,3 +375,9 @@ def test_geodataframe():
     except ImportError:
         pytest.skip("Can't import geopands")
     assert list(read_features(df))
+
+
+# TODO # io.parse_features on a feature-only geo_interface
+# TODO # io.parse_features on a feature-only geojson-like object
+# TODO # io.read_features on a feature-only
+# TODO # io.Raster.read() on an open rasterio dataset

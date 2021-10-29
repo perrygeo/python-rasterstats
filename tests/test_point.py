@@ -137,3 +137,8 @@ def test_geom_xys():
                                      (2, 2), (3, 3), (3, 2), (2, 2)]
     mpt3d = MultiPoint([(0, 0, 1), (1, 1, 2)])
     assert list(geom_xys(mpt3d)) == [(0, 0), (1, 1)]
+
+
+# TODO #  gen_point_query(interpolation="fake")
+# TODO #  gen_point_query(interpolation="bilinear")
+# TODO #  gen_point_query(<features_without_props>)

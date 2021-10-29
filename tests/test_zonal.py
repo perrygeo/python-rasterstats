@@ -567,3 +567,7 @@ def test_geodataframe_zonal():
     expected = zonal_stats(polygons, raster)
     assert zonal_stats(df, raster) == expected
 
+# TODO #  gen_zonal_stats(<features_without_props>)
+# TODO #  gen_zonal_stats(stats=nodata)
+# TODO #  gen_zonal_stats(<raster with non-integer dtype>)
+# TODO #  gen_zonal_stats(transform AND affine>)
