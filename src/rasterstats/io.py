@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
 from __future__ import division
-import sys
 import json
 import math
 import fiona
@@ -12,29 +11,27 @@ from rasterio.transform import guard_transform
 from rasterio.enums import MaskFlags
 from affine import Affine
 import numpy as np
+from shapely import wkt, wkb
+
 try:
     from shapely.errors import ReadingError
-except:
+except ImportError:  # pragma: no cover
     from shapely.geos import ReadingError
+
 try:
     from json.decoder import JSONDecodeError
-except ImportError:
+except ImportError:  # pragma: no cover
     JSONDecodeError = ValueError
-from shapely import wkt, wkb
+
 try:
     from collections.abc import Iterable, Mapping
-except:
+except ImportError:  # pragma: no cover
     from collections import Iterable, Mapping
 
 
 geom_types = ["Point", "LineString", "Polygon",
               "MultiPoint", "MultiLineString", "MultiPolygon"]
 
-PY3 = sys.version_info[0] >= 3
-if PY3:
-    string_types = str,  # pragma: no cover
-else:
-    string_types = basestring,  # pragma: no cover
 
 def wrap_geom(geom):
     """ Wraps a geometry dict in an GeoJSON Feature
@@ -85,8 +82,7 @@ def parse_feature(obj):
 
 def read_features(obj, layer=0):
     features_iter = None
-    
-    if isinstance(obj, string_types):
+    if isinstance(obj, str):
         try:
             # test it as fiona data source
             with fiona.open(obj, 'r', layer=layer) as src:
