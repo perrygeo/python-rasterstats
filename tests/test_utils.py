@@ -33,6 +33,7 @@ def test_get_percentile():
     assert get_percentile('percentile_100') == 100.0
     assert get_percentile('percentile_13.2') == 13.2
 
+
 def test_get_bad_percentile():
     with pytest.raises(ValueError):
         get_percentile('foo')
@@ -63,3 +64,6 @@ def test_boxify_non_point():
     line = LineString([(0, 0), (1, 1)])
     with pytest.raises(ValueError):
         boxify_points(line, None)
+
+# TODO # def test_boxify_multi_point
+# TODO # def test_boxify_point

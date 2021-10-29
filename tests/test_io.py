@@ -23,6 +23,8 @@ arr3d = np.array([[[1, 1, 1],
                    [1, 1, 1],
                    [1, 1, 1]]])
 
+eps = 1e-6
+
 with fiona.open(polygons, 'r') as src:
     target_features = [f for f in src]
 
@@ -31,7 +33,7 @@ target_geoms = [shape(f['geometry']) for f in target_features]
 
 def _compare_geomlists(aa, bb):
     for a, b in zip(aa, bb):
-        assert a.almost_equals(b)
+        assert a.equals_exact(b, eps)
 
 
 def _test_read_features(indata):
@@ -44,7 +46,7 @@ def _test_read_features(indata):
 def _test_read_features_single(indata):
     # single (first target geom)
     geom = shape(list(read_features(indata))[0]['geometry'])
-    assert geom.almost_equals(target_geoms[0])
+    assert geom.equals_exact(target_geoms[0], eps)
 
 
 def test_fiona_path():
@@ -375,3 +377,9 @@ def test_geodataframe():
     except ImportError:
         pytest.skip("Can't import geopands")
     assert list(read_features(df))
+
+
+# TODO # io.parse_features on a feature-only geo_interface
+# TODO # io.parse_features on a feature-only geojson-like object
+# TODO # io.read_features on a feature-only
+# TODO # io.Raster.read() on an open rasterio dataset

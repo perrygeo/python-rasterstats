@@ -79,9 +79,13 @@ def geom_xys(geom):
         geoms = [geom]
 
     for g in geoms:
-        arr = g.array_interface_base['data']
-        for pair in zip(arr[::2], arr[1::2]):
-            yield pair
+        if hasattr(g, "exterior"):
+            yield from geom_xys(g.exterior)
+            for interior in g.interiors:
+                yield from geom_xys(interior)
+        else:
+            for pair in g.coords:
+                yield pair
 
 
 def point_query(*args, **kwargs):

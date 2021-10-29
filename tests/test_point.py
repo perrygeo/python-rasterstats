@@ -122,18 +122,30 @@ def test_geom_xys():
                                   Polygon, MultiPolygon)
     pt = Point(0, 0)
     assert list(geom_xys(pt)) == [(0, 0)]
+
     mpt = MultiPoint([(0, 0), (1, 1)])
     assert list(geom_xys(mpt)) == [(0, 0), (1, 1)]
+
     line = LineString([(0, 0), (1, 1)])
     assert list(geom_xys(line)) == [(0, 0), (1, 1)]
+
     mline = MultiLineString([((0, 0), (1, 1)), ((-1, 0), (1, 0))])
     assert list(geom_xys(mline)) == [(0, 0), (1, 1), (-1, 0), (1, 0)]
-    poly = Polygon([(0, 0), (1, 1), (1, 0)])
+
+    poly = Polygon([(0, 0), (1, 1), (1, 0), (0, 0)])
     assert list(geom_xys(poly)) == [(0, 0), (1, 1), (1, 0), (0, 0)]
+
     ring = poly.exterior
     assert list(geom_xys(ring)) == [(0, 0), (1, 1), (1, 0), (0, 0)]
+
     mpoly = MultiPolygon([poly, Polygon([(2, 2), (3, 3), (3, 2)])])
     assert list(geom_xys(mpoly)) == [(0, 0), (1, 1), (1, 0), (0, 0),
                                      (2, 2), (3, 3), (3, 2), (2, 2)]
+
     mpt3d = MultiPoint([(0, 0, 1), (1, 1, 2)])
     assert list(geom_xys(mpt3d)) == [(0, 0), (1, 1)]
+
+
+# TODO #  gen_point_query(interpolation="fake")
+# TODO #  gen_point_query(interpolation="bilinear")
+# TODO #  gen_point_query(<features_without_props>)
