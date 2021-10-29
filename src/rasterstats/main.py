@@ -57,7 +57,7 @@ def gen_zonal_stats(
         If ndarray is passed, the ``affine`` kwarg is required.
 
     layer: int or string, optional
-        If `vectors` is a path to an fiona source,
+        If `vectors` is a path to a fiona source,
         specify the vector layer to use either by name or number.
         defaults to 0
 
