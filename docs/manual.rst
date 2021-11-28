@@ -149,7 +149,7 @@ You can also specify as a space-delimited string::
 
 
 Note that certain statistics (majority, minority, and unique) require significantly more processing
-due to expensive counting of unique occurences for each pixel value.
+due to expensive counting of unique occurrences for each pixel value.
 
 You can also use a percentile statistic by specifying
 ``percentile_<q>`` where ``<q>`` can be a floating point number between 0 and 100.
@@ -174,7 +174,7 @@ then use it in your ``zonal_stats`` call like so::
     ...             add_stats={'mymean':mymean})
     [{'count': 75, 'mymean': 14.660084635416666}, {'count': 50, 'mymean': 56.605761718750003}]
 
-To have access to geometry properties, a dictionnary can be passed to the user-defined function::
+To have access to geometry properties, a dictionary can be passed to the user-defined function::
 
     >>> def mymean_prop(x,prop):
     ...     return np.ma.mean(x) * prop['id']
@@ -221,7 +221,7 @@ There is no right or wrong way to rasterize a vector. The default strategy is to
 
 The figure above illustrates the difference; the default ``all_touched=False`` is on the left
 while the ``all_touched=True`` option is on the right.
-Both approaches are valid and there are tradeoffs to consider. Using the default rasterizer may miss polygons that are smaller than your cell size resulting in ``None`` stats for those geometries. Using the ``all_touched`` strategy includes many cells along the edges that may not be representative of the geometry and may give severly biased results in some cases.
+Both approaches are valid and there are tradeoffs to consider. Using the default rasterizer may miss polygons that are smaller than your cell size resulting in ``None`` stats for those geometries. Using the ``all_touched`` strategy includes many cells along the edges that may not be representative of the geometry and may give severely biased results in some cases.
 
 
 Working with categorical rasters
@@ -288,7 +288,7 @@ and standard interfaces like GeoJSON are employed to keep the core library lean.
 
 History
 --------
-This work grew out of a need to have a native python implementation (based on numpy) for zonal statisics.
+This work grew out of a need to have a native python implementation (based on numpy) for zonal statistics.
 I had been `using starspan <http://www.perrygeo.com/starspan-for-vector-on-raster-analysis.html>`_, a C++
 command line tool, as well as GRASS's `r.statistics <https://grass.osgeo.org/grass70/manuals/r.statistics.html>`_ for many years.
 They were suitable for offline analyses but were rather clunky to deploy in a large python application.

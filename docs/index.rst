@@ -25,7 +25,7 @@ Install::
     pip install rasterstats
 
 
-Given a polygon vector layer and a digitial elevation model (DEM) raster:
+Given a polygon vector layer and a digital elevation model (DEM) raster:
 
 .. figure:: https://github.com/perrygeo/python-raster-stats/raw/master/docs/img/zones_elevation.png
    :align: center

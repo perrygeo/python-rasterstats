@@ -85,7 +85,7 @@ for performing zonal statistics and point_queries at the command line.
 Example
 -----------
 
-In the following examples we use a polygon shapefile representing countries (``countries.shp``) and a raster digitial elevation model (``dem.tif``). The data are assumed to be in the same spatial reference system.
+In the following examples we use a polygon shapefile representing countries (``countries.shp``) and a raster digital elevation model (``dem.tif``). The data are assumed to be in the same spatial reference system.
 
 GeoJSON inputs
 ^^^^^^^^^^^^^^
@@ -97,7 +97,7 @@ This will print the GeoJSON Features to the terminal (stdout) with Features like
 
     {"type": Feature, "geometry": {...} ,"properties": {...}}
 
-We'll use unix pipes to pass this data directly into our zonal stats command without an intemediate file.
+We'll use unix pipes to pass this data directly into our zonal stats command without an intermediate file.
 
 Specifying the Raster
 ^^^^^^^^^^^^^^^^^^^^^
