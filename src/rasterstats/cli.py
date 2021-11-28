@@ -91,10 +91,10 @@ def pointquery(features, raster, band, indent, nodata,
     The raster values are added to the features properties and output as GeoJSON
     Feature Collection.
 
-    If the Features are Points, the point geometery is used.
-    For other Feauture types, all of the verticies of the geometry will be queried.
+    If the Features are Points, the point geometry is used.
+    For other Feauture types, all of the vertices of the geometry will be queried.
     For example, you can provide a linestring and get the profile along the line
-    if the verticies are spaced properly.
+    if the vertices are spaced properly.
 
     You can use either bilinear (default) or nearest neighbor interpolation.
     """
