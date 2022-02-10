@@ -152,7 +152,6 @@ def gen_zonal_stats(
         features_iter = read_features(vectors, layer)
         for _, feat in enumerate(features_iter):
             geom = shape(feat['geometry'])
-
             if 'Point' in geom.type:
                 geom = boxify_points(geom, rast)
 
@@ -166,7 +165,6 @@ def gen_zonal_stats(
                 
                 #iterate through individual polygons
                 for singlePolygon in geom.geoms:
-                    
                     polygon_bounds = tuple(singlePolygon.bounds)
                     polygon_fsrc = rast.read(bounds=polygon_bounds)
 
@@ -188,9 +186,9 @@ def gen_zonal_stats(
                         rv_array = np.ravel(polygon_rv_array)
                         isnodata = np.ravel(polygon_isnodata)
                     else:
-                        np.append(fsrc, polygon_fsrc.array)
-                        np.append(rv_array, polygon_rv_array)
-                        np.append(isnodata, polygon_isnodata)
+                        fsrc = np.append(fsrc, polygon_fsrc.array)
+                        rv_array = np.append(rv_array, polygon_rv_array)
+                        isnodata = np.append(isnodata, polygon_isnodata)
                 masked = np.ma.MaskedArray(fsrc, mask = (isnodata | ~rv_array))
             else:
 
