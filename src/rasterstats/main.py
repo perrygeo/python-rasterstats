@@ -165,7 +165,7 @@ def gen_zonal_stats(
                 isnodata = None
                 
                 #iterate through individual polygons
-                for singlePolygon in geom:
+                for singlePolygon in geom.geoms:
                     
                     polygon_bounds = tuple(singlePolygon.bounds)
                     polygon_fsrc = rast.read(bounds=polygon_bounds)
