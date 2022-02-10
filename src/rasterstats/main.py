@@ -46,7 +46,8 @@ def gen_zonal_stats(
         raster_out=False,
         prefix=None,
         geojson_out=False, 
-        boundless=True, **kwargs):
+        boundless=True,
+        split_multi_geom=False, **kwargs):
     """Zonal statistics of raster values aggregated to vector geometries.
 
     Parameters
@@ -155,28 +156,66 @@ def gen_zonal_stats(
             if 'Point' in geom.type:
                 geom = boxify_points(geom, rast)
 
-            geom_bounds = tuple(geom.bounds)
+            #Multiple polygons found, and split_multi_geom option is enabled
+            #In this case, we read the polygons in one at a time and concact the raster
+            #values together.  In order to save memory
+            if ('MultiPolygon' in geom.type) and (split_multi_geom):
+                fsrc = None
+                rv_array = None
+                isnodata = None
+                
+                #iterate through individual polygons
+                for singlePolygon in geom:
+                    
+                    polygon_bounds = tuple(singlePolygon.bounds)
+                    polygon_fsrc = rast.read(bounds=polygon_bounds)
 
-            fsrc = rast.read(bounds=geom_bounds, boundless=boundless)
+                    # rasterized geometry
+                    polygon_rv_array = rasterize_geom(singlePolygon, like=polygon_fsrc, all_touched=all_touched)
 
-            # rasterized geometry
-            rv_array = rasterize_geom(geom, like=fsrc, all_touched=all_touched)
+                    # nodata mask
+                    polygon_isnodata = (polygon_fsrc.array == polygon_fsrc.nodata)
 
-            # nodata mask
-            isnodata = (fsrc.array == fsrc.nodata)
+                    # add nan mask (if necessary)
+                    has_nan = (
+                        np.issubdtype(polygon_fsrc.array.dtype, np.floating)
+                        and np.isnan(polygon_fsrc.array.min()))
+                    if has_nan:
+                        polygon_isnodata = (polygon_isnodata | np.isnan(polygon_fsrc.array))
 
-            # add nan mask (if necessary)
-            has_nan = (
-                np.issubdtype(fsrc.array.dtype, np.floating)
-                and np.isnan(fsrc.array.min()))
-            if has_nan:
-                isnodata = (isnodata | np.isnan(fsrc.array))
+                    if fsrc is None:
+                        fsrc = np.ravel(polygon_fsrc.array)
+                        rv_array = np.ravel(polygon_rv_array)
+                        isnodata = np.ravel(polygon_isnodata)
+                    else:
+                        np.append(fsrc, polygon_fsrc.array)
+                        np.append(rv_array, polygon_rv_array)
+                        np.append(isnodata, polygon_isnodata)
+                masked = np.ma.MaskedArray(fsrc, mask = (isnodata | ~rv_array))
+            else:
 
-            # Mask the source data array
-            # mask everything that is not a valid value or not within our geom
-            masked = np.ma.MaskedArray(
-                fsrc.array,
-                mask=(isnodata | ~rv_array))
+                geom_bounds = tuple(geom.bounds)
+
+                fsrc = rast.read(bounds=geom_bounds, boundless=boundless)
+
+                # rasterized geometry
+                rv_array = rasterize_geom(geom, like=fsrc, all_touched=all_touched)
+
+                # nodata mask
+                isnodata = (fsrc.array == fsrc.nodata)
+
+                # add nan mask (if necessary)
+                has_nan = (
+                    np.issubdtype(fsrc.array.dtype, np.floating)
+                    and np.isnan(fsrc.array.min()))
+                if has_nan:
+                    isnodata = (isnodata | np.isnan(fsrc.array))
+
+                # Mask the source data array
+                # mask everything that is not a valid value or not within our geom
+                masked = np.ma.MaskedArray(
+                    fsrc.array,
+                    mask=(isnodata | ~rv_array))
 
             # If we're on 64 bit platform and the array is an integer type
             # make sure we cast to 64 bit to avoid overflow.
