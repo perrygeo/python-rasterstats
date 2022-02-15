@@ -164,12 +164,12 @@ def gen_zonal_stats(
                 isnodata = None
                 
                 #iterate through individual polygons
-                for singlePolygon in geom.geoms:
-                    polygon_bounds = tuple(singlePolygon.bounds)
+                for single_polygon in geom.geoms:
+                    polygon_bounds = tuple(single_polygon.bounds)
                     polygon_fsrc = rast.read(bounds=polygon_bounds)
 
                     # rasterized geometry
-                    polygon_rv_array = rasterize_geom(singlePolygon, like=polygon_fsrc, all_touched=all_touched)
+                    polygon_rv_array = rasterize_geom(single_polygon, like=polygon_fsrc, all_touched=all_touched)
 
                     # nodata mask
                     polygon_isnodata = (polygon_fsrc.array == polygon_fsrc.nodata)
