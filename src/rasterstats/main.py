@@ -2,11 +2,12 @@
 from __future__ import absolute_import
 from __future__ import division
 
+import sys
+import warnings
+
 from affine import Affine
 from shapely.geometry import shape
 import numpy as np
-import platform
-import warnings
 
 from .io import read_features, Raster
 from .utils import (rasterize_geom, get_percentile, check_stats,
@@ -181,7 +182,10 @@ def gen_zonal_stats(
             # If we're on 64 bit platform and the array is an integer type
             # make sure we cast to 64 bit to avoid overflow.
             # workaround for https://github.com/numpy/numpy/issues/8433
-            if platform.architecture()[0] == '64bit' and \
+            # if sysinfo.platform_bits == 64 and \
+            # if platform.architecture()[0] == '64bit' and \
+            # if platform_64bit and \
+            if sys.maxsize > 2**32 and \
                     masked.dtype != np.int64 and \
                     issubclass(masked.dtype.type, np.integer):
                 masked = masked.astype(np.int64)

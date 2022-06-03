@@ -1,9 +1,11 @@
 # test zonal stats
+from datetime import datetime
+import json
 import os
 import pytest
 import simplejson
-import json
 import sys
+
 import numpy as np
 import rasterio
 from rasterstats import zonal_stats, raster_stats
@@ -225,7 +227,8 @@ def test_no_overlap():
     stats = zonal_stats(polygons, raster, stats="count")
     for res in stats:
         # no polygon should have any overlap
-        assert res['count'] is 0
+        assert res['count'] == 0
+
 
 def test_all_touched():
     polygons = os.path.join(DATA, 'polygons.shp')
@@ -354,11 +357,13 @@ def test_zone_func_good():
     assert stats[0]['min'] == 0
     assert stats[0]['mean'] == 0
 
+
 def test_zone_func_bad():
     not_a_func = 'jar jar binks'
     polygons = os.path.join(DATA, 'polygons.shp')
     with pytest.raises(TypeError):
         zonal_stats(polygons, raster, zone_func=not_a_func)
+
 
 def test_percentile_nodata():
     polygons = os.path.join(DATA, 'polygons.shp')
@@ -409,6 +414,7 @@ def test_all_nodata():
     assert stats[0]['count'] == 0
     assert stats[1]['nodata'] == 50
     assert stats[1]['count'] == 0
+
 
 def test_some_nodata():
     polygons = os.path.join(DATA, 'polygons.shp')
@@ -550,6 +556,28 @@ def test_nan_counts():
         assert res['count'] == 3  # 3 pixels of valid data
         assert res['nodata'] == 3  # 3 pixels of nodata
         assert 'nan' not in res
+
+
+def test_performance():
+    polygons_path = os.path.join(DATA, 'polygons.shp')
+    polygons = list(read_features(polygons_path))
+    polygons = [polygon for polygon in polygons for _ in range(100)]
+
+    start_time = datetime.now()
+    stats = zonal_stats(polygons, raster)
+    secs_taken = (datetime.now() - start_time).total_seconds()
+    for key in ['count', 'min', 'max', 'mean']:
+        assert key in stats[0]
+    assert len(stats) == len(polygons)
+    assert stats[0]['count'] == 75
+    assert round(stats[0]['mean'], 2) == 14.66
+
+    if sys.platform == "linux" or sys.platform == "linux2":
+        assert secs_taken < 1
+    elif sys.platform == "darwin":  # OS X
+        assert secs_taken < 1
+    elif sys.platform == "win32":
+        assert secs_taken < 3
 
 
 # Optional tests
