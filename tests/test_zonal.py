@@ -577,7 +577,7 @@ def test_performance():
     elif sys.platform == "darwin":  # OS X
         assert secs_taken < 1
     elif sys.platform == "win32":
-        assert secs_taken < 3
+        assert secs_taken < 5
 
 
 # Optional tests
