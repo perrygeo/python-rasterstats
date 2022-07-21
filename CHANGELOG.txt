@@ -1,3 +1,6 @@
+0.17.0
+- Fix performance regression due to platform.architecture performance #258
+
 0.16.0
 - Fix deprecation warning with shapely 1.8+ #250
 
@@ -44,7 +47,7 @@
 0.10.0
 - Added a generator variant of zonal_stats (gen_zonal_stats) and point_query
 (gen_point_query) which yield results instead of returning a list
-- Dependency on cligj to standardize the geojson input/output args and opts 
+- Dependency on cligj to standardize the geojson input/output args and opts
 - Input/Output can be geojson sequences; allows for stream processing
 
 0.9.2
