@@ -35,7 +35,7 @@ def zonal_stats(*args, **kwargs):
 def gen_zonal_stats(
         vectors, raster,
         layer=0,
-        band=1,
+        band=None,
         nodata=None,
         affine=None,
         stats=None,

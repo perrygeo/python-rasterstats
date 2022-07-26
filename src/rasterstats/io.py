@@ -239,7 +239,7 @@ class Raster(object):
     read
     """
 
-    def __init__(self, raster, affine=None, nodata=None, band=1):
+    def __init__(self, raster, affine=None, nodata=None, band=None):
         self.array = None
         self.src = None
 
@@ -323,8 +323,12 @@ class Raster(object):
                     masked = True
                     warnings.warn("Setting masked to True because dataset mask has been detected")
 
-            new_array = self.src.read(
-                self.band, window=win, boundless=boundless, masked=masked)
+            if self.band is None:
+                new_array = self.src.read(
+                    window=win, boundless=boundless, masked=masked)
+            else:
+                new_array = self.src.read(
+                    self.band, window=win, boundless=boundless, masked=masked)
 
         return Raster(new_array, new_affine, nodata)
 

@@ -40,7 +40,7 @@ def rasterize_geom(geom, like, all_touched=False):
     geoms = [(geom, 1)]
     rv_array = features.rasterize(
         geoms,
-        out_shape=like.shape,
+        out_shape=like.shape[-2:],
         transform=like.affine,
         fill=0,
         dtype='uint8',
