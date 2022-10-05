@@ -1,8 +1,8 @@
 #!/bin/bash
 
-python setup.py sdist --formats=gztar,zip bdist_wheel
+python -m build
 # Redirect any warnings and check for failures
-if [[ -n $(twine check dist/* 2>/dev/null | grep "Failed") ]]; then
+if [[ -n $(twine check --strict dist/* 2>/dev/null | grep "Failed") ]]; then
     echo "Detected invalid markup, exiting!"
     exit 1
 fi
