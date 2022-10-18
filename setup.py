@@ -45,6 +45,7 @@ setup(
     package_dir={'': 'src'},
     packages=['rasterstats'],
     long_description=read('README.rst'),
+    long_description_content_type='text/x-rst',
     install_requires=read('requirements.txt').splitlines(),
     tests_require=['pytest', 'pytest-cov>=2.2.0', 'pyshp>=1.1.4',
                    'coverage', 'simplejson'],
