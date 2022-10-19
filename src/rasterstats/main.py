@@ -153,7 +153,7 @@ def gen_zonal_stats(
         for _, feat in enumerate(features_iter):
             geom = shape(feat['geometry'])
 
-            if 'Point' in geom.type:
+            if 'Point' in geom.geom_type:
                 geom = boxify_points(geom, rast)
 
             geom_bounds = tuple(geom.bounds)

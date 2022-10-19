@@ -14,9 +14,9 @@ import numpy as np
 from shapely import wkt, wkb
 
 try:
-    from shapely.errors import ReadingError
+    from shapely.errors import ShapelyError
 except ImportError:  # pragma: no cover
-    from shapely.geos import ReadingError
+    from shapely.errors import ReadingError as ShapelyError
 
 try:
     from json.decoder import JSONDecodeError
@@ -58,14 +58,14 @@ def parse_feature(obj):
     try:
         shape = wkt.loads(obj)
         return wrap_geom(shape.__geo_interface__)
-    except (ReadingError, TypeError, AttributeError):
+    except (ShapelyError, TypeError, AttributeError):
         pass
 
     # wkb
     try:
         shape = wkb.loads(obj)
         return wrap_geom(shape.__geo_interface__)
-    except (ReadingError, TypeError):
+    except (ShapelyError, TypeError):
         pass
 
     # geojson-like python mapping
