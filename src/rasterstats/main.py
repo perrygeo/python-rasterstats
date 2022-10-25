@@ -121,8 +121,9 @@ def gen_zonal_stats(
 
     cast_to_int64: boolean
         Cast the numpy array read from the raster to int64 if it is an integer
-        type.  This prevents inconsistent behaviour between windows and linux,
-        at the cost of increased memory usage. Raster data containing bytes will
+        type.  This prevents inconsistent behaviour between windows and linux
+        (https://github.com/numpy/numpy/issues/8433), at the cost of increased
+        memory usage. Raster data containing bytes will
         take 8 times as much memory if this is set to true.  Defaults to
         sys.maxsize > 2**32 (defaults to true on 64 bit machines)
         
@@ -136,6 +137,7 @@ def gen_zonal_stats(
         GeoJSON-like Feature as python dict
     """
     cast_to_int64 = cast_to_int64 or sys.maxsize > 2**32
+
     stats, run_count = check_stats(stats, categorical)
 
     # Handle 1.0 deprecations
