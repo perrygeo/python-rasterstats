@@ -253,6 +253,16 @@ you can use a ``category_map``::
     ...             categorical=True, category_map=cmap)[1]
     {'high': 40, 'med': 9, 'low': 1}
 
+You can also specify `cast_to_int64=False` to prevent casting the ndarray
+read from the raster to int64 on 64bit systems.  This will result in significant
+memory savings on datasets that user smaller datatypes, such as bytes ::
+
+    >>> zonal_stats('tests/data/polygons.shp',
+    ...             'tests/data/slope_classes.tif',
+    ...             categorical=True,
+                    cast_to_int64=False)[1]
+    {1.0: 1, 2.0: 9, 5.0: 40}
+
 "Mini-Rasters"
 ^^^^^^^^^^^^^^^
 
