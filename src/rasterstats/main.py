@@ -47,7 +47,8 @@ def gen_zonal_stats(
         raster_out=False,
         prefix=None,
         geojson_out=False, 
-        boundless=True, **kwargs):
+        boundless=True,
+        cast_to_int64=None, **kwargs):
     """Zonal statistics of raster values aggregated to vector geometries.
 
     Parameters
@@ -117,6 +118,13 @@ def gen_zonal_stats(
     boundless: boolean
         Allow features that extend beyond the raster dataset’s extent, default: True
         Cells outside dataset extents are treated as nodata.
+
+    cast_to_int64: boolean
+        Cast the numpy array read from the raster to int64 if it is an integer
+        type.  This prevents inconsistent behaviour between windows and linux,
+        at the cost of increased memory usage. Raster data containing bytes will
+        take 8 times as much memory if this is set to true.  Defaults to
+        sys.maxsize > 2**32 (defaults to true on 64 bit machines)
         
     Returns
     -------
@@ -127,6 +135,7 @@ def gen_zonal_stats(
     generator of geojson features (if geojson_out is True)
         GeoJSON-like Feature as python dict
     """
+    cast_to_int64 = cast_to_int64 or sys.maxsize > 2**32
     stats, run_count = check_stats(stats, categorical)
 
     # Handle 1.0 deprecations
@@ -182,7 +191,7 @@ def gen_zonal_stats(
             # If we're on 64 bit platform and the array is an integer type
             # make sure we cast to 64 bit to avoid overflow.
             # workaround for https://github.com/numpy/numpy/issues/8433
-            if sys.maxsize > 2**32 and \
+            if cast_to_int64 and \
                     masked.dtype != np.int64 and \
                     issubclass(masked.dtype.type, np.integer):
                 masked = masked.astype(np.int64)
