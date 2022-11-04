@@ -148,7 +148,7 @@ def gen_zonal_stats(
         warnings.warn("Use `band` to specify band number", DeprecationWarning)
         band = band_num
 
-    perc = {pctile: get_percentile(s) for pctile in stats if pctile.startswith('percentile_')}
+    perc = {pctile: get_percentile(pctile) for pctile in stats if pctile.startswith('percentile_')}
 
     with Raster(raster, affine, nodata, band) as rast:
         features_iter = read_features(vectors, layer)
@@ -249,11 +249,11 @@ def gen_zonal_stats(
                 if 'unique' in stats:
                     feature_stats['unique'] = len(keys)
                 if 'range' in stats:
-                    feature_stats['range'] = keys[-1] - keys[0]
+                    feature_stats['range'] = float(keys[-1]) - float(keys[0])
 
                 if perc:
                     ptiles = np.percentile(valid, list(perc.values()))
-                    feature_stats.update(zip(perc.keys(), ptiles))
+                    feature_stats.update(zip(perc.keys(), ptiles.tolist()))
 
             if 'nodata' in stats or 'nan' in stats:
                 featmasked = np.ma.MaskedArray(fsrc.array, mask=(~rv_array))
