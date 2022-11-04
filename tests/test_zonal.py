@@ -296,7 +296,7 @@ def test_add_stats():
 
     stats = zonal_stats(polygons, raster, add_stats={'mymean': mymean})
     for i in range(len(stats)):
-        assert stats[i]['mean'] == stats[i]['mymean']
+        assert np.isclose(stats[i]['mean'], stats[i]['mymean'])
 
 
 def test_add_stats_prop():
@@ -307,7 +307,7 @@ def test_add_stats_prop():
 
     stats = zonal_stats(polygons, raster, add_stats={'mymean_prop': mymean_prop})
     for i in range(len(stats)):
-        assert stats[i]['mymean_prop'] == stats[i]['mean'] * (i+1)
+        assert np.isclose(stats[i]['mymean_prop'], stats[i]['mean'] * (i+1))
 
 
 def test_mini_raster():
