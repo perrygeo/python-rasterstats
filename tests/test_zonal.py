@@ -500,7 +500,7 @@ def test_geojson_out():
 # since the read_features func for this data type is generating
 # the properties field
 def test_geojson_out_with_no_properties():
-    polygon = Polygon([[0, 0], [0, 0,5], [1, 1.5], [1.5, 2], [2, 2], [2, 0]])
+    polygon = Polygon([[0, 0], [0, 0.5], [1, 1.5], [1.5, 2], [2, 2], [2, 0]])
     arr = np.array([
         [100, 1],
         [100, 1]
@@ -559,15 +559,12 @@ def test_nan_counts():
 
 # Optional tests
 def test_geodataframe_zonal():
-    polygons = os.path.join(DATA, 'polygons.shp')
+    gpd = pytest.importorskip("geopandas")
 
-    try:
-        import geopandas as gpd
-        df = gpd.read_file(polygons)
-        if not hasattr(df, '__geo_interface__'):
-            pytest.skip("This version of geopandas doesn't support df.__geo_interface__")
-    except ImportError:
-        pytest.skip("Can't import geopands")
+    polygons = os.path.join(DATA, 'polygons.shp')
+    df = gpd.read_file(polygons)
+    if not hasattr(df, '__geo_interface__'):
+        pytest.skip("This version of geopandas doesn't support df.__geo_interface__")
 
     expected = zonal_stats(polygons, raster)
     assert zonal_stats(df, raster) == expected

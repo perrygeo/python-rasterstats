@@ -130,14 +130,14 @@ def boxify_points(geom, rast):
     Point and MultiPoint don't play well with GDALRasterize
     convert them into box polygons 99% cellsize, centered on the raster cell
     """
-    if 'Point' not in geom.type:
+    if 'Point' not in geom.geom_type:
         raise ValueError("Points or multipoints only")
 
     buff = -0.01 * abs(min(rast.affine.a, rast.affine.e))
 
-    if geom.type == 'Point':
+    if geom.geom_type == 'Point':
         pts = [geom]
-    elif geom.type == "MultiPoint":
+    elif geom.geom_type == "MultiPoint":
         pts = geom.geoms
     geoms = []
     for pt in pts:

@@ -369,13 +369,11 @@ def test_geointerface():
 
 # Optional tests
 def test_geodataframe():
-    try:
-        import geopandas as gpd
-        df = gpd.read_file(polygons)
-        if not hasattr(df, '__geo_interface__'):
-            pytest.skip("This version of geopandas doesn't support df.__geo_interface__")
-    except ImportError:
-        pytest.skip("Can't import geopands")
+    gpd = pytest.importorskip("geopandas")
+
+    df = gpd.read_file(polygons)
+    if not hasattr(df, '__geo_interface__'):
+        pytest.skip("This version of geopandas doesn't support df.__geo_interface__")
     assert list(read_features(df))
 
 
