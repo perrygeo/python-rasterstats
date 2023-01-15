@@ -227,8 +227,26 @@ def gen_zonal_stats(
                     feature_stats['max'] = float(masked.max())
                 if 'mean' in stats:
                     feature_stats['mean'] = float(masked.mean())
+
+                stats_count = int(masked.count())
                 if 'count' in stats:
-                    feature_stats['count'] = int(masked.count())
+                    feature_stats['count'] = stats_count
+
+                if 'area' in stats:
+                    if rast.src is not None:
+                        cellsize = rast.src.res[0] * rast.src.res[1]
+                    else:
+                        cellsize = rast.affine.a * rast.affine.a
+                    feature_stats['area'] = stats_count * cellsize
+                    
+                if 'area_percent' in stats:
+                    if rast.src is not None:
+                        cellsize = rast.src.res[0] * rast.src.res[1]
+                    else:
+                        cellsize = rast.affine.a * rast.affine.a
+                    feature_stats['area_percent'] = stats_count * cellsize / geom.area
+                    
+
                 # optional
                 if 'sum' in stats:
                     feature_stats['sum'] = float(masked.sum())
