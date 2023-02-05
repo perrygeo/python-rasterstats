@@ -1,3 +1,68 @@
 [build-system]
-requires = ["setuptools"]
+requires = ["setuptools >=61"]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "rasterstats"
+description = "Summarize geospatial raster datasets based on vector geometries"
+authors = [
+    {name = "Matthew Perry", email = "perrygeo@gmail.com"},
+]
+readme = "README.rst"
+keywords = ["gis", "geospatial", "geographic", "raster", "vector", "zonal statistics"]
+dynamic = ["version"]
+license = {text = "BSD-3-Clause"}
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: BSD License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Utilities",
+    "Topic :: Scientific/Engineering :: GIS",
+]
+requires-python = ">=3.7"
+dependencies = [
+    "affine <3.0",
+    "click >7.1",
+    "cligj >=0.4",
+    "fiona <1.9",
+    "numpy >=1.9",
+    "rasterio >=1.0",
+    "simplejson",
+    "shapely",
+]
+
+
+[project.optional-dependencies]
+test = [
+    "coverage",
+    "pyshp >=1.1.4",
+    "pytest >=4.6",
+    "pytest-cov >=2.2.0",
+    "simplejson",
+]
+dev = [
+    "rasterstats[test]",
+    "numpydoc",
+    "twine",
+]
+
+[project.entry-points."rasterio.rio_plugins"]
+zonalstats = "rasterstats.cli:zonalstats"
+pointquery = "rasterstats.cli:pointquery"
+
+[project.urls]
+Documentation = "https://pythonhosted.org/rasterstats/"
+"Source Code" = "https://github.com/perrygeo/python-rasterstats"
+
+[tool.setuptools.dynamic]
+version = {attr = "rasterstats._version.__version__"}
+
+[tool.setuptools.packages.find]
+where = ["src"]

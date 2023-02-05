@@ -1,8 +1,0 @@
-# https://github.com/pytest-dev/pytest/issues/1043 and 1032
-pytest>=4.6
-
-coverage
-simplejson
-twine
-numpydoc
-pytest-cov
