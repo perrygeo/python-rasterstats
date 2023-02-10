@@ -148,6 +148,8 @@ def gen_zonal_stats(
         warnings.warn("Use `band` to specify band number", DeprecationWarning)
         band = band_num
 
+    perc = {pctile: get_percentile(pctile) for pctile in stats if pctile.startswith('percentile_')}
+
     with Raster(raster, affine, nodata, band) as rast:
         features_iter = read_features(vectors, layer)
         for _, feat in enumerate(features_iter):
@@ -205,14 +207,10 @@ def gen_zonal_stats(
                 if 'count' in stats:  # special case, zero makes sense here
                     feature_stats['count'] = 0
             else:
+                valid = masked.compressed()
+                keys, counts = np.unique(valid, return_counts=True)
                 if run_count:
-                    keys, counts = np.unique(masked.compressed(), return_counts=True)
-                    try:
-                        pixel_count = dict(zip([k.item() for k in keys],
-                                               [c.item() for c in counts]))
-                    except AttributeError:
-                        pixel_count = dict(zip([np.asscalar(k) for k in keys],
-                                               [np.asscalar(c) for c in counts]))
+                    pixel_count = dict(zip(keys.tolist(), counts.tolist()))
 
                 if categorical:
                     feature_stats = dict(pixel_count)
@@ -222,41 +220,40 @@ def gen_zonal_stats(
                     feature_stats = {}
 
                 if 'min' in stats:
-                    feature_stats['min'] = float(masked.min())
+                    feature_stats['min'] = float(keys[0])
                 if 'max' in stats:
-                    feature_stats['max'] = float(masked.max())
+                    feature_stats['max'] = float(keys[-1])
                 if 'mean' in stats:
-                    feature_stats['mean'] = float(masked.mean())
+                    feature_stats['mean'] = float(valid.mean())
                 if 'count' in stats:
-                    feature_stats['count'] = int(masked.count())
+                    feature_stats['count'] = len(valid)
                 # optional
                 if 'sum' in stats:
-                    feature_stats['sum'] = float(masked.sum())
+                    feature_stats['sum'] = float((keys * counts).sum())
                 if 'std' in stats:
-                    feature_stats['std'] = float(masked.std())
+                    feature_stats['std'] = float(valid.std())
                 if 'median' in stats:
-                    feature_stats['median'] = float(np.median(masked.compressed()))
+                    # we have unique keys and counts
+                    # which means we can avoid sorting to find median
+                    sortedvalid = np.repeat(keys, counts)
+                    size = len(sortedvalid)
+                    if size % 2 == 1:
+                        median = sortedvalid[size//2]
+                    else:
+                        median = (sortedvalid[size//2] + sortedvalid[size//2+1])/2
+                    feature_stats['median'] = float(median)
                 if 'majority' in stats:
                     feature_stats['majority'] = float(key_assoc_val(pixel_count, max))
                 if 'minority' in stats:
                     feature_stats['minority'] = float(key_assoc_val(pixel_count, min))
                 if 'unique' in stats:
-                    feature_stats['unique'] = len(list(pixel_count.keys()))
+                    feature_stats['unique'] = len(keys)
                 if 'range' in stats:
-                    try:
-                        rmin = feature_stats['min']
-                    except KeyError:
-                        rmin = float(masked.min())
-                    try:
-                        rmax = feature_stats['max']
-                    except KeyError:
-                        rmax = float(masked.max())
-                    feature_stats['range'] = rmax - rmin
+                    feature_stats['range'] = float(keys[-1]) - float(keys[0])
 
-                for pctile in [s for s in stats if s.startswith('percentile_')]:
-                    q = get_percentile(pctile)
-                    pctarr = masked.compressed()
-                    feature_stats[pctile] = np.percentile(pctarr, q)
+                if perc:
+                    ptiles = np.percentile(valid, list(perc.values()))
+                    feature_stats.update(zip(perc.keys(), ptiles.tolist()))
 
             if 'nodata' in stats or 'nan' in stats:
                 featmasked = np.ma.MaskedArray(fsrc.array, mask=(~rv_array))
