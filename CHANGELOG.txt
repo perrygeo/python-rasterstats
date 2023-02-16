@@ -1,3 +1,9 @@
+0.18.0
+- Move project metadata to pyproject.toml #277
+- Black formatting #278
+- Don't cast integers to int64, use numpy accumulator dtype #279
+- Warn about nodata only once, io.NodataWarning type #280
+
 0.17.1
 - Fixes to keep up with recent versions of dependencies: #275 fiona, #266 shapely, #264 click
 - Added a pyproject.toml #265
