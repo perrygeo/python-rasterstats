@@ -219,6 +219,16 @@ def boundless_array(arr, window, nodata, masked=False):
     return out
 
 
+class NodataWarning(RuntimeWarning):
+    pass
+
+
+# *should* limit NodataWarnings to once, but doesn't! Bug in CPython.
+# warnings.filterwarnings("once", category=NodataWarning)
+# instead we resort to a global bool
+already_warned_nodata = False
+
+
 class Raster(object):
     """Raster abstraction for data access to 2/3D array-like things
 
@@ -289,7 +299,6 @@ class Raster(object):
             specifying both or neither will raise exception
         masked: boolean
             return a masked numpy array, default: False
-            bounds OR window are required, specifying both or neither will raise exception
         boundless: boolean
             allow window/bounds that extend beyond the dataset’s extent, default: True
             partially or completely filled arrays will be returned as appropriate.
@@ -311,7 +320,7 @@ class Raster(object):
 
         if not boundless and beyond_extent(win, self.shape):
             raise ValueError(
-                "Window/bounds is outside dataset extent and boundless reads are disabled"
+                "Window/bounds is outside dataset extent, boundless reads are disabled"
             )
 
         c, _, _, f = window_bounds(win, self.affine)  # c ~ west, f ~ north
@@ -321,7 +330,12 @@ class Raster(object):
         nodata = self.nodata
         if nodata is None:
             nodata = -999
-            warnings.warn("Setting nodata to -999; specify nodata explicitly")
+            global already_warned_nodata
+            if not already_warned_nodata:
+                warnings.warn(
+                    "Setting nodata to -999; specify nodata explicitly", NodataWarning
+                )
+                already_warned_nodata = True
 
         if self.array is not None:
             # It's an ndarray already
