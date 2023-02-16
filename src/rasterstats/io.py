@@ -219,7 +219,7 @@ def boundless_array(arr, window, nodata, masked=False):
     return out
 
 
-class NodataWarning(RuntimeWarning):
+class NodataWarning(UserWarning):
     pass
 
 
