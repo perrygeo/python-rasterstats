@@ -13,7 +13,7 @@ tif = "benchmark_data/srtm.tif"
 def chunks(data, n):
     """Yield successive n-sized chunks from a slice-able iterable."""
     for i in range(0, len(data), n):
-        yield data[i:i+n]
+        yield data[i : i + n]
 
 
 def zonal_stats_partial(feats):
@@ -22,7 +22,6 @@ def zonal_stats_partial(feats):
 
 
 if __name__ == "__main__":
-
     with fiona.open(shp) as src:
         features = list(src)
 

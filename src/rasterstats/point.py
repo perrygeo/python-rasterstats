@@ -7,7 +7,7 @@ from .io import read_features, Raster
 
 
 def point_window_unitxy(x, y, affine):
-    """ Given an x, y and a geotransform
+    """Given an x, y and a geotransform
     Returns
         - rasterio window representing 2x2 window whose center points encompass point
         - the cartesian x, y coordinates of the point on the unit square
@@ -22,14 +22,13 @@ def point_window_unitxy(x, y, affine):
     new_win = ((r - 1, r + 1), (c - 1, c + 1))
 
     # the new x, y coords on the unit square
-    unitxy = (0.5 - (c - fcol),
-              0.5 + (r - frow))
+    unitxy = (0.5 - (c - fcol), 0.5 + (r - frow))
 
     return new_win, unitxy
 
 
 def bilinear(arr, x, y):
-    """ Given a 2x2 array, an x, and y, treat center points as a unit square
+    """Given a 2x2 array, an x, and y, treat center points as a unit square
     return the value for the fractional row/col
     using bilinear interpolation between the cells
 
@@ -49,7 +48,7 @@ def bilinear(arr, x, y):
     assert 0.0 <= x <= 1.0
     assert 0.0 <= y <= 1.0
 
-    if hasattr(arr, 'count') and arr.count() != 4:
+    if hasattr(arr, "count") and arr.count() != 4:
         # a masked array with at least one nodata
         # fall back to nearest neighbor
         val = arr[int(round(1 - y)), int(round(x))]
@@ -59,10 +58,12 @@ def bilinear(arr, x, y):
             return val.item()
 
     # bilinear interp on unit square
-    return ((llv * (1 - x) * (1 - y)) +
-            (lrv * x * (1 - y)) +
-            (ulv * (1 - x) * y) +
-            (urv * x * y))
+    return (
+        (llv * (1 - x) * (1 - y))
+        + (lrv * x * (1 - y))
+        + (ulv * (1 - x) * y)
+        + (urv * x * y)
+    )
 
 
 def geom_xys(geom):
@@ -106,10 +107,11 @@ def gen_point_query(
     layer=0,
     nodata=None,
     affine=None,
-    interpolate='bilinear',
-    property_name='value',
+    interpolate="bilinear",
+    property_name="value",
     geojson_out=False,
-    boundless=True):
+    boundless=True,
+):
     """
     Given a set of vector features and a raster,
     generate raster values at each vertex of the geometry
@@ -166,39 +168,42 @@ def gen_point_query(
     generator of arrays (if ``geojson_out`` is False)
     generator of geojson features (if ``geojson_out`` is True)
     """
-    if interpolate not in ['nearest', 'bilinear']:
+    if interpolate not in ["nearest", "bilinear"]:
         raise ValueError("interpolate must be nearest or bilinear")
 
     features_iter = read_features(vectors, layer)
 
     with Raster(raster, nodata=nodata, affine=affine, band=band) as rast:
-
         for feat in features_iter:
-            geom = shape(feat['geometry'])
+            geom = shape(feat["geometry"])
             vals = []
             for x, y in geom_xys(geom):
-                if interpolate == 'nearest':
+                if interpolate == "nearest":
                     r, c = rast.index(x, y)
-                    window = ((int(r), int(r+1)), (int(c), int(c+1)))
-                    src_array = rast.read(window=window, masked=True, boundless=boundless).array
+                    window = ((int(r), int(r + 1)), (int(c), int(c + 1)))
+                    src_array = rast.read(
+                        window=window, masked=True, boundless=boundless
+                    ).array
                     val = src_array[0, 0]
                     if val is masked:
                         vals.append(None)
                     else:
                         vals.append(val.item())
 
-                elif interpolate == 'bilinear':
+                elif interpolate == "bilinear":
                     window, unitxy = point_window_unitxy(x, y, rast.affine)
-                    src_array = rast.read(window=window, masked=True, boundless=boundless).array
+                    src_array = rast.read(
+                        window=window, masked=True, boundless=boundless
+                    ).array
                     vals.append(bilinear(src_array, *unitxy))
 
             if len(vals) == 1:
                 vals = vals[0]  # flatten single-element lists
 
             if geojson_out:
-                if 'properties' not in feat:
-                    feat['properties'] = {}
-                feat['properties'][property_name] = vals
+                if "properties" not in feat:
+                    feat["properties"] = {}
+                feat["properties"][property_name] = vals
                 yield feat
             else:
                 yield vals

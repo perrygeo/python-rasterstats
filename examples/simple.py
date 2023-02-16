@@ -5,4 +5,5 @@ raster = "../tests/data/slope.tif"
 stats = zonal_stats(polys, raster, stats="*")
 
 from pprint import pprint
+
 pprint(stats)

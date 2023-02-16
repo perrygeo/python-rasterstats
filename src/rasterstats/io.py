@@ -29,29 +29,32 @@ except ImportError:  # pragma: no cover
     from collections import Iterable, Mapping
 
 
-geom_types = ["Point", "LineString", "Polygon",
-              "MultiPoint", "MultiLineString", "MultiPolygon"]
+geom_types = [
+    "Point",
+    "LineString",
+    "Polygon",
+    "MultiPoint",
+    "MultiLineString",
+    "MultiPolygon",
+]
 
 
 def wrap_geom(geom):
-    """ Wraps a geometry dict in an GeoJSON Feature
-    """
-    return {'type': 'Feature',
-            'properties': {},
-            'geometry': geom}
+    """Wraps a geometry dict in an GeoJSON Feature"""
+    return {"type": "Feature", "properties": {}, "geometry": geom}
 
 
 def parse_feature(obj):
-    """ Given a python object
+    """Given a python object
     attemp to a GeoJSON-like Feature from it
     """
 
     # object implementing geo_interface
-    if hasattr(obj, '__geo_interface__'):
+    if hasattr(obj, "__geo_interface__"):
         gi = obj.__geo_interface__
-        if gi['type'] in geom_types:
+        if gi["type"] in geom_types:
             return wrap_geom(gi)
-        elif gi['type'] == 'Feature':
+        elif gi["type"] == "Feature":
             return gi
 
     # wkt
@@ -70,9 +73,9 @@ def parse_feature(obj):
 
     # geojson-like python mapping
     try:
-        if obj['type'] in geom_types:
+        if obj["type"] in geom_types:
             return wrap_geom(obj)
-        elif obj['type'] == 'Feature':
+        elif obj["type"] == "Feature":
             return obj
     except (AssertionError, TypeError):
         pass
@@ -85,37 +88,44 @@ def read_features(obj, layer=0):
     if isinstance(obj, str):
         try:
             # test it as fiona data source
-            with fiona.open(obj, 'r', layer=layer) as src:
+            with fiona.open(obj, "r", layer=layer) as src:
                 assert len(src) > 0
 
             def fiona_generator(obj):
-                with fiona.open(obj, 'r', layer=layer) as src:
+                with fiona.open(obj, "r", layer=layer) as src:
                     for feature in src:
                         yield feature
 
             features_iter = fiona_generator(obj)
-        except (AssertionError, TypeError, IOError, OSError, DriverError, UnicodeDecodeError):
+        except (
+            AssertionError,
+            TypeError,
+            IOError,
+            OSError,
+            DriverError,
+            UnicodeDecodeError,
+        ):
             try:
                 mapping = json.loads(obj)
-                if 'type' in mapping and mapping['type'] == 'FeatureCollection':
-                    features_iter = mapping['features']
-                elif mapping['type'] in geom_types + ['Feature']:
+                if "type" in mapping and mapping["type"] == "FeatureCollection":
+                    features_iter = mapping["features"]
+                elif mapping["type"] in geom_types + ["Feature"]:
                     features_iter = [parse_feature(mapping)]
             except (ValueError, JSONDecodeError):
                 # Single feature-like string
                 features_iter = [parse_feature(obj)]
     elif isinstance(obj, Mapping):
-        if 'type' in obj and obj['type'] == 'FeatureCollection':
-            features_iter = obj['features']
+        if "type" in obj and obj["type"] == "FeatureCollection":
+            features_iter = obj["features"]
         else:
             features_iter = [parse_feature(obj)]
     elif isinstance(obj, bytes):
         # Single binary object, probably a wkb
         features_iter = [parse_feature(obj)]
-    elif hasattr(obj, '__geo_interface__'):
+    elif hasattr(obj, "__geo_interface__"):
         mapping = obj.__geo_interface__
-        if mapping['type'] == 'FeatureCollection':
-            features_iter = mapping['features']
+        if mapping["type"] == "FeatureCollection":
+            features_iter = mapping["features"]
         else:
             features_iter = [parse_feature(mapping)]
     elif isinstance(obj, Iterable):
@@ -129,22 +139,20 @@ def read_features(obj, layer=0):
 
 def read_featurecollection(obj, layer=0):
     features = read_features(obj, layer=layer)
-    fc = {'type': 'FeatureCollection', 'features': []}
-    fc['features'] = [f for f in features]
+    fc = {"type": "FeatureCollection", "features": []}
+    fc["features"] = [f for f in features]
     return fc
 
 
 def rowcol(x, y, affine, op=math.floor):
-    """ Get row/col for a x/y
-    """
+    """Get row/col for a x/y"""
     r = int(op((y - affine.f) / affine.e))
     c = int(op((x - affine.c) / affine.a))
     return r, c
 
 
 def bounds_window(bounds, affine):
-    """Create a full cover rasterio-style window
-    """
+    """Create a full cover rasterio-style window"""
     w, s, e, n = bounds
     row_start, col_start = rowcol(w, n, affine)
     row_stop, col_stop = rowcol(e, s, affine, op=math.ceil)
@@ -197,11 +205,13 @@ def boundless_array(arr, window, nodata, masked=False):
     nc_start = olc_start - wc_start
     nc_stop = nc_start + overlap_shape[1]
     if dim3:
-        out[:, nr_start:nr_stop, nc_start:nc_stop] = \
-            arr[:, olr_start:olr_stop, olc_start:olc_stop]
+        out[:, nr_start:nr_stop, nc_start:nc_stop] = arr[
+            :, olr_start:olr_stop, olc_start:olc_stop
+        ]
     else:
-        out[nr_start:nr_stop, nc_start:nc_stop] = \
-            arr[olr_start:olr_stop, olc_start:olc_stop]
+        out[nr_start:nr_stop, nc_start:nc_stop] = arr[
+            olr_start:olr_stop, olc_start:olc_stop
+        ]
 
     if masked:
         out = np.ma.MaskedArray(out, mask=(out == nodata))
@@ -210,7 +220,7 @@ def boundless_array(arr, window, nodata, masked=False):
 
 
 class Raster(object):
-    """ Raster abstraction for data access to 2/3D array-like things
+    """Raster abstraction for data access to 2/3D array-like things
 
     Use as a context manager to ensure dataset gets closed properly::
 
@@ -251,7 +261,7 @@ class Raster(object):
             self.shape = raster.shape
             self.nodata = nodata
         else:
-            self.src = rasterio.open(raster, 'r')
+            self.src = rasterio.open(raster, "r")
             self.affine = guard_transform(self.src.transform)
             self.shape = (self.src.height, self.src.width)
             self.band = band
@@ -263,13 +273,12 @@ class Raster(object):
                 self.nodata = self.src.nodata
 
     def index(self, x, y):
-        """ Given (x, y) in crs, return the (row, column) on the raster
-        """
+        """Given (x, y) in crs, return the (row, column) on the raster"""
         col, row = [math.floor(a) for a in (~self.affine * (x, y))]
         return row, col
 
     def read(self, bounds=None, window=None, masked=False, boundless=True):
-        """ Performs a read against the underlying array source
+        """Performs a read against the underlying array source
 
         Parameters
         ----------
@@ -301,7 +310,9 @@ class Raster(object):
             raise ValueError("Specify either bounds or window")
 
         if not boundless and beyond_extent(win, self.shape):
-            raise ValueError("Window/bounds is outside dataset extent and boundless reads are disabled")
+            raise ValueError(
+                "Window/bounds is outside dataset extent and boundless reads are disabled"
+            )
 
         c, _, _, f = window_bounds(win, self.affine)  # c ~ west, f ~ north
         a, b, _, d, e, _, _, _, _ = tuple(self.affine)
@@ -315,16 +326,22 @@ class Raster(object):
         if self.array is not None:
             # It's an ndarray already
             new_array = boundless_array(
-                self.array, window=win, nodata=nodata, masked=masked)
+                self.array, window=win, nodata=nodata, masked=masked
+            )
         elif self.src:
             # It's an open rasterio dataset
-            if all(MaskFlags.per_dataset in flags for flags in self.src.mask_flag_enums):
+            if all(
+                MaskFlags.per_dataset in flags for flags in self.src.mask_flag_enums
+            ):
                 if not masked:
                     masked = True
-                    warnings.warn("Setting masked to True because dataset mask has been detected")
+                    warnings.warn(
+                        "Setting masked to True because dataset mask has been detected"
+                    )
 
             new_array = self.src.read(
-                self.band, window=win, boundless=boundless, masked=masked)
+                self.band, window=win, boundless=boundless, masked=masked
+            )
 
         return Raster(new_array, new_affine, nodata)
 
