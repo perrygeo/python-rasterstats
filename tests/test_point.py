@@ -3,8 +3,8 @@ import rasterio
 from rasterstats.point import point_window_unitxy, bilinear, geom_xys
 from rasterstats import point_query
 
-raster = os.path.join(os.path.dirname(__file__), 'data/slope.tif')
-raster_nodata = os.path.join(os.path.dirname(__file__), 'data/slope_nodata.tif')
+raster = os.path.join(os.path.dirname(__file__), "data/slope.tif")
+raster_nodata = os.path.join(os.path.dirname(__file__), "data/slope_nodata.tif")
 
 with rasterio.open(raster) as src:
     affine = src.transform
@@ -55,8 +55,8 @@ def test_unitxy_ll():
 
 def test_bilinear():
     import numpy as np
-    arr = np.array([[1.0, 2.0],
-                    [3.0, 4.0]])
+
+    arr = np.array([[1.0, 2.0], [3.0, 4.0]])
 
     assert bilinear(arr, 0, 0) == 3.0
     assert bilinear(arr, 1, 0) == 4.0
@@ -68,8 +68,7 @@ def test_bilinear():
 
 
 def test_xy_array_bilinear_window():
-    """ integration test
-    """
+    """integration test"""
     x, y = (245309, 1000064)
 
     with rasterio.open(raster) as src:
@@ -90,8 +89,8 @@ def test_point_query_geojson():
     point = "POINT(245309 1000064)"
     features = point_query(point, raster, property_name="TEST", geojson_out=True)
     for feature in features:
-        assert 'TEST' in feature['properties']
-        assert round(feature['properties']['TEST']) == 74
+        assert "TEST" in feature["properties"]
+        assert round(feature["properties"]["TEST"]) == 74
 
 
 def test_point_query_nodata():
@@ -117,9 +116,15 @@ def test_point_query_nodata():
 
 
 def test_geom_xys():
-    from shapely.geometry import (Point, MultiPoint,
-                                  LineString, MultiLineString,
-                                  Polygon, MultiPolygon)
+    from shapely.geometry import (
+        Point,
+        MultiPoint,
+        LineString,
+        MultiLineString,
+        Polygon,
+        MultiPolygon,
+    )
+
     pt = Point(0, 0)
     assert list(geom_xys(pt)) == [(0, 0)]
 
@@ -139,8 +144,16 @@ def test_geom_xys():
     assert list(geom_xys(ring)) == [(0, 0), (1, 1), (1, 0), (0, 0)]
 
     mpoly = MultiPolygon([poly, Polygon([(2, 2), (3, 3), (3, 2)])])
-    assert list(geom_xys(mpoly)) == [(0, 0), (1, 1), (1, 0), (0, 0),
-                                     (2, 2), (3, 3), (3, 2), (2, 2)]
+    assert list(geom_xys(mpoly)) == [
+        (0, 0),
+        (1, 1),
+        (1, 0),
+        (0, 0),
+        (2, 2),
+        (3, 3),
+        (3, 2),
+        (2, 2),
+    ]
 
     mpt3d = MultiPoint([(0, 0, 1), (1, 1, 2)])
     assert list(geom_xys(mpt3d)) == [(0, 0), (1, 1)]

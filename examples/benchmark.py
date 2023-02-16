@@ -1,4 +1,5 @@
 from __future__ import print_function
+
 """
 First, download the data and place in `benchmark_data`
 
@@ -19,12 +20,14 @@ Runtime history:
 from rasterstats import zonal_stats
 import time
 
-class Timer():
+
+class Timer:
     def __enter__(self):
         self.start = time.time()
 
     def __exit__(self, *args):
         print("Time:", time.time() - self.start)
+
 
 countries = "./benchmark_data/ne_50m_admin_0_countries.shp"
 elevation = "./benchmark_data/SRTM_1km.tif"
