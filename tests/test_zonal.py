@@ -65,7 +65,7 @@ def test_nonsense():
     polygons = os.path.join(DATA, "polygons.shp")
     with pytest.raises(ValueError):
         zonal_stats("blaghrlargh", raster)
-    with pytest.raises(IOError):
+    with pytest.raises(OSError):
         zonal_stats(polygons, "blercherlerch")
     with pytest.raises(ValueError):
         zonal_stats(
@@ -257,9 +257,9 @@ def _assert_dict_eq(a, b):
             continue
         try:
             if abs(a[k] - b[k]) > err:
-                raise AssertionError("{}: {} != {}".format(k, a[k], b[k]))
+                raise AssertionError(f"{k}: {a[k]} != {b[k]}")
         except TypeError:  # can't take abs, nan
-            raise AssertionError("{} != {}".format(a[k], b[k]))
+            raise AssertionError(f"{a[k]} != {b[k]}")
 
 
 def test_ndarray():

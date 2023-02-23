@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import division
 from shapely.geometry import shape
 from shapely.ops import transform
 from numpy.ma import masked
@@ -85,8 +83,7 @@ def geom_xys(geom):
             for interior in g.interiors:
                 yield from geom_xys(interior)
         else:
-            for pair in g.coords:
-                yield pair
+            yield from g.coords
 
 
 def point_query(*args, **kwargs):

@@ -35,7 +35,7 @@ def test_cli_feature_stdin():
     result = runner.invoke(
         zonalstats,
         ["--raster", raster, "--stats", "all", "--prefix", "test_"],
-        input=open(vector, "r").read(),
+        input=open(vector).read(),
     )
     assert result.exit_code == 0
     outdata = json.loads(result.output)
