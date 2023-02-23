@@ -1,3 +1,6 @@
+current
+- Drop Python 2 support, Python 3 style updates #283
+
 0.18.0
 - Move project metadata to pyproject.toml #277
 - Black formatting #278
