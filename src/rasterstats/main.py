@@ -1,7 +1,3 @@
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import
-from __future__ import division
-
 import sys
 import warnings
 
@@ -202,11 +198,8 @@ def gen_zonal_stats(
             if zone_func is not None:
                 if not callable(zone_func):
                     raise TypeError(
-                        (
-                            "zone_func must be a callable "
-                            "which accepts function a "
-                            "single `zone_array` arg."
-                        )
+                        "zone_func must be a callable function "
+                        "which accepts a single `zone_array` arg."
                     )
                 value = zone_func(masked)
 
@@ -216,7 +209,7 @@ def gen_zonal_stats(
 
             if masked.compressed().size == 0:
                 # nothing here, fill with None and move on
-                feature_stats = dict([(stat, None) for stat in stats])
+                feature_stats = {stat: None for stat in stats}
                 if "count" in stats:  # special case, zero makes sense here
                     feature_stats["count"] = 0
             else:
@@ -304,7 +297,7 @@ def gen_zonal_stats(
             if prefix is not None:
                 prefixed_feature_stats = {}
                 for key, val in feature_stats.items():
-                    newkey = "{}{}".format(prefix, key)
+                    newkey = f"{prefix}{key}"
                     prefixed_feature_stats[newkey] = val
                 feature_stats = prefixed_feature_stats
 

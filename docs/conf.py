@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 #
 # rasterstats documentation build configuration file, created by
 # sphinx-quickstart on Mon Aug 31 09:59:38 2015.
@@ -73,14 +72,14 @@ def get_version():
     vfile = os.path.join(
         os.path.dirname(__file__), "..", "src", "rasterstats", "_version.py"
     )
-    with open(vfile, "r") as vfh:
+    with open(vfile) as vfh:
         vline = vfh.read()
     vregex = r"^__version__ = ['\"]([^'\"]*)['\"]"
     match = re.search(vregex, vline, re.M)
     if match:
         return match.group(1)
     else:
-        raise RuntimeError("Unable to find version string in {}.".format(vfile))
+        raise RuntimeError(f"Unable to find version string in {vfile}.")
 
 
 version = ".".join(get_version().split(".")[0:2])

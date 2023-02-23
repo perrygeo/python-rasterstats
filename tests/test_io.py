@@ -347,7 +347,7 @@ def test_Raster_context():
 
 
 def test_geointerface():
-    class MockGeo(object):
+    class MockGeo:
         def __init__(self, features):
             self.__geo_interface__ = {"type": "FeatureCollection", "features": features}
 

@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 """
 First, download the data and place in `benchmark_data`
 

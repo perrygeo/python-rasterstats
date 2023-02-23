@@ -1,6 +1,3 @@
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import
-from __future__ import division
 import json
 import math
 import fiona
@@ -26,7 +23,7 @@ except ImportError:  # pragma: no cover
 try:
     from collections.abc import Iterable, Mapping
 except ImportError:  # pragma: no cover
-    from collections import Iterable, Mapping
+    from collections.abc import Iterable, Mapping
 
 
 geom_types = [
@@ -93,18 +90,10 @@ def read_features(obj, layer=0):
 
             def fiona_generator(obj):
                 with fiona.open(obj, "r", layer=layer) as src:
-                    for feature in src:
-                        yield feature
+                    yield from src
 
             features_iter = fiona_generator(obj)
-        except (
-            AssertionError,
-            TypeError,
-            IOError,
-            OSError,
-            DriverError,
-            UnicodeDecodeError,
-        ):
+        except (AssertionError, TypeError, OSError, DriverError, UnicodeDecodeError):
             try:
                 mapping = json.loads(obj)
                 if "type" in mapping and mapping["type"] == "FeatureCollection":
@@ -229,7 +218,7 @@ class NodataWarning(UserWarning):
 already_warned_nodata = False
 
 
-class Raster(object):
+class Raster:
     """Raster abstraction for data access to 2/3D array-like things
 
     Use as a context manager to ensure dataset gets closed properly::
@@ -284,7 +273,7 @@ class Raster(object):
 
     def index(self, x, y):
         """Given (x, y) in crs, return the (row, column) on the raster"""
-        col, row = [math.floor(a) for a in (~self.affine * (x, y))]
+        col, row = (math.floor(a) for a in (~self.affine * (x, y)))
         return row, col
 
     def read(self, bounds=None, window=None, masked=False, boundless=True):
