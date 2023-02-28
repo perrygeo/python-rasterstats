@@ -1,12 +1,13 @@
-import os.path
 import json
+import os.path
 import warnings
+
+from click.testing import CliRunner
+
+from rasterstats.cli import pointquery, zonalstats
 
 # Some warnings must be ignored to parse output properly
 # https://github.com/pallets/click/issues/371#issuecomment-223790894
-
-from click.testing import CliRunner
-from rasterstats.cli import zonalstats, pointquery
 
 
 def test_cli_feature():

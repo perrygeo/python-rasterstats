@@ -1,7 +1,8 @@
+from numpy.ma import masked
 from shapely.geometry import shape
 from shapely.ops import transform
-from numpy.ma import masked
-from .io import read_features, Raster
+
+from rasterstats.io import Raster, read_features
 
 
 def point_window_unitxy(x, y, affine):

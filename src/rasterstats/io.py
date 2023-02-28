@@ -1,29 +1,22 @@
 import json
 import math
-import fiona
-from fiona.errors import DriverError
-import rasterio
 import warnings
-from rasterio.transform import guard_transform
-from rasterio.enums import MaskFlags
-from affine import Affine
+from collections.abc import Iterable, Mapping
+from json import JSONDecodeError
+
+import fiona
 import numpy as np
-from shapely import wkt, wkb
+import rasterio
+from affine import Affine
+from fiona.errors import DriverError
+from rasterio.enums import MaskFlags
+from rasterio.transform import guard_transform
+from shapely import wkb, wkt
 
 try:
     from shapely.errors import ShapelyError
 except ImportError:  # pragma: no cover
     from shapely.errors import ReadingError as ShapelyError
-
-try:
-    from json.decoder import JSONDecodeError
-except ImportError:  # pragma: no cover
-    JSONDecodeError = ValueError
-
-try:
-    from collections.abc import Iterable, Mapping
-except ImportError:  # pragma: no cover
-    from collections.abc import Iterable, Mapping
 
 
 geom_types = [

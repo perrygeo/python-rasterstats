@@ -1,16 +1,17 @@
-import sys
 import os
+import sys
+
 import pytest
 from shapely.geometry import LineString
+
+from rasterstats import zonal_stats
 from rasterstats.utils import (
-    stats_to_csv,
+    VALID_STATS,
+    boxify_points,
     get_percentile,
     remap_categories,
-    boxify_points,
+    stats_to_csv,
 )
-from rasterstats import zonal_stats
-from rasterstats.utils import VALID_STATS
-
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 DATA = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")

@@ -66,3 +66,7 @@ version = {attr = "rasterstats._version.__version__"}
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.isort]
+profile = "black"
+known_first_party = ["rasterstats"]
