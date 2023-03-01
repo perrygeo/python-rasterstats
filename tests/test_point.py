@@ -1,7 +1,9 @@
 import os
+
 import rasterio
-from rasterstats.point import point_window_unitxy, bilinear, geom_xys
+
 from rasterstats import point_query
+from rasterstats.point import bilinear, geom_xys, point_window_unitxy
 
 raster = os.path.join(os.path.dirname(__file__), "data/slope.tif")
 raster_nodata = os.path.join(os.path.dirname(__file__), "data/slope_nodata.tif")
@@ -117,12 +119,12 @@ def test_point_query_nodata():
 
 def test_geom_xys():
     from shapely.geometry import (
-        Point,
-        MultiPoint,
         LineString,
         MultiLineString,
-        Polygon,
+        MultiPoint,
         MultiPolygon,
+        Point,
+        Polygon,
     )
 
     pt = Point(0, 0)

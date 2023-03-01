@@ -1,17 +1,21 @@
-import sys
-import os
-import fiona
-import rasterio
 import json
-import pytest
-from shapely.geometry import shape
-from rasterstats.io import (
-    read_features,
-    read_featurecollection,
-    Raster,
-)  # todo parse_feature
-from rasterstats.io import boundless_array, window_bounds, bounds_window, rowcol
+import os
+import sys
 
+import fiona
+import pytest
+import rasterio
+from shapely.geometry import shape
+
+from rasterstats.io import (  # todo parse_feature
+    Raster,
+    boundless_array,
+    bounds_window,
+    read_featurecollection,
+    read_features,
+    rowcol,
+    window_bounds,
+)
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 DATA = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")

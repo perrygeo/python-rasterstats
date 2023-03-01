@@ -4,7 +4,7 @@ import click
 import cligj
 import simplejson as json
 
-from rasterstats import gen_zonal_stats, gen_point_query
+from rasterstats import gen_point_query, gen_zonal_stats
 from rasterstats._version import __version__ as version
 
 SETTINGS = dict(help_option_names=["-h", "--help"])

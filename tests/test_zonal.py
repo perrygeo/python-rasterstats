@@ -1,17 +1,18 @@
 # test zonal stats
 import json
 import os
-import pytest
-import simplejson
 import sys
 
 import numpy as np
+import pytest
 import rasterio
-from rasterstats import zonal_stats, raster_stats
-from rasterstats.utils import VALID_STATS
-from rasterstats.io import read_featurecollection, read_features
-from shapely.geometry import Polygon
+import simplejson
 from affine import Affine
+from shapely.geometry import Polygon
+
+from rasterstats import raster_stats, zonal_stats
+from rasterstats.io import read_featurecollection, read_features
+from rasterstats.utils import VALID_STATS
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 

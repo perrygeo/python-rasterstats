@@ -2,9 +2,9 @@
 import itertools
 import multiprocessing
 
-from rasterstats import zonal_stats
 import fiona
 
+from rasterstats import zonal_stats
 
 shp = "benchmark_data/ne_50m_admin_0_countries.shp"
 tif = "benchmark_data/srtm.tif"

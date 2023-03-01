@@ -1,18 +1,18 @@
 import sys
 import warnings
 
+import numpy as np
 from affine import Affine
 from shapely.geometry import shape
-import numpy as np
 
-from .io import read_features, Raster
-from .utils import (
-    rasterize_geom,
-    get_percentile,
-    check_stats,
-    remap_categories,
-    key_assoc_val,
+from rasterstats.io import Raster, read_features
+from rasterstats.utils import (
     boxify_points,
+    check_stats,
+    get_percentile,
+    key_assoc_val,
+    rasterize_geom,
+    remap_categories,
 )
 
 

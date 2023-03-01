@@ -1,8 +1,7 @@
-import sys
 from rasterio import features
-from shapely.geometry import box, MultiPolygon
-from .io import window_bounds
+from shapely.geometry import MultiPolygon, box
 
+from rasterstats.io import window_bounds
 
 DEFAULT_STATS = ["count", "min", "max", "mean"]
 VALID_STATS = DEFAULT_STATS + [
@@ -57,14 +56,10 @@ def rasterize_geom(geom, like, all_touched=False):
 
 
 def stats_to_csv(stats):
-    if sys.version_info[0] >= 3:
-        from io import StringIO as IO  # pragma: no cover
-    else:
-        from cStringIO import StringIO as IO  # pragma: no cover
-
     import csv
+    from io import StringIO
 
-    csv_fh = IO()
+    csv_fh = StringIO()
 
     keys = set()
     for stat in stats:
