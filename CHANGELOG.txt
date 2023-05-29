@@ -1,5 +1,7 @@
-current
+0.19.0
 - Drop Python 2 support, Python 3 style updates #283
+- Sort imports #284
+- Add support for Fiona>1.9 #287
 
 0.18.0
 - Move project metadata to pyproject.toml #277
@@ -10,7 +12,7 @@ current
 0.17.1
 - Fixes to keep up with recent versions of dependencies: #275 fiona, #266 shapely, #264 click
 - Added a pyproject.toml #265
-- Added CI testing for python 3.7 through 3.11 
+- Added CI testing for python 3.7 through 3.11
 
 0.17.0
 - Fix performance regression due to platform.architecture performance #258
