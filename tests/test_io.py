@@ -8,6 +8,7 @@ import rasterio
 from shapely.geometry import shape
 
 from rasterstats.io import (  # todo parse_feature
+    fiona_generator,
     Raster,
     boundless_array,
     bounds_window,
@@ -30,8 +31,7 @@ arr3d = np.array([[[1, 1, 1], [1, 1, 1], [1, 1, 1]]])
 
 eps = 1e-6
 
-with fiona.open(polygons, "r") as src:
-    target_features = [f for f in src]
+target_features = [f for f in fiona_generator(polygons)]
 
 target_geoms = [shape(f["geometry"]) for f in target_features]
 
@@ -85,73 +85,63 @@ def test_featurecollection():
 
 
 def test_shapely():
-    with fiona.open(polygons, "r") as src:
-        indata = [shape(f["geometry"]) for f in src]
+    indata = [shape(f["geometry"]) for f in fiona_generator(polygons)]
     _test_read_features(indata)
     _test_read_features_single(indata[0])
 
 
 def test_wkt():
-    with fiona.open(polygons, "r") as src:
-        indata = [shape(f["geometry"]).wkt for f in src]
+    indata = [shape(f["geometry"]).wkt for f in fiona_generator(polygons)]
     _test_read_features(indata)
     _test_read_features_single(indata[0])
 
 
 def test_wkb():
-    with fiona.open(polygons, "r") as src:
-        indata = [shape(f["geometry"]).wkb for f in src]
+    indata = [shape(f["geometry"]).wkb for f in fiona_generator(polygons)]
     _test_read_features(indata)
     _test_read_features_single(indata[0])
 
 
 def test_mapping_features():
     # list of Features
-    with fiona.open(polygons, "r") as src:
-        indata = [f for f in src]
+    indata = [f for f in fiona_generator(polygons)]
     _test_read_features(indata)
 
 
 def test_mapping_feature():
     # list of Features
-    with fiona.open(polygons, "r") as src:
-        indata = [f for f in src]
+    indata = [f for f in fiona_generator(polygons)]
     _test_read_features(indata[0])
 
 
 def test_mapping_geoms():
-    with fiona.open(polygons, "r") as src:
-        indata = [f for f in src]
+    indata = [f for f in fiona_generator(polygons)]
     _test_read_features(indata[0]["geometry"])
 
 
 def test_mapping_collection():
     indata = {"type": "FeatureCollection"}
-    with fiona.open(polygons, "r") as src:
-        indata["features"] = [f for f in src]
+    indata["features"] = [f for f in fiona_generator(polygons)]
     _test_read_features(indata)
 
 
 def test_jsonstr():
     # Feature str
-    with fiona.open(polygons, "r") as src:
-        indata = [f for f in src]
+    indata = [f for f in fiona_generator(polygons)]
     indata = json.dumps(indata[0])
     _test_read_features(indata)
 
 
 def test_jsonstr_geom():
     # geojson geom str
-    with fiona.open(polygons, "r") as src:
-        indata = [f for f in src]
+    indata = [f for f in fiona_generator(polygons)]
     indata = json.dumps(indata[0]["geometry"])
     _test_read_features(indata)
 
 
 def test_jsonstr_collection():
     indata = {"type": "FeatureCollection"}
-    with fiona.open(polygons, "r") as src:
-        indata["features"] = [f for f in src]
+    indata["features"] = [f for f in fiona_generator(polygons)]
     indata = json.dumps(indata)
     _test_read_features(indata)
 
@@ -176,22 +166,19 @@ class MockGeoInterface:
 
 
 def test_geo_interface():
-    with fiona.open(polygons, "r") as src:
-        indata = [MockGeoInterface(f) for f in src]
+    indata = [MockGeoInterface(f) for f in fiona_generator(polygons)]
     _test_read_features(indata)
 
 
 def test_geo_interface_geom():
-    with fiona.open(polygons, "r") as src:
-        indata = [MockGeoInterface(f["geometry"]) for f in src]
+    indata = [MockGeoInterface(f["geometry"]) for f in fiona_generator(polygons)]
     _test_read_features(indata)
 
 
 def test_geo_interface_collection():
     # geointerface for featurecollection?
     indata = {"type": "FeatureCollection"}
-    with fiona.open(polygons, "r") as src:
-        indata["features"] = [f for f in src]
+    indata["features"] = [f for f in fiona_generator(polygons)]
     indata = MockGeoInterface(indata)
     _test_read_features(indata)
 

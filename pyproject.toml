@@ -28,10 +28,10 @@ classifiers = [
 ]
 requires-python = ">=3.7"
 dependencies = [
-    "affine <3.0",
+    "affine",
     "click >7.1",
     "cligj >=0.4",
-    "fiona <1.9",
+    "fiona",
     "numpy >=1.9",
     "rasterio >=1.0",
     "simplejson",
@@ -42,6 +42,7 @@ dependencies = [
 [project.optional-dependencies]
 test = [
     "coverage",
+    "geopandas",
     "pyshp >=1.1.4",
     "pytest >=4.6",
     "pytest-cov >=2.2.0",
