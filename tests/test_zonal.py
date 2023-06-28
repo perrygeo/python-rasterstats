@@ -315,6 +315,18 @@ def test_add_stats_prop():
     for i in range(len(stats)):
         assert stats[i]["mymean_prop"] == stats[i]["mean"] * (i + 1)
 
+def test_add_stats_prop_and_array():
+    polygons = os.path.join(DATA, "polygons.shp")
+
+    def mymean_prop_and_array(x, prop, rv_array):
+        # confirm that the object exists and is accessible.
+        assert rv_array is not None
+        return np.ma.mean(x) * prop["id"]
+
+    stats = zonal_stats(polygons, raster, add_stats={"mymean_prop_and_array": mymean_prop_and_array})
+    for i in range(len(stats)):
+        assert stats[i]["mymean_prop_and_array"] == stats[i]["mean"] * (i + 1)
+
 
 def test_mini_raster():
     polygons = os.path.join(DATA, "polygons.shp")
