@@ -35,6 +35,24 @@ def zonal_stats(*args, **kwargs):
     return a list rather than a generator."""
     return list(gen_zonal_stats(*args, **kwargs))
 
+def gdf_zonal_stats(vectors, *args, **kwargs):
+    """The primary zonal statistics entry point.
+    All arguments are passed directly to ``gen_zonal_stats``.
+    See its docstring for details.
+    
+    The difference is that ``gdf_zonal_stats`` will
+    return a GeoDataFrame rather than a generator.
+    Besides this, we make sure the new gdf as the right
+    metadata by conserving the CRS
+    """
+
+    gdf = gpd.GeoDataFrame.from_features(
+        list(gen_zonal_stats(vectors, geojson_out=True, *args, **kwargs))
+        )
+    gdf.crs = vectors.crs
+
+    return gdf
+
 
 def gen_zonal_stats(
     vectors,
