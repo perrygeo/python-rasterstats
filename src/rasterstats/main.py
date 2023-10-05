@@ -1,3 +1,4 @@
+import inspect
 import sys
 import warnings
 
@@ -283,10 +284,14 @@ def gen_zonal_stats(
 
             if add_stats is not None:
                 for stat_name, stat_func in add_stats.items():
-                    try:
+                    n_params = len(inspect.signature(stat_func).parameters.keys())
+                    if n_params == 3:
+                        feature_stats[stat_name] = stat_func(masked, feat["properties"], rv_array)
+                    # backwards compatible with two-argument function
+                    elif n_params == 2:
                         feature_stats[stat_name] = stat_func(masked, feat["properties"])
-                    except TypeError:
-                        # backwards compatible with single-argument function
+                    # backwards compatible with single-argument function
+                    else:
                         feature_stats[stat_name] = stat_func(masked)
 
             if raster_out:
