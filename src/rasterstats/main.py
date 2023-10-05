@@ -47,7 +47,7 @@ def gdf_zonal_stats(vectors, *args, **kwargs):
     """
 
     gdf = gpd.GeoDataFrame.from_features(
-        list(gen_zonal_stats(vectors, geojson_out=True, *args, **kwargs))
+        gen_zonal_stats(vectors, geojson_out=True, *args, **kwargs)
         )
     gdf.crs = vectors.crs
 
