@@ -2,6 +2,7 @@ import sys
 import warnings
 
 import numpy as np
+import geopandas as gpd
 from affine import Affine
 from shapely.geometry import shape
 
@@ -49,7 +50,19 @@ def gdf_zonal_stats(vectors, *args, **kwargs):
     gdf = gpd.GeoDataFrame.from_features(
         gen_zonal_stats(vectors, geojson_out=True, *args, **kwargs)
         )
-    gdf.crs = vectors.crs
+    
+    # if the input is a file path : open has gdf and get crs
+    if isinstance(vectors, str): 
+        gdf.crs = gpd.read_file(vectors).crs
+
+    # if the vectors has a 'crs' attribute use it to keep the crs
+    elif hasattr(vectors, "crs"):
+        gdf.crs = vectors.crs
+        
+    # otherwise, we cannot store the crs ? (not sure if that is possible)
+    else:
+        gdf.crs = None
+        print("Warning : the crs is not stored in the output GeoDataFrame")
 
     return gdf
 
