@@ -20,14 +20,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install pip --upgrade
-        python -m pip install -e .[dev]
+        python -m pip install -e ".[dev]"
     - name: Test all packages
       run: |
-        pytest
-    - name: Test with older packages and older pythons
-      # wheel only available for python <=3.11
-      if: contains(fromJson('["3.8", "3.9", "3.10", "3.11"]'), ${{ matrix.python-version }})
-      run: |
-        python -m pip uninstall --yes geopandas
-        python -m pip install "fiona<1.9" "shapely<2.0"
         pytest
