@@ -25,6 +25,7 @@ jobs:
       run: |
         pytest
     - name: Test with older packages
+      if: ${{ matrix.python-minor-version < 11 }}  # only for python <=3.11
       run: |
         python -m pip uninstall --yes geopandas
         python -m pip install "fiona<1.9" "shapely<2.0"
