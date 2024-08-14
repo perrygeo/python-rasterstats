@@ -270,7 +270,7 @@ def gen_zonal_stats(
                 for pctile in [s for s in stats if s.startswith("percentile_")]:
                     q = get_percentile(pctile)
                     pctarr = masked.compressed()
-                    feature_stats[pctile] = np.percentile(pctarr, q)
+                    feature_stats[pctile] = float(np.percentile(pctarr, q))
 
             if "nodata" in stats or "nan" in stats:
                 featmasked = np.ma.MaskedArray(fsrc.array, mask=(~rv_array))
@@ -286,7 +286,9 @@ def gen_zonal_stats(
                 for stat_name, stat_func in add_stats.items():
                     n_params = len(inspect.signature(stat_func).parameters.keys())
                     if n_params == 3:
-                        feature_stats[stat_name] = stat_func(masked, feat["properties"], rv_array)
+                        feature_stats[stat_name] = stat_func(
+                            masked, feat["properties"], rv_array
+                        )
                     # backwards compatible with two-argument function
                     elif n_params == 2:
                         feature_stats[stat_name] = stat_func(masked, feat["properties"])
