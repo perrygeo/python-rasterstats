@@ -16,6 +16,8 @@ from rasterstats.utils import (
     remap_categories,
 )
 
+from tqdm import tqdm
+
 
 def raster_stats(*args, **kwargs):
     """Deprecated. Use zonal_stats instead."""
@@ -34,7 +36,13 @@ def zonal_stats(*args, **kwargs):
 
     The only difference is that ``zonal_stats`` will
     return a list rather than a generator."""
-    return list(gen_zonal_stats(*args, **kwargs))
+    progress = kwargs.get("progress")
+    if progress:
+        stats = gen_zonal_stats(*args, **kwargs)
+        total = sum(1 for _ in stats)
+        return [stat for stat in tqdm(stats, total=total)]
+    else:
+        return list(gen_zonal_stats(*args, **kwargs))
 
 
 def gen_zonal_stats(

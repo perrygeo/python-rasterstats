@@ -41,6 +41,9 @@ dependencies = [
 
 
 [project.optional-dependencies]
+progress = [
+    "tqdm"
+]
 test = [
     "coverage",
     "geopandas",
