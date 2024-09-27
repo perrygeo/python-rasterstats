@@ -97,7 +97,14 @@ def read_features(obj, layer=0):
                 assert len(src) > 0
 
             features_iter = fiona_generator(obj, layer)
-        except (AssertionError, TypeError, OSError, DriverError, UnicodeDecodeError):
+        except (
+            AssertionError,
+            DriverError,
+            OSError,
+            TypeError,
+            UnicodeDecodeError,
+            ValueError,
+        ):
             try:
                 mapping = json.loads(obj)
                 if "type" in mapping and mapping["type"] == "FeatureCollection":
