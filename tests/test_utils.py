@@ -1,5 +1,4 @@
-import os
-import sys
+from pathlib import Path
 
 import pytest
 from shapely.geometry import LineString
@@ -13,21 +12,20 @@ from rasterstats.utils import (
     stats_to_csv,
 )
 
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-DATA = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
-raster = os.path.join(DATA, "slope.tif")
+data_dir = Path(__file__).parent / "data"
+raster = data_dir / "slope.tif"
 
 
 def test_csv():
-    polygons = os.path.join(DATA, "polygons.shp")
+    polygons = data_dir / "polygons.shp"
     stats = zonal_stats(polygons, raster, stats="*")
     csv = stats_to_csv(stats)
     assert csv.split()[0] == ",".join(sorted(VALID_STATS))
 
 
 def test_categorical_csv():
-    polygons = os.path.join(DATA, "polygons.shp")
-    categorical_raster = os.path.join(DATA, "slope_classes.tif")
+    polygons = data_dir / "polygons.shp"
+    categorical_raster = data_dir / "slope_classes.tif"
     stats = zonal_stats(polygons, categorical_raster, categorical=True)
     csv = stats_to_csv(stats)
     assert csv.split()[0] == "1.0,2.0,5.0"

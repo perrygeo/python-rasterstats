@@ -75,9 +75,11 @@ def gen_zonal_stats(
 
     Parameters
     ----------
-    vectors: path to an vector source or geo-like python objects
+    vectors : str or PathLike
+        Path to an vector source or geo-like python objects.
 
-    raster: ndarray or path to a GDAL raster source
+    raster: array_like, str or PathLike
+        NumPy array or path to a GDAL raster source.
         If ndarray is passed, the ``affine`` kwarg is required.
 
     layer: int or string, optional
