@@ -30,7 +30,7 @@ classifiers = [
 requires-python = ">=3.7"
 dependencies = [
     "affine",
-    "click >7.1",
+    "click >7.1, !=8.2.1",
     "cligj >=0.4",
     "fiona",
     "numpy >=1.9",
@@ -65,6 +65,14 @@ pointquery = "rasterstats.cli:pointquery"
 [project.urls]
 Documentation = "https://pythonhosted.org/rasterstats/"
 "Source Code" = "https://github.com/perrygeo/python-rasterstats"
+
+[tool.pytest.ini_options]
+filterwarnings = [
+    "error",
+    "ignore::UserWarning",
+]
+testpaths = ["tests"]
+# addopts = "--verbose -rf --ipdb --maxfail=1"
 
 [tool.setuptools.dynamic]
 version = {attr = "rasterstats._version.__version__"}

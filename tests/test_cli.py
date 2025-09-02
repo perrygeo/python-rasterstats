@@ -1,6 +1,6 @@
 import json
-import os.path
 import warnings
+from pathlib import Path
 
 from click.testing import CliRunner
 
@@ -9,10 +9,11 @@ from rasterstats.cli import pointquery, zonalstats
 # Some warnings must be ignored to parse output properly
 # https://github.com/pallets/click/issues/371#issuecomment-223790894
 
+data_dir = Path(__file__).parent / "data"
 
 def test_cli_feature():
-    raster = os.path.join(os.path.dirname(__file__), "data/slope.tif")
-    vector = os.path.join(os.path.dirname(__file__), "data/feature.geojson")
+    raster = str(data_dir / "slope.tif")
+    vector = str(data_dir / "feature.geojson")
     runner = CliRunner()
     warnings.simplefilter("ignore")
     result = runner.invoke(
@@ -28,15 +29,15 @@ def test_cli_feature():
 
 
 def test_cli_feature_stdin():
-    raster = os.path.join(os.path.dirname(__file__), "data/slope.tif")
-    vector = os.path.join(os.path.dirname(__file__), "data/feature.geojson")
+    raster = str(data_dir / "slope.tif")
+    vector_pth = data_dir / "feature.geojson"
 
     runner = CliRunner()
     warnings.simplefilter("ignore")
     result = runner.invoke(
         zonalstats,
         ["--raster", raster, "--stats", "all", "--prefix", "test_"],
-        input=open(vector).read(),
+        input=vector_pth.read_text(),
     )
     assert result.exit_code == 0
     outdata = json.loads(result.output)
@@ -47,8 +48,8 @@ def test_cli_feature_stdin():
 
 
 def test_cli_features_sequence():
-    raster = os.path.join(os.path.dirname(__file__), "data/slope.tif")
-    vector = os.path.join(os.path.dirname(__file__), "data/featurecollection.geojson")
+    raster = str(data_dir / "slope.tif")
+    vector = str(data_dir / "featurecollection.geojson")
     runner = CliRunner()
     result = runner.invoke(
         zonalstats,
@@ -71,8 +72,8 @@ def test_cli_features_sequence():
 
 
 def test_cli_features_sequence_rs():
-    raster = os.path.join(os.path.dirname(__file__), "data/slope.tif")
-    vector = os.path.join(os.path.dirname(__file__), "data/featurecollection.geojson")
+    raster = str(data_dir / "slope.tif")
+    vector = str(data_dir / "featurecollection.geojson")
     runner = CliRunner()
     result = runner.invoke(
         zonalstats,
@@ -94,8 +95,8 @@ def test_cli_features_sequence_rs():
 
 
 def test_cli_featurecollection():
-    raster = os.path.join(os.path.dirname(__file__), "data/slope.tif")
-    vector = os.path.join(os.path.dirname(__file__), "data/featurecollection.geojson")
+    raster = str(data_dir / "slope.tif")
+    vector = str(data_dir / "featurecollection.geojson")
     runner = CliRunner()
     result = runner.invoke(
         zonalstats, [vector, "--raster", raster, "--stats", "mean", "--prefix", "test_"]
@@ -110,8 +111,8 @@ def test_cli_featurecollection():
 
 
 def test_cli_pointquery():
-    raster = os.path.join(os.path.dirname(__file__), "data/slope.tif")
-    vector = os.path.join(os.path.dirname(__file__), "data/featurecollection.geojson")
+    raster = str(data_dir / "slope.tif")
+    vector = str(data_dir / "featurecollection.geojson")
     runner = CliRunner()
     result = runner.invoke(
         pointquery, [vector, "--raster", raster, "--property-name", "slope"]
@@ -124,8 +125,8 @@ def test_cli_pointquery():
 
 
 def test_cli_point_sequence():
-    raster = os.path.join(os.path.dirname(__file__), "data/slope.tif")
-    vector = os.path.join(os.path.dirname(__file__), "data/featurecollection.geojson")
+    raster = str(data_dir / "slope.tif")
+    vector = str(data_dir / "featurecollection.geojson")
     runner = CliRunner()
     result = runner.invoke(
         pointquery,
@@ -139,8 +140,8 @@ def test_cli_point_sequence():
 
 
 def test_cli_point_sequence_rs():
-    raster = os.path.join(os.path.dirname(__file__), "data/slope.tif")
-    vector = os.path.join(os.path.dirname(__file__), "data/featurecollection.geojson")
+    raster = str(data_dir / "slope.tif")
+    vector = str(data_dir / "featurecollection.geojson")
     runner = CliRunner()
     result = runner.invoke(
         pointquery,

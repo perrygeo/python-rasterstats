@@ -3,6 +3,7 @@ import math
 import warnings
 from collections.abc import Iterable, Mapping
 from json import JSONDecodeError
+from os import PathLike
 
 import fiona
 import numpy as np
@@ -90,7 +91,8 @@ def parse_feature(obj):
 
 def read_features(obj, layer=0):
     features_iter = None
-    if isinstance(obj, str):
+    if isinstance(obj, (str, PathLike)):
+        obj = str(obj)
         try:
             # test it as fiona data source
             with fiona.open(obj, "r", layer=layer) as src:

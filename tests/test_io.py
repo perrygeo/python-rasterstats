@@ -1,8 +1,8 @@
 import json
-import os
-import sys
+from pathlib import Path
 
 import fiona
+import numpy as np
 import pytest
 import rasterio
 from shapely.geometry import shape
@@ -18,12 +18,9 @@ from rasterstats.io import (  # todo parse_feature
     window_bounds,
 )
 
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-DATA = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
-polygons = os.path.join(DATA, "polygons.shp")
-raster = os.path.join(DATA, "slope.tif")
-
-import numpy as np
+data_dir = Path(__file__).parent / "data"
+polygons = data_dir / "polygons.shp"
+raster = data_dir / "slope.tif"
 
 arr = np.array([[1, 1, 1], [1, 1, 1], [1, 1, 1]])
 
@@ -59,12 +56,12 @@ def test_fiona_path():
 
 
 def test_layer_index():
-    layer = fiona.listlayers(DATA).index("polygons")
-    assert list(read_features(DATA, layer=layer)) == target_features
+    layer = fiona.listlayers(data_dir).index("polygons")
+    assert list(read_features(data_dir, layer=layer)) == target_features
 
 
 def test_layer_name():
-    assert list(read_features(DATA, layer="polygons")) == target_features
+    assert list(read_features(data_dir, layer="polygons")) == target_features
 
 
 def test_path_unicode():
