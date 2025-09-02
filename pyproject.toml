@@ -1,6 +1,6 @@
 [build-system]
-requires = ["setuptools >=61"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [project]
 name = "rasterstats"
@@ -19,7 +19,6 @@ classifiers = [
     "License :: OSI Approved :: BSD License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
@@ -27,7 +26,7 @@ classifiers = [
     "Topic :: Utilities",
     "Topic :: Scientific/Engineering :: GIS",
 ]
-requires-python = ">=3.7"
+requires-python = ">=3.9"
 dependencies = [
     "affine",
     "click >7.1, !=8.2.1",
@@ -38,7 +37,6 @@ dependencies = [
     "simplejson",
     "shapely",
 ]
-
 
 [project.optional-dependencies]
 progress = [
@@ -66,6 +64,9 @@ pointquery = "rasterstats.cli:pointquery"
 Documentation = "https://pythonhosted.org/rasterstats/"
 "Source Code" = "https://github.com/perrygeo/python-rasterstats"
 
+[tool.hatch.build.targets.sdist]
+only-include = ["src", "tests"]
+
 [tool.pytest.ini_options]
 filterwarnings = [
     "error",
@@ -77,8 +78,8 @@ testpaths = ["tests"]
 [tool.setuptools.dynamic]
 version = {attr = "rasterstats._version.__version__"}
 
-[tool.setuptools.packages.find]
-where = ["src"]
+[tool.hatch.version]
+path = "src/rasterstats/_version.py"
 
 [tool.isort]
 profile = "black"
