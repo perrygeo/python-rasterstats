@@ -86,7 +86,7 @@ def parse_feature(obj):
     except (AssertionError, TypeError):
         pass
 
-    raise ValueError("Can't parse %s as a geojson Feature object" % obj)
+    raise ValueError(f"Can't parse {obj} as a geojson Feature object")
 
 
 def read_features(obj, layer=0):
@@ -302,7 +302,7 @@ class Raster:
         masked: boolean
             return a masked numpy array, default: False
         boundless: boolean
-            allow window/bounds that extend beyond the dataset’s extent, default: True
+            allow window/bounds that extend beyond the dataset's extent, default: True
             partially or completely filled arrays will be returned as appropriate.
 
         Returns

@@ -15,7 +15,7 @@ def point_window_unitxy(x, y, affine):
     ((row1, row2), (col1, col2)), (unitx, unity)
     """
     fcol, frow = ~affine * (x, y)
-    r, c = int(round(frow)), int(round(fcol))
+    r, c = round(frow), round(fcol)
 
     # The new source window for our 2x2 array
     new_win = ((r - 1, r + 1), (c - 1, c + 1))
@@ -50,7 +50,7 @@ def bilinear(arr, x, y):
     if hasattr(arr, "count") and arr.count() != 4:
         # a masked array with at least one nodata
         # fall back to nearest neighbor
-        val = arr[int(round(1 - y)), int(round(x))]
+        val = arr[round(1 - y), round(x)]
         if val is masked:
             return None
         else:
@@ -158,7 +158,7 @@ def gen_point_query(
         point query values appended as additional properties.
 
     boundless: boolean
-        Allow features that extend beyond the raster dataset’s extent, default: True
+        Allow features that extend beyond the raster dataset's extent, default: True
         Cells outside dataset extents are treated as nodata.
 
     Returns

@@ -43,8 +43,9 @@ def zonalstats(
 
     The input arguments to zonalstats should be valid GeoJSON Features. (see cligj)
 
-    The output GeoJSON will be mostly unchanged but have additional properties per feature
-    describing the summary statistics (min, max, mean, etc.) of the underlying raster dataset.
+    The output GeoJSON will be mostly unchanged but have additional properties per
+    feature describing the summary statistics (min, max, mean, etc.) of the underlying
+    raster dataset.
 
     The raster is specified by the required -r/--raster argument.
 

@@ -6,10 +6,10 @@ from rasterstats._version import __version__
 
 __all__ = [
     "__version__",
-    "gen_zonal_stats",
+    "cli",
     "gen_point_query",
+    "gen_zonal_stats",
+    "point_query",
     "raster_stats",
     "zonal_stats",
-    "point_query",
-    "cli",
 ]

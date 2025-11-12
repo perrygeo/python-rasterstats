@@ -25,7 +25,7 @@ except ImportError:
 def raster_stats(*args, **kwargs):
     """Deprecated. Use zonal_stats instead."""
     warnings.warn(
-        "'raster_stats' is an alias to 'zonal_stats'" " and will disappear in 1.0",
+        "'raster_stats' is an alias to 'zonal_stats' and will disappear in 1.0",
         DeprecationWarning,
     )
     return zonal_stats(*args, **kwargs)
@@ -43,7 +43,9 @@ def zonal_stats(*args, **kwargs):
     if progress:
         if tqdm is None:
             raise ValueError(
-                "You specified progress=True, but tqdm is not installed in the environment. You can do pip install rasterstats[progress] to install tqdm!"
+                "You specified progress=True, but tqdm is not installed in "
+                "the environment. "
+                "You can do pip install rasterstats[progress] to install tqdm!"
             )
         stats = gen_zonal_stats(*args, **kwargs)
         total = len(args[0])
@@ -140,7 +142,7 @@ def gen_zonal_stats(
         Use with `prefix` to ensure unique and meaningful property names.
 
     boundless: boolean
-        Allow features that extend beyond the raster dataset’s extent, default: True
+        Allow features that extend beyond the raster dataset's extent, default: True
         Cells outside dataset extents are treated as nodata.
 
     Returns
