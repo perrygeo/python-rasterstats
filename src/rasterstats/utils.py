@@ -93,9 +93,7 @@ def check_stats(stats, categorical):
         if x.startswith("percentile_"):
             get_percentile(x)
         elif x not in VALID_STATS:
-            raise ValueError(
-                "Stat `%s` not valid; " "must be one of \n %r" % (x, VALID_STATS)
-            )
+            raise ValueError(f"Stat {x!r} not valid; must be one of \n {VALID_STATS}")
 
     run_count = False
     if categorical or "majority" in stats or "minority" in stats or "unique" in stats:

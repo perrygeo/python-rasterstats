@@ -42,6 +42,11 @@ dependencies = [
 progress = [
     "tqdm"
 ]
+docs = [
+    "numpydoc",
+    "sphinx",
+    "sphinx-rtd-theme",
+]
 test = [
     "coverage",
     "geopandas",
@@ -52,7 +57,7 @@ test = [
 ]
 dev = [
     "rasterstats[test]",
-    "numpydoc",
+    "ruff",
     "twine",
 ]
 
@@ -81,6 +86,18 @@ version = {attr = "rasterstats._version.__version__"}
 [tool.hatch.version]
 path = "src/rasterstats/_version.py"
 
-[tool.isort]
-profile = "black"
-known_first_party = ["rasterstats"]
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle
+    "F",    # Pyflakes
+    "I",    # isort
+    "RUF",  # Ruff-specific rules
+    "UP",   # pyupgrade
+]
+ignore = [
+    "RUF005",  # Consider iterable unpacking instead of concatenation
+]
+
+[tool.ruff]
+# TODO: files in docs/notebooks/ use old versions and are incompatible with modern tools
+extend-exclude = ["*.ipynb"]

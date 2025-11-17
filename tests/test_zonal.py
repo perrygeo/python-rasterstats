@@ -307,6 +307,7 @@ def test_add_stats_prop():
     for i in range(len(stats)):
         assert stats[i]["mymean_prop"] == stats[i]["mean"] * (i + 1)
 
+
 def test_add_stats_prop_and_array():
     polygons = data_dir / "polygons.shp"
 
@@ -315,7 +316,9 @@ def test_add_stats_prop_and_array():
         assert rv_array is not None
         return np.ma.mean(x) * prop["id"]
 
-    stats = zonal_stats(polygons, raster, add_stats={"mymean_prop_and_array": mymean_prop_and_array})
+    stats = zonal_stats(
+        polygons, raster, add_stats={"mymean_prop_and_array": mymean_prop_and_array}
+    )
     for i in range(len(stats)):
         assert stats[i]["mymean_prop_and_array"] == stats[i]["mean"] * (i + 1)
 

@@ -11,6 +11,7 @@ from rasterstats.cli import pointquery, zonalstats
 
 data_dir = Path(__file__).parent / "data"
 
+
 def test_cli_feature():
     raster = str(data_dir / "slope.tif")
     vector = str(data_dir / "feature.geojson")

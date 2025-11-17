@@ -8,10 +8,10 @@ import rasterio
 from shapely.geometry import shape
 
 from rasterstats.io import (  # todo parse_feature
-    fiona_generator,
     Raster,
     boundless_array,
     bounds_window,
+    fiona_generator,
     read_featurecollection,
     read_features,
     rowcol,
@@ -47,7 +47,7 @@ def _test_read_features(indata):
 
 def _test_read_features_single(indata):
     # single (first target geom)
-    geom = shape(list(read_features(indata))[0]["geometry"])
+    geom = shape(next(iter(read_features(indata)))["geometry"])
     assert geom.equals_exact(target_geoms[0], eps)
 
 
@@ -280,9 +280,9 @@ def test_Raster():
     r2 = Raster(arr, affine, nodata, band=1).read(bounds)
 
     with pytest.raises(ValueError):
-        r3 = Raster(arr, affine, nodata, band=1).read()
+        Raster(arr, affine, nodata, band=1).read()
     with pytest.raises(ValueError):
-        r4 = Raster(arr, affine, nodata, band=1).read(bounds=1, window=1)
+        Raster(arr, affine, nodata, band=1).read(bounds=1, window=1)
 
     # If the abstraction is correct, the arrays are equal
     assert np.array_equal(r1.array, r2.array)
@@ -301,7 +301,7 @@ def test_Raster_boundless_disabled():
 
     # rasterio src fails outside extent
     with pytest.raises(ValueError):
-        r1 = Raster(raster, band=1).read(outside_bounds, boundless=False)
+        Raster(raster, band=1).read(outside_bounds, boundless=False)
 
     # rasterio src works inside extent
     r2 = Raster(raster, band=1).read(bounds, boundless=False)
@@ -316,7 +316,7 @@ def test_Raster_boundless_disabled():
 
     # ndarray src fails outside extent
     with pytest.raises(ValueError):
-        r4 = Raster(arr, affine, nodata, band=1).read(outside_bounds, boundless=False)
+        Raster(arr, affine, nodata, band=1).read(outside_bounds, boundless=False)
 
     # If the abstraction is correct, the arrays are equal
     assert np.array_equal(r2.array, r3.array)
