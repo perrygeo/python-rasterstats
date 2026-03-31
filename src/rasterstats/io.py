@@ -29,21 +29,15 @@ geom_types = [
     "MultiPolygon",
 ]
 
-try:
-    # Fiona 1.9+
-    import fiona.model
+from pyogrio import read_dataframe
+from pyogrio.errors import DataLayerError,DataSourceError
+from json import loads
+def pyogrio_generator(obj,layer=0):
+    collection=loads(read_dataframe(obj,layer).to_json())
+    for feat in collection["features"]:
+        yield feat   
 
-    def fiona_generator(obj, layer=0):
-        with fiona.open(obj, "r", layer=layer) as src:
-            for feat in src:
-                yield fiona.model.to_dict(feat)
-
-except ModuleNotFoundError:
-    # Fiona <1.9
-    def fiona_generator(obj, layer=0):
-        with fiona.open(obj, "r", layer=layer) as src:
-            yield from src
-
+fiona_generator=pyogrio_generator # for compatibility with old ocde
 
 def wrap_geom(geom):
     """Wraps a geometry dict in an GeoJSON Feature"""
@@ -98,10 +92,11 @@ def read_features(obj, layer=0):
             with fiona.open(obj, "r", layer=layer) as src:
                 assert len(src) > 0
 
-            features_iter = fiona_generator(obj, layer)
+            features_iter = pyogrio_generator(obj, layer)
         except (
             AssertionError,
-            DriverError,
+            DataSourceError,
+            DataLayerError,
             OSError,
             TypeError,
             UnicodeDecodeError,
