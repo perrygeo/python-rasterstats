@@ -49,6 +49,8 @@ dependencies = [
 [project.optional-dependencies]
 progress = ["tqdm"]
 fiona = ["fiona; python_version < '3.14'"]
+
+[dependency-groups]
 docs = ["numpydoc", "sphinx", "sphinx-rtd-theme"]
 test = [
   "coverage",
@@ -58,7 +60,12 @@ test = [
   "pytest-cov >=2.2.0",
   "simplejson",
 ]
-dev = ["rasterstats[test,fiona]", "ruff", "twine"]
+dev = [
+  "ruff",
+  "twine",
+  "fiona; python_version < '3.14'",
+  {include-group = "test"},
+]
 
 [project.entry-points."rasterio.rio_plugins"]
 zonalstats = "rasterstats.cli:zonalstats"
