@@ -292,6 +292,8 @@ def boundless_array(arr, window, nodata, masked=False):
     # create an array of nodata values
     out = np.empty(shape=window_shape, dtype=arr.dtype)
     out[:] = nodata
+    if np.ma.isMaskedArray(arr):
+        out = np.ma.array(out, mask=np.zeros(window_shape, dtype=bool))
 
     # Fill with data where overlapping
     nr_start = olr_start - wr_start
@@ -308,7 +310,7 @@ def boundless_array(arr, window, nodata, masked=False):
         ]
 
     if masked:
-        out = np.ma.MaskedArray(out, mask=(out == nodata))
+        out = np.ma.masked_equal(out, nodata, copy=False)
 
     return out
 
