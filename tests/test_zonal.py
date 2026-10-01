@@ -452,6 +452,45 @@ def test_nan_nodata():
     assert stats[0]["max"] == 12.75
 
 
+def test_masked_ndarray_excludes_source_mask():
+    polygon = Polygon([[0, 0], [2, 0], [2, 2], [0, 2]])
+    arr = np.ma.array([[1, 100], [-999, 3]], mask=[[False, True], [False, False]])
+    affine = Affine(1, 0, 0, 0, -1, 2)
+
+    stats = zonal_stats(
+        polygon, arr, affine=affine, nodata=-999, stats="count sum mean nodata"
+    )[0]
+
+    assert stats == {"count": 2, "sum": 4.0, "mean": 2.0, "nodata": 1.0}
+
+
+def test_masked_ndarray_excludes_masked_nodata_and_nan():
+    polygon = Polygon([[0, 0], [2, 0], [2, 2], [0, 2]])
+    arr = np.ma.array(
+        [[1.0, np.nan], [-999.0, 3.0]],
+        mask=[[False, True], [True, False]],
+    )
+    affine = Affine(1, 0, 0, 0, -1, 2)
+
+    stats = zonal_stats(
+        polygon, arr, affine=affine, nodata=-999, stats="count sum nodata nan"
+    )[0]
+
+    assert stats == {"count": 2, "sum": 4.0, "nodata": 0.0, "nan": 0}
+
+
+def test_masked_ndarray_with_every_pixel_masked():
+    polygon = Polygon([[0, 0], [2, 0], [2, 2], [0, 2]])
+    arr = np.ma.array([[1, 2], [3, 4]], mask=True)
+    affine = Affine(1, 0, 0, 0, -1, 2)
+
+    stats = zonal_stats(
+        polygon, arr, affine=affine, nodata=-999, stats="count mean nodata"
+    )[0]
+
+    assert stats == {"count": 0, "mean": None, "nodata": 0.0}
+
+
 def test_some_nodata_ndarray():
     polygons = data_dir / "polygons.shp"
     raster = data_dir / "slope_nodata.tif"

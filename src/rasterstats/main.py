@@ -195,7 +195,9 @@ def gen_zonal_stats(
         band = band_num
 
     with Raster(raster, affine, nodata, band) as rast:
-        features_iter = read_features(vectors, layer, engine=engine, chunk_size=chunk_size)
+        features_iter = read_features(
+            vectors, layer, engine=engine, chunk_size=chunk_size
+        )
         for _, feat in enumerate(features_iter):
             geom = feat["geometry"]
             if not isinstance(geom, Geometry):
@@ -223,7 +225,10 @@ def gen_zonal_stats(
 
             # Mask the source data array
             # mask everything that is not a valid value or not within our geom
-            masked = np.ma.MaskedArray(fsrc.array, mask=(isnodata | ~rv_array))
+            source_mask = np.ma.getmaskarray(fsrc.array)
+            masked = np.ma.MaskedArray(
+                fsrc.array, mask=(source_mask | isnodata | ~rv_array)
+            )
 
             # If we're on 64 bit platform and the array is an integer type
             # make sure we cast to 64 bit to avoid overflow for certain numpy ops
@@ -310,13 +315,19 @@ def gen_zonal_stats(
                     feature_stats[pctile] = float(np.percentile(pctarr, q))
 
             if "nodata" in stats or "nan" in stats:
-                featmasked = np.ma.MaskedArray(fsrc.array, mask=(~rv_array))
+                featmasked = np.ma.MaskedArray(
+                    fsrc.array, mask=(source_mask | ~rv_array)
+                )
 
                 if "nodata" in stats:
-                    feature_stats["nodata"] = float((featmasked == fsrc.nodata).sum())
+                    feature_stats["nodata"] = float(
+                        np.ma.filled(featmasked == fsrc.nodata, False).sum()
+                    )
                 if "nan" in stats:
                     feature_stats["nan"] = (
-                        float(np.isnan(featmasked).sum()) if has_nan else 0
+                        float(np.ma.filled(np.isnan(featmasked), False).sum())
+                        if has_nan
+                        else 0
                     )
 
             if add_stats is not None:

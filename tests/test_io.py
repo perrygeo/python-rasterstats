@@ -240,6 +240,35 @@ def test_boundless_masked():
     assert c.mask.any() and not c.mask.all()
 
 
+@pytest.mark.parametrize("dim3", [False, True])
+@pytest.mark.parametrize("masked", [False, True])
+def test_boundless_preserves_source_mask(dim3, masked):
+    source = np.ma.array([[1, 2], [3, 4]], mask=[[False, True], [False, False]])
+    if dim3:
+        source = source[np.newaxis, :, :]
+
+    result = boundless_array(
+        source, window=((-1, 2), (0, 3)), nodata=-999, masked=masked
+    )
+
+    assert isinstance(result, np.ma.MaskedArray)
+    actual_mask = np.ma.getmaskarray(result)
+    if dim3:
+        actual_mask = actual_mask[0]
+    assert actual_mask[1, 1]
+    assert result.count() == (3 if masked else 8)
+    assert actual_mask[0, 0] == masked
+    assert actual_mask[2, 2] == masked
+
+
+def test_boundless_masked_array_without_overlap():
+    source = np.ma.array([[1]], mask=[[True]])
+    result = boundless_array(source, window=((2, 3), (2, 3)), nodata=-999, masked=True)
+
+    assert result.shape == (1, 1)
+    assert result.mask.all()
+
+
 def test_window_bounds():
     with rasterio.open(raster) as src:
         win = ((0, src.shape[0]), (0, src.shape[1]))
