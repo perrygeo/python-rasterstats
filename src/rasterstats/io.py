@@ -308,7 +308,8 @@ def boundless_array(arr, window, nodata, masked=False):
         ]
 
     if masked:
-        out = np.ma.MaskedArray(out, mask=(out == nodata))
+        mask = np.isnan(out) if nodata != nodata else out == nodata
+        out = np.ma.MaskedArray(out, mask=mask)
 
     return out
 

@@ -1,6 +1,9 @@
 import os
 
+import numpy as np
+import pytest
 import rasterio
+from affine import Affine
 
 from rasterstats import point_query
 from rasterstats.point import bilinear, geom_xys, point_window_unitxy
@@ -10,6 +13,36 @@ raster_nodata = os.path.join(os.path.dirname(__file__), "data/slope_nodata.tif")
 
 with rasterio.open(raster) as src:
     affine = src.transform
+
+
+@pytest.mark.parametrize("interpolate", ["nearest", "bilinear"])
+def test_point_query_nan_nodata(interpolate):
+    data = np.array([[1.0, np.nan], [3.0, 4.0]])
+    points = [
+        {"type": "Point", "coordinates": xy}
+        for xy in [(0.75, 1.25), (1.5, 1.5), (-0.25, 1.5)]
+    ]
+    assert point_query(
+        points,
+        data,
+        affine=Affine(1, 0, 0, 0, -1, 2),
+        nodata=np.nan,
+        interpolate=interpolate,
+    ) == [1.0, None, None]
+
+
+@pytest.mark.parametrize("nodata", [2**64, 10**20])
+@pytest.mark.parametrize("interpolate", ["nearest", "bilinear"])
+def test_point_query_large_integer_nodata(nodata, interpolate):
+    data = np.array([[1.0, nodata], [3.0, 4.0]], dtype="float64")
+    points = [{"type": "Point", "coordinates": xy} for xy in [(0.75, 1.25), (1.5, 1.5)]]
+    assert point_query(
+        points,
+        data,
+        affine=Affine(1, 0, 0, 0, -1, 2),
+        nodata=nodata,
+        interpolate=interpolate,
+    ) == [1.0, None]
 
 
 def test_unitxy_ul():
