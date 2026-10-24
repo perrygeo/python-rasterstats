@@ -4,6 +4,7 @@ import warnings
 from collections.abc import Iterable, Mapping
 from json import JSONDecodeError
 from os import PathLike
+from os.path import exists
 
 import numpy as np
 import pyogrio
@@ -175,39 +176,43 @@ def parse_feature(obj):
 
 
 def _is_vector_file(path, layer):
-    """Return True if ``path`` is a readable vector file with at least one feature.
+    """Return True if ``path`` is a readable vector file.
 
     Uses pyogrio.read_info for the probe — no fiona required.
-    Returns False for invalid paths, non-vector files, and genuinely empty sources.
-    A feature count of -1 (unknown, e.g. some GeoJSON drivers) is treated as
-    non-empty (True).
+    Returns False for invalid paths and non-vector files.
+    Empty sources and sources with unknown feature counts are readable.
     """
     try:
-        info = pyogrio.read_info(path, layer=layer)
+        pyogrio.read_info(path, layer=layer)
     # important: don't catch DataLayerErrors, let those bubble up directly
     except pyogrio.errors.DataSourceError:
         return False
-    return info["features"] != 0
+    return True
 
 
 def read_features(obj, layer=0, engine=None, chunk_size=DEFAULT_CHUNK_SIZE):
     features_iter = None
     if isinstance(obj, (str, PathLike)):
         obj = str(obj)
-        if _is_vector_file(obj, layer):
-            features_iter = feature_generator(
-                obj, layer, engine=engine, chunk_size=chunk_size
-            )
-        else:
+        mapping = None
+        if not exists(obj):
             try:
                 mapping = json.loads(obj)
-                if "type" in mapping and mapping["type"] == "FeatureCollection":
-                    features_iter = mapping["features"]
-                elif mapping["type"] in geom_types + ["Feature"]:
-                    features_iter = [parse_feature(mapping)]
             except (ValueError, JSONDecodeError):
+                pass
+        if mapping is None:
+            if _is_vector_file(obj, layer):
+                features_iter = feature_generator(
+                    obj, layer, engine=engine, chunk_size=chunk_size
+                )
+            else:
                 # Single feature-like string
                 features_iter = [parse_feature(obj)]
+        else:
+            if "type" in mapping and mapping["type"] == "FeatureCollection":
+                features_iter = mapping["features"]
+            elif mapping["type"] in geom_types + ["Feature"]:
+                features_iter = [parse_feature(mapping)]
     elif isinstance(obj, Mapping):
         if "type" in obj and obj["type"] == "FeatureCollection":
             features_iter = obj["features"]
@@ -226,7 +231,7 @@ def read_features(obj, layer=0, engine=None, chunk_size=DEFAULT_CHUNK_SIZE):
         # Iterable of feature-like objects
         features_iter = (parse_feature(x) for x in obj)
 
-    if not features_iter:
+    if features_iter is None:
         raise ValueError("Object is not a recognized source of Features")
     return features_iter
 

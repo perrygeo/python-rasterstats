@@ -158,8 +158,8 @@ def test_jsonstr_collection():
 def test_jsonstr_collection_without_features():
     indata = {"type": "FeatureCollection", "features": []}
     indata = json.dumps(indata)
-    with pytest.raises(ValueError):
-        _test_read_features(indata)
+    # RFC 7946 section 3.3 permits an empty features array.
+    assert list(read_features(indata)) == []
 
 
 def test_invalid_jsonstr():
@@ -533,6 +533,42 @@ def test_geodataframe():
     if not hasattr(df, "__geo_interface__"):
         pytest.skip("This version of geopandas doesn't support df.__geo_interface__")
     assert list(read_features(df))
+
+
+@pytest.mark.parametrize("as_text", [False, True])
+def test_empty_featurecollection(as_text):
+    collection = {"type": "FeatureCollection", "features": []}
+    source = json.dumps(collection) if as_text else collection
+    assert list(read_features(source)) == []
+
+
+def test_empty_geodataframe():
+    gpd = pytest.importorskip("geopandas")
+
+    frame = gpd.read_file(polygons).iloc[:0]
+    assert list(read_features(frame)) == []
+
+
+@pytest.mark.parametrize("engine", ["pyogrio", "fiona"])
+def test_empty_vector_file(tmp_path, engine):
+    if engine == "fiona":
+        pytest.importorskip("fiona")
+    path = tmp_path / "empty.geojson"
+    path.write_text(json.dumps({"type": "FeatureCollection", "features": []}))
+    assert _is_vector_file(path, 0)
+    assert list(read_features(path, engine=engine)) == []
+
+
+@pytest.mark.parametrize("filename", ["123", "{}"])
+@pytest.mark.parametrize("as_path", [False, True])
+def test_json_like_filename(tmp_path, monkeypatch, filename, as_path):
+    collection = read_featurecollection(polygons)
+    monkeypatch.chdir(tmp_path)
+    path = Path(filename)
+    path.write_text(json.dumps(collection))
+    features = list(read_features(path if as_path else filename))
+    assert len(features) == len(target_geoms)
+    _compare_geomlists([shape(f["geometry"]) for f in features], target_geoms)
 
 
 def test_feature_generator_chunk_size(tmp_path):
