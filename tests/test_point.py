@@ -117,6 +117,72 @@ def test_point_query_nodata():
     assert round(val) == 43
 
 
+def test_point_query_corner_nodata():
+    """Regression test for #294
+
+    Points on the corner of a pixel bordered by nodata are equidistant
+    from every pixel sharing the corner; the pixel with data should win
+    over nodata pixels for both interpolation modes.
+    """
+    import numpy as np
+    from rasterio.transform import Affine
+    from shapely.geometry import Point
+
+    data = np.array([[0, 0, 0], [0, 1, 0], [0, 0, 0]])
+    transform = Affine(1, 0, 0, 0, -1, 3)
+    # the four corners of the single valid (center) pixel
+    points = [Point(1, 1), Point(2, 1), Point(1, 2), Point(2, 2)]
+
+    for interpolate in ["nearest", "bilinear"]:
+        vals = point_query(
+            points, data, affine=transform, interpolate=interpolate, nodata=0
+        )
+        assert vals == [1, 1, 1, 1]
+
+    # midpoint of the valid pixel's edge behaves the same way
+    for interpolate in ["nearest", "bilinear"]:
+        vals = point_query(
+            [Point(1.5, 1)],
+            data,
+            affine=transform,
+            interpolate=interpolate,
+            nodata=0,
+        )
+        assert vals == [1]
+
+
+def test_point_query_corner_all_nodata():
+    """Boundary tie-breaking must not invent data: points whose touching
+    pixels are all nodata, and points inside a nodata pixel, return None.
+    """
+    import numpy as np
+    from rasterio.transform import Affine
+    from shapely.geometry import Point
+
+    data = np.array([[0, 0, 0], [0, 1, 0], [0, 0, 0]])
+    transform = Affine(1, 0, 0, 0, -1, 3)
+
+    for interpolate in ["nearest", "bilinear"]:
+        # corner shared only by nodata pixels (and the outside)
+        vals = point_query(
+            [Point(1, 3)],
+            data,
+            affine=transform,
+            interpolate=interpolate,
+            nodata=0,
+        )
+        assert vals == [None]
+        # center of a nodata pixel, not on any boundary
+        vals = point_query(
+            [Point(0.5, 2.5)],
+            data,
+            affine=transform,
+            interpolate=interpolate,
+            nodata=0,
+        )
+        assert vals == [None]
+
+
 def test_geom_xys():
     from shapely.geometry import (
         LineString,
