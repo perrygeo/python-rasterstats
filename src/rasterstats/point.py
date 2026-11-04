@@ -49,12 +49,19 @@ def bilinear(arr, x, y):
 
     if hasattr(arr, "count") and arr.count() != 4:
         # a masked array with at least one nodata
-        # fall back to nearest neighbor
-        val = arr[round(1 - y), round(x)]
-        if val is masked:
-            return None
-        else:
-            return val.item()
+        # fall back to nearest neighbor, preferring cells with data:
+        # examine cells in order of distance from the point
+        # (ties, e.g. points on a pixel corner, in row-major order)
+        cells = sorted(
+            ((x - cx) ** 2 + (y - cy) ** 2, i, j)
+            for i, cy in enumerate((1, 0))
+            for j, cx in enumerate((0, 1))
+        )
+        for _, i, j in cells:
+            val = arr[i, j]
+            if val is not masked:
+                return val.item()
+        return None
 
     # bilinear interp on unit square
     return (
@@ -198,6 +205,34 @@ def gen_point_query(
                         window=window, masked=True, boundless=boundless
                     ).array
                     val = src_array[0, 0]
+                    if val is masked:
+                        # The point may fall exactly on a pixel edge or
+                        # corner, making it equidistant from every pixel
+                        # that shares the boundary. If the selected pixel
+                        # has no data, check the other pixels that touch
+                        # the point before giving up.
+                        fcol, frow = ~rast.affine * (x, y)
+                        rows = [r, r - 1] if frow == r else [r]
+                        cols = [c, c - 1] if fcol == c else [c]
+                        if len(rows) * len(cols) > 1:
+                            if not boundless:
+                                rows = [i for i in rows if 0 <= i < rast.shape[0]]
+                                cols = [j for j in cols if 0 <= j < rast.shape[1]]
+                            r0, c0 = min(rows), min(cols)
+                            window = (
+                                (r0, max(rows) + 1),
+                                (c0, max(cols) + 1),
+                            )
+                            src_array = rast.read(
+                                window=window, masked=True, boundless=boundless
+                            ).array
+                            for i in rows:
+                                for j in cols:
+                                    val = src_array[i - r0, j - c0]
+                                    if val is not masked:
+                                        break
+                                if val is not masked:
+                                    break
                     if val is masked:
                         vals.append(None)
                     else:
