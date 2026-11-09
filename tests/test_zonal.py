@@ -583,3 +583,112 @@ def test_geodataframe_zonal():
 # TODO #  gen_zonal_stats(stats=nodata)
 # TODO #  gen_zonal_stats(<raster with non-integer dtype>)
 # TODO #  gen_zonal_stats(transform AND affine>)
+
+
+@pytest.mark.parametrize("use_file", [False, True])
+@pytest.mark.parametrize("has_nan", [False, True])
+@pytest.mark.filterwarnings(
+    "error:Warning.*converting a masked element to nan:UserWarning"
+)
+def test_empty_rasterization_counts(tmp_path, use_file, has_nan):
+    transform = Affine(1, 0, 0, 0, -1, 2)
+    polygon = Polygon([(0.1, 0.1), (0.2, 0.1), (0.2, 1.9), (0.1, 1.9)])
+    array = np.array([[np.nan if has_nan else 1, 2], [3, -999]])
+    original = array.copy()
+    source = array
+    if use_file:
+        source = tmp_path / "thin.tif"
+        with rasterio.open(
+            source,
+            "w",
+            driver="GTiff",
+            height=2,
+            width=2,
+            count=1,
+            dtype=array.dtype,
+            transform=transform,
+            crs="EPSG:4326",
+            nodata=-999,
+        ) as dataset:
+            dataset.write(array, 1)
+
+    stats = zonal_stats(
+        polygon,
+        source,
+        affine=transform,
+        nodata=-999,
+        stats="count nodata nan min max mean",
+    )[0]
+    assert stats == {
+        "count": 0,
+        "nodata": 0,
+        "nan": 0,
+        "min": None,
+        "max": None,
+        "mean": None,
+    }
+    assert type(stats["count"]) is int
+    assert type(stats["nodata"]) is float
+
+    # No pixel center is inside the thin strip; all_touched selects column zero.
+    touched = zonal_stats(
+        polygon,
+        source,
+        affine=transform,
+        nodata=-999,
+        stats="count nodata nan min max mean",
+        all_touched=True,
+    )[0]
+    assert touched == {
+        "count": 1 if has_nan else 2,
+        "nodata": 0,
+        "nan": int(has_nan),
+        "min": 3 if has_nan else 1,
+        "max": 3,
+        "mean": 3 if has_nan else 2,
+    }
+    np.testing.assert_array_equal(array, original)
+
+
+@pytest.mark.parametrize("stat", ["nodata", "nan"])
+@pytest.mark.filterwarnings(
+    "error:Warning.*converting a masked element to nan:UserWarning"
+)
+def test_empty_rasterization_optional_count(stat):
+    array = np.array([[np.nan, 2], [3, -999]])
+    polygon = Polygon([(0.1, 0.1), (0.2, 0.1), (0.2, 1.9), (0.1, 1.9)])
+    result = zonal_stats(
+        polygon, array, affine=Affine(1, 0, 0, 0, -1, 2), nodata=-999, stats=stat
+    )
+    assert result == [{stat: 0}]
+
+
+@pytest.mark.filterwarnings(
+    "error:Warning.*converting a masked element to nan:UserWarning"
+)
+def test_empty_rasterization_geojson_extra_stats():
+    polygon = Polygon([(0.1, 0.1), (0.2, 0.1), (0.2, 1.9), (0.1, 1.9)])
+    feature = {
+        "type": "Feature",
+        "geometry": polygon.__geo_interface__,
+        "properties": {"name": "thin"},
+    }
+    result = zonal_stats(
+        [feature],
+        np.array([[np.nan, 2], [3, -999]]),
+        affine=Affine(1, 0, 0, 0, -1, 2),
+        nodata=-999,
+        stats="count nodata nan",
+        categorical=True,
+        geojson_out=True,
+        add_stats={
+            "selected": lambda _values, _properties, selected: int(selected.sum())
+        },
+    )[0]
+    assert result["properties"] == {
+        "name": "thin",
+        "count": 0,
+        "nodata": 0,
+        "nan": 0,
+        "selected": 0,
+    }
