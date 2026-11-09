@@ -248,6 +248,10 @@ def rowcol(x, y, affine, op=math.floor):
 def bounds_window(bounds, affine):
     """Create a full cover rasterio-style window"""
     w, s, e, n = bounds
+    if affine.e > 0:
+        row_start, col_start = rowcol(w, s, affine)
+        row_stop, col_stop = rowcol(e, n, affine, op=math.ceil)
+        return (row_start, row_stop), (col_start, col_stop)
     row_start, col_start = rowcol(w, n, affine)
     row_stop, col_stop = rowcol(e, s, affine, op=math.ceil)
     return (row_start, row_stop), (col_start, col_stop)
@@ -255,6 +259,8 @@ def bounds_window(bounds, affine):
 
 def window_bounds(window, affine):
     (row_start, row_stop), (col_start, col_stop) = window
+    if affine.e > 0:
+        row_start, row_stop = row_stop, row_start
     w, s = affine * (col_start, row_stop)
     e, n = affine * (col_stop, row_start)
     return w, s, e, n
@@ -400,6 +406,9 @@ class Raster:
         Returns
         -------
         Raster object with update affine and array info
+
+        Axis-aligned rasters retain their native row order, including when
+        the affine's y scale is positive (south-up).
         """
         # Calculate the window
         if bounds and window:
@@ -417,8 +426,11 @@ class Raster:
                 "Window/bounds is outside dataset extent, boundless reads are disabled"
             )
 
-        c, _, _, f = window_bounds(win, self.affine)  # c ~ west, f ~ north
+        c, s, _, f = window_bounds(win, self.affine)
         a, b, _, d, e, _, _, _, _ = tuple(self.affine)
+        if e > 0:
+            # Retain native row order: the first row begins at the south edge.
+            f = s
         new_affine = Affine(a, b, c, d, e, f)
 
         nodata = self.nodata
