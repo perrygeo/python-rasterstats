@@ -2,7 +2,7 @@ from numpy.ma import masked
 from shapely.geometry import shape
 from shapely.ops import transform
 
-from rasterstats.io import DEFAULT_CHUNK_SIZE, Raster, read_features
+from rasterstats.io import DEFAULT_CHUNK_SIZE, Raster, _transform_point, read_features
 
 
 def point_window_unitxy(x, y, affine):
@@ -14,7 +14,7 @@ def point_window_unitxy(x, y, affine):
 
     ((row1, row2), (col1, col2)), (unitx, unity)
     """
-    fcol, frow = ~affine * (x, y)
+    fcol, frow = _transform_point(~affine, (x, y))
     r, c = round(frow), round(fcol)
 
     # The new source window for our 2x2 array

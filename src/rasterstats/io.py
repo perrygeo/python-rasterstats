@@ -1,5 +1,6 @@
 import json
 import math
+import operator
 import warnings
 from collections.abc import Iterable, Mapping
 from json import JSONDecodeError
@@ -14,6 +15,9 @@ from affine import Affine
 from rasterio.enums import MaskFlags
 from rasterio.transform import guard_transform
 from shapely import wkb, wkt
+
+# Affine 3 uses @ for coordinates. Affine 2 only supports *.
+_transform_point = operator.matmul if hasattr(Affine, "__matmul__") else operator.mul
 
 try:
     from shapely.errors import ShapelyError
@@ -255,8 +259,8 @@ def bounds_window(bounds, affine):
 
 def window_bounds(window, affine):
     (row_start, row_stop), (col_start, col_stop) = window
-    w, s = affine * (col_start, row_stop)
-    e, n = affine * (col_stop, row_start)
+    w, s = _transform_point(affine, (col_start, row_stop))
+    e, n = _transform_point(affine, (col_stop, row_start))
     return w, s, e, n
 
 
@@ -378,7 +382,7 @@ class Raster:
 
     def index(self, x, y):
         """Given (x, y) in crs, return the (row, column) on the raster"""
-        col, row = (math.floor(a) for a in (~self.affine * (x, y)))
+        col, row = (math.floor(a) for a in _transform_point(~self.affine, (x, y)))
         return row, col
 
     def read(self, bounds=None, window=None, masked=False, boundless=True):
