@@ -5,6 +5,7 @@ import numpy as np
 import pyogrio
 import pytest
 import rasterio
+from affine import Affine
 from shapely.geometry import shape
 
 from rasterstats.io import (  # todo parse_feature
@@ -18,6 +19,7 @@ from rasterstats.io import (  # todo parse_feature
     rowcol,
     window_bounds,
 )
+from rasterstats.point import point_window_unitxy
 
 data_dir = Path(__file__).parent / "data"
 polygons = data_dir / "polygons.shp"
@@ -247,6 +249,22 @@ def test_window_bounds():
 
         win = ((5, 10), (5, 10))
         assert src.window_bounds(win) == window_bounds(win, src.transform)
+
+
+@pytest.mark.filterwarnings("error:Use .*matmul:PendingDeprecationWarning")
+def test_affine_point_operations():
+    transform = Affine(2, 0, 10, 0, -3, 20)
+    assert window_bounds(((1, 3), (1, 4)), transform) == (12, 11, 18, 17)
+
+    with Raster(np.arange(16).reshape(4, 4), affine=transform, nodata=-1) as raster:
+        assert raster.index(14.5, 16.25) == (1, 2)
+        window = raster.read(window=((1, 3), (1, 4)))
+        np.testing.assert_array_equal(window.array, [[5, 6, 7], [9, 10, 11]])
+        assert (window.affine.c, window.affine.f) == (12, 17)
+
+    window, unitxy = point_window_unitxy(14.5, 16.25, transform)
+    assert window == ((0, 2), (1, 3))
+    assert unitxy == pytest.approx((0.75, 0.25))
 
 
 def test_bounds_window():
