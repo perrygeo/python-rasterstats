@@ -195,7 +195,9 @@ def gen_zonal_stats(
         band = band_num
 
     with Raster(raster, affine, nodata, band) as rast:
-        features_iter = read_features(vectors, layer, engine=engine, chunk_size=chunk_size)
+        features_iter = read_features(
+            vectors, layer, engine=engine, chunk_size=chunk_size
+        )
         for _, feat in enumerate(features_iter):
             geom = feat["geometry"]
             if not isinstance(geom, Geometry):
@@ -313,10 +315,14 @@ def gen_zonal_stats(
                 featmasked = np.ma.MaskedArray(fsrc.array, mask=(~rv_array))
 
                 if "nodata" in stats:
-                    feature_stats["nodata"] = float((featmasked == fsrc.nodata).sum())
+                    feature_stats["nodata"] = float(
+                        np.ma.filled((featmasked == fsrc.nodata).sum(), 0)
+                    )
                 if "nan" in stats:
                     feature_stats["nan"] = (
-                        float(np.isnan(featmasked).sum()) if has_nan else 0
+                        float(np.ma.filled(np.isnan(featmasked).sum(), 0))
+                        if has_nan
+                        else 0
                     )
 
             if add_stats is not None:
